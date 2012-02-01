@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   while ((c = getopt(argc, argv, "h?vgf:")) != -1) {
     switch (c) {
     case 'v':
-      verbose = 1;
+      g_verbose = 1;
       break;
     case 'g':
       do_gt = 1;
@@ -223,16 +223,16 @@ int main(int argc, char **argv) {
     spinor_scalar_product_re(&norm, g_spinor_field[2], g_spinor_field[2], VOLUME);
     if(g_cart_id==0) fprintf(stdout, "# Norm of difference  of orig. reading and rereading: %e\n", norm);
 */
-#ifdef _UNDEF
+
     // point source
     for(ix=0; ix<VOLUME; ix++) { _fv_eq_zero(g_spinor_field[0]+_GSI(ix)); }
     if(have_source_flag) {
       ix = g_ipt[sl0][sl1][sl2][sl3];
       g_spinor_field[0][_GSI( ix )+2*i  ] = 1.;
       // multiply the soiurce with g2
-      if(g_cart_id==0) fprintf(stdout, "# [] rotate from DeGrand-Rossi to local basis\n");
-      _fv_eq_fv(spinor1, g_spinor_field[0]+_GSI(ix));
-      _fv_eq_gamma_ti_fv(g_spinor_field[0]+_GSI(ix), 2, spinor1);
+      //if(g_cart_id==0) fprintf(stdout, "# [] rotate from DeGrand-Rossi to local basis\n");
+      //_fv_eq_fv(spinor1, g_spinor_field[0]+_GSI(ix));
+      //_fv_eq_gamma_ti_fv(g_spinor_field[0]+_GSI(ix), 2, spinor1);
     }
     xchange_field(g_spinor_field[0]);
  
@@ -266,16 +266,18 @@ int main(int argc, char **argv) {
     //}
     //fprintf(stdout, "# [%d] max of abs difference HMC-prop. = %e\n", g_cart_id, norm);
 
-
+/*
     if(g_cart_id==0) fprintf(stdout, "# [] rotate from local to DeGrand-Rossi basis\n");
     for(ix=0; ix<VOLUME; ix++) {
       _fv_eq_fv(spinor1, g_spinor_field[1]+_GSI(ix));
       _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, spinor1);
     }
-#endif
-    sprintf(filename, "source_DR.%.4d.%.2d.inverted", Nconf, i);
-    //status = write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision);
-    status = read_lime_spinor(g_spinor_field[1], filename, 0);
+*/
+
+    //sprintf(filename, "source_DR.%.4d.%.2d.inverted", Nconf, i);
+    sprintf(filename, "source.%.4d.%.2d.inverted", Nconf, i);
+    status = write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision);
+    //status = read_lime_spinor(g_spinor_field[1], filename, 0);
     if(status != 0) {
       fprintf(stderr, "Error from write_propagator, status was %d\n", status);
 #ifdef MPI
@@ -284,16 +286,19 @@ int main(int argc, char **argv) {
 #endif
       exit(22);
     }
+
 #ifndef MPI
-/*
-    sprintf(filename, "source_DR_tzyx.%.4d.%.2d.inverted.ascii", Nconf, i);
+
+    //sprintf(filename, "source_DR_tzyx.%.4d.%.2d.inverted.ascii", Nconf, i);
+    sprintf(filename, "source.%.4d.%.2d.inverted.ascii", Nconf, i);
     if( (ofs = fopen(filename, "w")) == NULL ) {
       fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
     } else {
-      printf_spinor_field_tzyx(g_spinor_field[1], ofs);
+      //printf_spinor_field_tzyx(g_spinor_field[1], ofs);
+      printf_spinor_field(g_spinor_field[1], ofs);
       fclose(ofs);
     }
-*/
+
 /*
     for(x0=0; x0<T; x0++) {
     for(x1=0; x1<LX; x1++) {
@@ -314,6 +319,7 @@ int main(int argc, char **argv) {
       fclose(ofs);
     }
 */
+/*
     for(ix=0;ix<VOLUME;ix++) {
       iix = g_lexic2eot[ix];
       _fv_eq_fv(g_spinor_field[3]+_GSI(iix), g_spinor_field[1]+_GSI(ix));
@@ -328,7 +334,7 @@ int main(int argc, char **argv) {
       }
       fclose(ofs);
     }
-
+*/
 #endif
 /*
     for(ix=0; ix<VOLUME; ix++) {

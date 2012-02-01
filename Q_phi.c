@@ -1651,7 +1651,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_eq_zero(xi_);
 
     // Negative t-direction
-    phi_ = phi + _GSI(_G5DI(is, g_idn[ix][0]) );
+    // phi_ = phi + _GSI(_G5DI(is, g_idn[ix][0]) );
+    phi_ = phi + _GSI( g_idn_5d[index_s][0] );
 
     _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1663,7 +1664,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Positive t-direction
-    phi_ = phi + _GSI( _G5DI(is,g_iup[ix][0]) );
+    //phi_ = phi + _GSI( _G5DI(is,g_iup[ix][0]) );
+    phi_ = phi + _GSI(g_iup_5d[index_s][0] );
 
     _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
     _fv_mi(spinor1);
@@ -1676,7 +1678,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Negative x-direction
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][1]) );
+    // phi_ = phi + _GSI(_G5DI(is,g_idn[ix][1]) );
+    phi_ = phi + _GSI(g_idn_5d[index_s][1] );
 
     _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1688,7 +1691,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Positive x-direction
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][1]) );
+    //phi_ = phi + _GSI(_G5DI(is, g_iup[ix][1]) );
+    phi_ = phi + _GSI(g_iup_5d[index_s][1] );
 
     _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
     _fv_mi(spinor1);
@@ -1702,7 +1706,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
 
 
     // Negative y-direction
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][2]) );
+    // phi_ = phi + _GSI(_G5DI(is,g_idn[ix][2]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][2]);
 
     _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1715,7 +1720,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
 
 
     // Positive y-direction
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][2]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][2]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][2]);
 
     _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
     _fv_mi(spinor1);
@@ -1729,7 +1735,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
 
 
     // Negative z-direction
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][3]) );
+    // phi_ = phi + _GSI(_G5DI(is,g_idn[ix][3]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][3]);
 
     _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1741,7 +1748,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Positive z-direction
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][3]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][3]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][3]);
 
     _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
     _fv_mi(spinor1);
@@ -1770,7 +1778,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_eq_zero(xi_);
 
     // Negative t-direction. 
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][0]));
+    // phi_ = phi + _GSI(_G5DI(is,g_idn[ix][0]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][0]);
 
     _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1782,7 +1791,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Positive t-direction. 
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][0]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][0]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][0]);
 
     _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
     _fv_mi(spinor1);
@@ -1795,7 +1805,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Negative x-direction. 
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][1]));
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][1]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][1]);
 
     _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1807,7 +1818,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Positive x-direction. 
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][1]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][1]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][1]);
 
     _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
     _fv_mi(spinor1);
@@ -1821,7 +1833,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
 
 
     // Negative y-direction. 
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][2]));
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][2]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][2]);
 
     _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1834,7 +1847,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
 
 
     // Positive y-direction. 
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][2]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][2]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][2]);
 
     _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
     _fv_mi(spinor1);
@@ -1848,7 +1862,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
 
 
     // Negative z-direction. 
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][3]));
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][3]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][3]);
 
     _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1860,7 +1875,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Positive z-direction. 
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][3]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][3]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][3]);
 
     _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
     _fv_mi(spinor1);
@@ -1886,7 +1902,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_eq_zero(xi_);
 
     // Negative t-direction
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][0]));
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][0]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][0]);
 
     _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1898,7 +1915,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Positive t-direction
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][0]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][0]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][0]);
 
     _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
     _fv_mi(spinor1);
@@ -1911,7 +1929,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Negative x-direction
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][1]));
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][1]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][1]);
 
     _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1923,7 +1942,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Positive x-direction
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][1]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][1]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][1]);
 
     _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
     _fv_mi(spinor1);
@@ -1937,7 +1957,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
 
 
     // Negative y-direction
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][2]));
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][2]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][2]);
 
     _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1950,7 +1971,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
 
 
     // Positive y-direction
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][2]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][2]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][2]);
 
     _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
     _fv_mi(spinor1);
@@ -1964,7 +1986,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
 
 
     // Negative z-direction
-    phi_ = phi + _GSI(_G5DI(is,g_idn[ix][3]));
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][3]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][3]);
 
     _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
     _fv_pl_eq_fv(spinor1, phi_);
@@ -1976,7 +1999,8 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
     _fv_pl_eq_fv(xi_, spinor2);
 
     // Positive z-direction
-    phi_ = phi + _GSI(_G5DI(is,g_iup[ix][3]));
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][3]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][3]);
 
     _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
     _fv_mi(spinor1);
@@ -2001,6 +2025,427 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
   return;
 }
 
+void Q_DW_Wilson_dag_4d_phi(double *xi, double *phi) {
+
+  unsigned int ix, is, index_s; 
+  unsigned int VOL3 = LX*LY*LZ;
+  double xi_[24], *phi_, *U_, SU3_1[18];
+  double spinor1[24], spinor2[24];
+  double psign = ( g_proc_coords[0]==g_nproc_t-1 ) ? -1. : 1.;
+  double nsign = ( g_proc_coords[0]==0 ) ? -1. : 1.;
+ 
+  for(is=0; is<L5; is++) {
+
+    index_s = is * VOLUME;
+  // ----------------------------------------------------------------------------
+  // timeslice no. 0
+  for(ix = 0; ix < VOL3; ix++) {
+
+    _fv_eq_zero(xi_);
+
+    // Negative t-direction
+    // phi_ = phi + _GSI(_G5DI(is, g_idn[ix][0]) );
+    phi_ = phi + _GSI( g_idn_5d[index_s][0] );
+
+    _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_, spinor1);
+
+    U_ = g_gauge_field + _GGI( g_idn[ix][0], 0);
+
+    _cm_eq_cm_ti_re(SU3_1, U_, nsign);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Positive t-direction
+    //phi_ = phi + _GSI( _G5DI(is,g_iup[ix][0]) );
+    phi_ = phi + _GSI(g_iup_5d[index_s][0] );
+
+    _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+
+    U_ = g_gauge_field + _GGI(ix, 0);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Negative x-direction
+    // phi_ = phi + _GSI(_G5DI(is,g_idn[ix][1]) );
+    phi_ = phi + _GSI(g_idn_5d[index_s][1] );
+
+    _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_, spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][1], 1);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Positive x-direction
+    //phi_ = phi + _GSI(_G5DI(is, g_iup[ix][1]) );
+    phi_ = phi + _GSI(g_iup_5d[index_s][1] );
+
+    _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+
+    U_ = g_gauge_field + _GGI(ix, 1);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+
+    // Negative y-direction
+    // phi_ = phi + _GSI(_G5DI(is,g_idn[ix][2]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][2]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_, spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][2], 2);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+
+    // Positive y-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][2]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][2]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+
+    U_ = g_gauge_field + _GGI(ix, 2);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+
+    // Negative z-direction
+    // phi_ = phi + _GSI(_G5DI(is,g_idn[ix][3]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][3]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_, spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][3], 3);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Positive z-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][3]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][3]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+ 
+    U_ = g_gauge_field + _GGI(ix, 3);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Multiplication with -1/2
+
+    _fv_ti_eq_re(xi_, -0.5);
+
+    _fv_pl_eq_fv(xi+_GSI(index_s), xi_);
+    index_s++;
+
+  }  // of loop on ix
+
+
+  // ----------------------------------------------------------------------------
+  // timeslices no. 1,..., T-2
+  for(; ix < (T-1)*VOL3; ix++) {
+
+    _fv_eq_zero(xi_);
+
+    // Negative t-direction. 
+    // phi_ = phi + _GSI(_G5DI(is,g_idn[ix][0]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][0]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_, spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][0], 0);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Positive t-direction. 
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][0]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][0]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+
+    U_ = g_gauge_field + _GGI(ix, 0);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Negative x-direction. 
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][1]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][1]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_, spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][1], 1);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Positive x-direction. 
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][1]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][1]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+
+    U_ = g_gauge_field + _GGI(ix, 1);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+
+    // Negative y-direction. 
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][2]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][2]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_, spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][2], 2);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+
+    // Positive y-direction. 
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][2]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][2]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+
+    U_ = g_gauge_field + _GGI(ix, 2);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+
+    // Negative z-direction. 
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][3]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][3]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_, spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][3], 3);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Positive z-direction. 
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][3]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][3]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+ 
+    U_ = g_gauge_field + _GGI(ix, 3);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Multiplication with -1/2. 
+    _fv_ti_eq_re(xi_, -0.5);
+
+    _fv_pl_eq_fv(xi+_GSI(index_s), xi_);
+    index_s++;
+  }  // of loop on ix, intermediate timeslices
+
+  // ----------------------------------------------------------------------------
+  // timeslice no. T-1  
+  for(; ix < VOLUME; ix++) {
+
+    _fv_eq_zero(xi_);
+
+    // Negative t-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][0]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][0]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_,spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][0], 0);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Positive t-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][0]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][0]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+
+    U_ = g_gauge_field + _GGI(ix, 0);
+
+    _cm_eq_cm_ti_re(SU3_1, U_, psign);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Negative x-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][1]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][1]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_,spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][1], 1);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Positive x-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][1]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][1]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+
+    U_ = g_gauge_field + _GGI(ix, 1);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+
+    // Negative y-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][2]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][2]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_,spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][2], 2);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+
+    // Positive y-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][2]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][2]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+
+    U_ = g_gauge_field + _GGI(ix, 2);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+
+    // Negative z-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_idn[ix][3]));
+    phi_ = phi + _GSI(g_idn_5d[index_s][3]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+    _fv_eq_fv_mi_fv(spinor1, phi_,spinor1);
+
+    U_ = g_gauge_field + _GGI(g_idn[ix][3], 3);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Positive z-direction
+    //phi_ = phi + _GSI(_G5DI(is,g_iup[ix][3]));
+    phi_ = phi + _GSI(g_iup_5d[index_s][3]);
+
+    _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+    _fv_pl_eq_fv(spinor1, phi_);
+ 
+    U_ = g_gauge_field + _GGI(ix, 3);
+
+    _cm_eq_cm(SU3_1, U_);
+    _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+    _fv_pl_eq_fv(xi_, spinor2);
+
+    // Multiplication with -1/2
+
+    _fv_ti_eq_re(xi_, -0.5);
+
+    _fv_pl_eq_fv(xi+_GSI(index_s), xi_);
+    index_s++;
+  }  // of loop on ix, last timeslice
+
+  }  // of loop on is
+
+  return;
+}
+
+void Q_DW_Wilson_dag_5th_phi(double *xi, double *phi) {
+
+  unsigned int ix, index_s, is; 
+  double spinor1[24], spinor2[24];
+  double *xi_, *phi_;
+
+  // 5-slice no 0
+  index_s = 0;
+  for(ix=0;ix<VOLUME;ix++) {
+    xi_  = xi  + _GSI(index_s);
+    phi_ = phi + _GSI(index_s);
+
+    _fv_pl_eq_PLi_fv_ti_re(xi_, phi+_GSI((L5-1)*VOLUME+ix), g_m5);
+    _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s+VOLUME));
+    index_s++;
+  }
+
+  // 5-slice no 1,...,L5-2
+  for(is=1;is<L5-1;is++) {
+  for(ix=0;ix<VOLUME;ix++) {
+    xi_  = xi  + _GSI(index_s);
+    phi_ = phi + _GSI(index_s);
+
+    _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s - VOLUME));
+    _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s + VOLUME));
+    index_s++;
+  }
+  }
+
+  // 5-slice no L5-1
+  for(ix=0;ix<VOLUME;ix++) {
+    xi_  = xi  + _GSI(index_s);
+    phi_ = phi + _GSI(index_s);
+
+    _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s - VOLUME));
+    _fv_pl_eq_PRe_fv_ti_re(xi_, phi+_GSI(ix), g_m5);
+    index_s++;
+  }
+  return;
+}
 
 void Q_DW_Wilson_5th_phi(double *xi, double *phi) {
 
@@ -2044,7 +2489,6 @@ void Q_DW_Wilson_5th_phi(double *xi, double *phi) {
   return;
 }
 
-
 void Q_DW_Wilson_phi(double *xi, double *phi) {
   double _1_2_kappa = 0.5 / g_kappa5d;
   unsigned int ix;
@@ -2056,6 +2500,20 @@ void Q_DW_Wilson_phi(double *xi, double *phi) {
 
   Q_DW_Wilson_4d_phi(xi, phi);
   Q_DW_Wilson_5th_phi(xi, phi);
+  return;
+}
+
+void Q_DW_Wilson_dag_phi(double *xi, double *phi) {
+  double _1_2_kappa = 0.5 / g_kappa5d;
+  unsigned int ix;
+
+  for(ix=0;ix<VOLUME*L5;ix++) {
+    _fv_eq_fv_ti_re(xi+_GSI(ix), phi+_GSI(ix), _1_2_kappa);
+    //_fv_eq_zero(xi+_GSI(ix));
+  }
+
+  Q_DW_Wilson_dag_4d_phi(xi, phi);
+  Q_DW_Wilson_dag_5th_phi(xi, phi);
   return;
 }
 

@@ -15,6 +15,18 @@
 #define _WILSON_FERMION    1
 #define _DW_WILSON_FERMION 2
 
+#ifdef MPI
+#define EXIT(_i) { MPI_Abort(MPI_COMM_WORLD, (_i)); MPI_Finalize(); exit((_i)); }
+#else
+#define EXIT(_i) { exit(_i); }
+#endif
+
+#ifdef MPI
+#define EXIT(_i) { MPI_Abort(MPI_COMM_WORLD, (_i)); MPI_Finalize(); exit((_i)); }
+#else
+#define EXIT(_i) { exit(_i); }
+#endif
+
 #if defined MAIN_PROGRAM
 #  define EXTERN
 #else
@@ -78,6 +90,7 @@ EXTERN int g_xs_id, g_xs_nproc;
 EXTERN int g_nb_t_up, g_nb_t_dn;
 EXTERN int g_nb_x_up, g_nb_x_dn;
 EXTERN int g_nb_y_up, g_nb_y_dn;
+EXTERN int g_nb_z_up, g_nb_z_dn;
 EXTERN int g_ts_nb_up, g_ts_nb_dn;
 EXTERN int g_ts_nb_x_up, g_ts_nb_x_dn;
 EXTERN int g_ts_nb_y_up, g_ts_nb_y_dn;
@@ -146,4 +159,5 @@ EXTERN int g_source_momentum[3], g_source_momentum_set;
 EXTERN int g_sink_momentum[3], g_sink_momentum_set;
 EXTERN int *g_rng_state;
 EXTERN int g_verbose;
+EXTERN int g_source_proc_id;
 #endif

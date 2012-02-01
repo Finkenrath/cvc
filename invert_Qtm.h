@@ -10,4 +10,6 @@ int invert_Qtm(double *xi, double *phi, int kwork);
 int invert_Qtm_her(double *xi, double *phi, int kwork);
 int invert_Q_Wilson(double *xi, double *phi, int kwork);
 int invert_Q_Wilson_her(double *xi, double *phi, int kwork);
+int invert_Q_DW_Wilson(double *xi, double *phi, int kwork);
+int invert_Q_DW_Wilson_her(double *xi, double *phi, int kwork);
 #endif

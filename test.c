@@ -4,11 +4,14 @@
 #include <time.h>
 #include <string.h>
 #include <getopt.h>
+#ifdef MPI
+#include "mpi.h"
+#endif
 
 #define MAIN_PROGRAM
 
 #include "cvc_complex.h"
-#include "cvc_linalg.h"
+#include "ilinalg.h"
 #include "global.h"
 #include "cvc_geometry.h"
 #include "cvc_utils.h"
@@ -29,11 +32,12 @@ int main (int argc, char **argv) {
   int filename_set = 0;
   double plaq;
   double *smeared_gauge_field=NULL;
-  // fermion_propagator_type fp1=NULL, fp2=NULL, fp3 = NULL;
+  fermion_propagator_type fp1=NULL, fp2=NULL, fp3 = NULL;
   double ratime, retime;
   unsigned int VOL3;
   time_t ttime1, ttime2;
 
+#ifdef _UNDEF
   // FILE *ofs=NULL;
 
   while ((c = getopt(argc, argv, "h?f:l:")) != -1) {
@@ -90,7 +94,7 @@ int main (int argc, char **argv) {
   }
 
   geometry();
-
+#ifdef _UNDEF
   // read the gauge field
   alloc_gauge_field(&g_gauge_field, VOLUMEPLUSRAND);
   sprintf(filename, "conf.%.5d", Nconf);
@@ -149,7 +153,7 @@ int main (int argc, char **argv) {
     }
   }
   fprintf(stdout, "# [] maximal absolut difference = %e at site %d; values: (%25.16e, %25.16e)\n", dtmp, x0, g_gauge_field[x0], smeared_gauge_field[x0]);
-
+#endif
 #ifdef _UNDEF
   // alloc spinor fields; read
   no_fields = 3;
@@ -199,24 +203,28 @@ int main (int argc, char **argv) {
   }
   fprintf(stdout, "# [] maximal absolut difference = %e at site %d; values: (%25.16e, %25.16e)\n", dtmp, x0, g_spinor_field[0][x0], g_spinor_field[1][x0]);
 #endif
-/*
+
   create_fp(&fp1);
   create_fp(&fp2);
   create_fp(&fp3);
-  
+/*
   for(i=0;i<g_sv_dim;i++) {
   for(j=0;j<g_sv_dim;j++) {
     for(k=0;k<g_cv_dim;k++) {
       fp1[3*i+k][2*(3*j+k)] = 1.;
     }
   }}
+*/
+  for(i=0;i<2*g_fv_dim*g_fv_dim;i++) fp1[0][i] = 2. * rand() / (double)RAND_MAX - 1.;
+  for(i=0;i<2*g_fv_dim*g_fv_dim;i++) fp2[0][i] = 2. * rand() / (double)RAND_MAX - 1.;
 
   printf_fp(fp1, "(fp)", stdout);
+  printf_fp(fp2, "(fp)", stdout);
 
-  _fp_eq_cm_ti_fp(fp2, g_gauge_field+_GGI(0,0), fp1);
+  _fp_pl_eq_fp_spin_transposed(fp1, fp2);
 
-  printf_fp(fp2, "(cm fp)", stdout);
-
+  printf_fp(fp1, "fp3", stdout);
+/*
   _fp_eq_fp_ti_cm_dagger(fp3, g_gauge_field+_GGI(0,0), fp2);
 
   printf_fp(fp3, "(cm fp cm^dagger)", stdout);
@@ -228,16 +236,18 @@ int main (int argc, char **argv) {
     if(dtmp2>dtmp) dtmp = dtmp2;
   }}
   fprintf(stdout, "# [] maximal differnce = %e\n", dtmp);
-
+*/
   free_fp(&fp1);
   free_fp(&fp2);
   free_fp(&fp3);
-*/
+
   if(g_gauge_field!=NULL) free(g_gauge_field);
   if(no_fields>0) {
     for(i=0; i<no_fields; i++) free(g_spinor_field[i]);
     free(g_spinor_field);
   }
+
+#endif
 
   return(0);
 

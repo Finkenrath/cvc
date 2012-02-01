@@ -50,7 +50,7 @@ void mpi_init(int argc,char *argv[]) {
 
   int reorder=1;
   int namelen;
-  int dims[1], periods[1]={1};
+  int dims[4], periods[4]={1,1,1,1};
   char processor_name[MPI_MAX_PROCESSOR_NAME];
 
   MPI_Comm_size(MPI_COMM_WORLD, &g_nproc);
@@ -58,28 +58,38 @@ void mpi_init(int argc,char *argv[]) {
   MPI_Get_processor_name(processor_name, &namelen);
 
   /* determine the neighbours in +/-t-direction */
-  dims[0] = g_nproc;
   g_nproc_t = g_nproc;
   g_nproc_x = 1;
   g_nproc_y = 1;
   g_nproc_z = 1;
+  dims[0] = g_nproc_t;
+  dims[1] = g_nproc_x;
+  dims[2] = g_nproc_y;
+  dims[3] = g_nproc_z;
 
-  MPI_Dims_create(g_nproc, 1, dims);
+  MPI_Dims_create(g_nproc, 4, dims);
 
-  MPI_Cart_create(MPI_COMM_WORLD, 1, dims, periods, reorder, &g_cart_grid);
+  MPI_Cart_create(MPI_COMM_WORLD, 4, dims, periods, reorder, &g_cart_grid);
   MPI_Comm_rank(g_cart_grid, &g_cart_id);
-  MPI_Cart_coords(g_cart_grid, g_cart_id, 1, g_proc_coords);
+  MPI_Cart_coords(g_cart_grid, g_cart_id, 4, g_proc_coords);
 
   MPI_Cart_shift(g_cart_grid, 0, 1, &g_nb_t_dn, &g_nb_t_up);
+  MPI_Cart_shift(g_cart_grid, 1, 1, &g_nb_x_dn, &g_nb_x_up);
+  MPI_Cart_shift(g_cart_grid, 2, 1, &g_nb_y_dn, &g_nb_y_up);
+  MPI_Cart_shift(g_cart_grid, 3, 1, &g_nb_z_dn, &g_nb_z_up);
+
 
   g_nb_list[0] = g_nb_t_up;
   g_nb_list[1] = g_nb_t_dn;
-  g_nb_list[2] = g_cart_id;
-  g_nb_list[3] = g_cart_id;
-  g_nb_list[4] = g_cart_id;
-  g_nb_list[5] = g_cart_id;
-  g_nb_list[6] = g_cart_id;
-  g_nb_list[7] = g_cart_id;
+
+  g_nb_list[2] = g_nb_x_up;
+  g_nb_list[3] = g_nb_x_dn;
+
+  g_nb_list[4] = g_nb_y_up;
+  g_nb_list[5] = g_nb_y_dn;
+
+  g_nb_list[6] = g_nb_z_up;
+  g_nb_list[7] = g_nb_z_dn;
 
   MPI_Type_contiguous(72, MPI_DOUBLE, &gauge_point);
   MPI_Type_commit(&gauge_point);
@@ -107,15 +117,39 @@ void mpi_init(int argc,char *argv[]) {
 		  "# [%2d] g_cart_id = %3d\n"\
 		  "# [%2d] g_nb_t_up = %3d\n"\
 		  "# [%2d] g_nb_t_dn = %3d\n"\
+		  "# [%2d] g_nb_x_up = %3d\n"\
+		  "# [%2d] g_nb_x_dn = %3d\n"\
+		  "# [%2d] g_nb_y_up = %3d\n"\
+		  "# [%2d] g_nb_y_dn = %3d\n"\
+		  "# [%2d] g_nb_z_up = %3d\n"\
+		  "# [%2d] g_nb_z_dn = %3d\n"\
                   "# [%2d] g_nb_list[0] = %3d\n"\
-		  "# [%2d] g_nb_list[1] = %3d\n",
+                  "# [%2d] g_nb_list[1] = %3d\n"\
+                  "# [%2d] g_nb_list[2] = %3d\n"\
+                  "# [%2d] g_nb_list[3] = %3d\n"\
+                  "# [%2d] g_nb_list[4] = %3d\n"\
+                  "# [%2d] g_nb_list[5] = %3d\n"\
+                  "# [%2d] g_nb_list[6] = %3d\n"\
+		  "# [%2d] g_nb_list[7] = %3d\n",
 		  g_cart_id, g_cart_id, g_nproc,
 		  g_cart_id, g_proc_id,
 		  g_cart_id, g_cart_id,
 		  g_cart_id, g_nb_t_up,
 		  g_cart_id, g_nb_t_dn,
+		  g_cart_id, g_nb_x_up,
+		  g_cart_id, g_nb_x_dn,
+		  g_cart_id, g_nb_y_up,
+		  g_cart_id, g_nb_y_dn,
+		  g_cart_id, g_nb_z_up,
+		  g_cart_id, g_nb_z_dn,
 		  g_cart_id, g_nb_list[0],
-		  g_cart_id, g_nb_list[1]);
+		  g_cart_id, g_nb_list[1],
+		  g_cart_id, g_nb_list[2],
+		  g_cart_id, g_nb_list[3],
+		  g_cart_id, g_nb_list[4],
+		  g_cart_id, g_nb_list[5],
+		  g_cart_id, g_nb_list[6],
+		  g_cart_id, g_nb_list[7]);
 
 #else /* PARALLELTX || PARALLELTXY defined */
 

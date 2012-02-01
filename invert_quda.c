@@ -12,6 +12,7 @@
  *
  * TODO:
  * -finish and test MPI implementation with code from Alexei
+ * - adapt to changes made for invert_dw_quda
  * DONE:
  * CHANGES:
  ****************************************************/
@@ -31,12 +32,6 @@
 #endif
 
 #define MAIN_PROGRAM
-
-#ifdef MPI
-#define EXIT255 { MPI_Abort(MPI_COMM_WORLD, 255); MPI_Finalize(); exit(255); }
-#else
-#define EXIT255 { exit(255); }
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -263,7 +258,6 @@ int main(int argc, char **argv) {
    **************************************/
   if(g_cart_id==0) fprintf(stdout, "# [invert_quda] initializing quda\n");
 #ifdef HAVE_QUDA
-  initQuda(g_gpu_device_number);
 
   cudaGetDeviceCount(&num_gpu_on_node);
 #ifdef MPI
@@ -273,6 +267,7 @@ int main(int argc, char **argv) {
 #endif
   g_gpu_device_number = rank % num_gpu_on_node;
   fprintf(stdout, "# [] process %d/%d uses device %d\n", rank, g_cart_id, g_gpu_device_number);
+  initQuda(g_gpu_device_number);
 #endif
  
 
@@ -452,16 +447,16 @@ int main(int argc, char **argv) {
 #ifdef HAVE_QUDA
   // QUDA inverter parameters
   inv_param.dslash_type    = QUDA_WILSON_DSLASH;
-  inv_param.inv_type       = QUDA_BICGSTAB_INVERTER;
-//  inv_param.inv_type       = QUDA_CG_INVERTER;
+//  inv_param.inv_type       = QUDA_BICGSTAB_INVERTER;
+  inv_param.inv_type       = QUDA_CG_INVERTER;
   inv_param.kappa          = g_kappa;
   inv_param.tol            = solver_precision;
   inv_param.maxiter        = niter_max;
   inv_param.reliable_delta = reliable_delta;
 
   inv_param.solution_type      = QUDA_MAT_SOLUTION;
-  inv_param.solve_type         = QUDA_DIRECT_PC_SOLVE;
-//  inv_param.solve_type         = QUDA_NORMEQ_PC_SOLVE;
+//  inv_param.solve_type         = QUDA_DIRECT_PC_SOLVE;
+  inv_param.solve_type         = QUDA_NORMEQ_PC_SOLVE;
   inv_param.matpc_type         = QUDA_MATPC_EVEN_EVEN; // QUDA_MATPC_EVEN_EVEN;
   inv_param.dagger             = QUDA_DAG_NO;
   inv_param.mass_normalization = QUDA_KAPPA_NORMALIZATION; //;QUDA_MASS_NORMALIZATION;
@@ -499,7 +494,7 @@ int main(int argc, char **argv) {
 #endif
       exit(210);
     }
-  } else if(g_source_type==3 || g_source_type==4) {
+  } else if( (g_source_type==2 && g_coherent_source==1) || g_source_type==3 || g_source_type==4) {
     if( init_rng_state(g_seed, &g_rng_state) != 0 ) {
       if(g_cart_id==0) fprintf(stderr, "[invert_quda] Error, could initialize rng state\n");
 #ifdef MPI
@@ -541,8 +536,9 @@ int main(int argc, char **argv) {
   /***********************************************
    * loop on spin-color-index
    ***********************************************/
-//  for(isc=g_source_index[0]; isc<=g_source_index[1]; isc++) {
-  for(isc=g_source_index[0]; isc<=g_source_index[0]; isc++) {
+//  for(isc=g_source_index[0]; isc<=g_source_index[1]; isc++)
+  for(isc=g_source_index[0]; isc<=g_source_index[0]; isc++)
+  {
     ispin = isc / n_c;
     icol  = isc % n_c;
 
@@ -601,7 +597,7 @@ int main(int argc, char **argv) {
             // timeslice source
             if(g_coherent_source==1) {
               if(g_cart_id==0) fprintf(stdout, "# [invert_quda] Creating coherent timeslice source\n");
-              status = prepare_coherent_timeslice_source(g_spinor_field[0], gauge_field_smeared, g_coherent_source_base, g_coherent_source_delta, VOLUME, g_rng_filename, NULL);
+              status = prepare_coherent_timeslice_source(g_spinor_field[0], gauge_field_smeared, g_coherent_source_base, g_coherent_source_delta, VOLUME, g_rng_state, 1);
               if(status != 0) {
                 fprintf(stderr, "[invert_quda] Error from prepare source, status was %d\n", status);
 #ifdef MPI
@@ -613,23 +609,13 @@ int main(int argc, char **argv) {
               timeslice = g_coherent_source_base;
             } else {
               if(g_coherent_source==2) {
-                strcpy(rng_file_in, rng_file_out);
-                if(isc == g_source_index[1]) { strcpy(rng_file_out, g_rng_filename); }
-                else                         { sprintf(rng_file_out, "%s.%d", g_rng_filename, isc+1); }
                 timeslice = (g_coherent_source_base+isc*g_coherent_source_delta)%T_global;
                 fprintf(stdout, "# [invert_quda] Creating timeslice source\n");
-                status = prepare_timeslice_source(g_spinor_field[0], gauge_field_smeared, timeslice, VOLUME, rng_file_in, rng_file_out);
-                if(status != 0) {
-                  fprintf(stderr, "[invert_quda] Error from prepare source, status was %d\n", status);
-                  exit(123);
-                }
+                check_error(prepare_timeslice_source(g_spinor_field[0], gauge_field_smeared, timeslice, VOLUME, g_rng_state, 1), "prepare_timeslice_source", NULL, 123);
               } else {
                 fprintf(stdout, "# [invert_quda] Creating timeslice source\n");
-                status = prepare_timeslice_source(g_spinor_field[0], gauge_field_smeared, g_source_timeslice, VOLUME, g_rng_filename, g_rng_filename);
-                if(status != 0) {
-                  fprintf(stderr, "[invert_quda] Error from prepare source, status was %d\n", status);
-                  exit(124);
-                }
+                check_error(prepare_timeslice_source(g_spinor_field[0], gauge_field_smeared, g_source_timeslice, VOLUME, g_rng_state, 1),
+                    "prepare_timeslice_source", NULL, 124);
                 timeslice = g_source_timeslice;
               }
             }
@@ -643,12 +629,8 @@ int main(int argc, char **argv) {
           case 3:
             // timeslice sources for one-end trick (spin dilution)
             fprintf(stdout, "# [invert_quda] Creating timeslice source for one-end-trick\n");
-            status = prepare_timeslice_source_one_end(g_spinor_field[0], gauge_field_smeared, g_source_timeslice, source_momentum, isc%n_s, g_rng_state, \
-                ( isc%n_s==(n_s-1) && imom==source_momentum_runs-1 ) );
-            if(status != 0) {
-              fprintf(stderr, "[invert_quda] Error from prepare source, status was %d\n", status);
-              exit(125);
-            }
+            check_error(prepare_timeslice_source_one_end(g_spinor_field[0], gauge_field_smeared, g_source_timeslice, source_momentum, isc%n_s, g_rng_state, \
+                ( isc%n_s==(n_s-1) && imom==source_momentum_runs-1 )), "prepare_timeslice_source_one_end", NULL, 125);
             c = N_Jacobi > 0 ? isc%n_s + n_s : isc%n_s;
             if(g_source_momentum_set) {
               sprintf(source_filename, "%s.%.4d.%.2d.%.2d.qx%.2dqy%.2dqz%.2d", filename_prefix, Nconf, 
@@ -660,12 +642,8 @@ int main(int argc, char **argv) {
           case 4:
             // timeslice sources for one-end trick (spin and color dilution )
             fprintf(stdout, "# [invert_quda] Creating timeslice source for one-end-trick\n");
-            status = prepare_timeslice_source_one_end_color(g_spinor_field[0], gauge_field_smeared, g_source_timeslice, source_momentum,\
-                isc%(n_s*n_c), g_rng_state, ( isc%(n_s*n_c)==(n_s*n_c-1)  && imom==source_momentum_runs-1 ) );
-            if(status != 0) {
-              fprintf(stderr, "[invert_quda] Error from prepare source, status was %d\n", status);
-              exit(126);
-            }
+            check_error(prepare_timeslice_source_one_end_color(g_spinor_field[0], gauge_field_smeared, g_source_timeslice, source_momentum,\
+                isc%(n_s*n_c), g_rng_state, ( isc%(n_s*n_c)==(n_s*n_c-1)  && imom==source_momentum_runs-1 )), "prepare_timeslice_source_one_end_color", NULL, 126);
             c = N_Jacobi > 0 ? isc%(n_s*n_c) + (n_s*n_c) : isc%(n_s*n_c);
             if(g_source_momentum_set) {
               sprintf(source_filename, "%s.%.4d.%.2d.%.2d.qx%.2dqy%.2dqz%.2d", filename_prefix, Nconf, 
@@ -689,11 +667,7 @@ int main(int argc, char **argv) {
               sprintf(source_filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d", filename_prefix2, Nconf, sl0, sl1, sl2, sl3, isc);
             }
             fprintf(stdout, "# [invert_quda] reading source from file %s\n", source_filename);
-            status = read_lime_spinor(g_spinor_field[0], source_filename, 0);
-            if(status != 0) {
-              fprintf(stderr, "# [invert_quda] Errro, could not read source from file %s\n", source_filename);
-              exit(115);
-            }
+            check_error(read_lime_spinor(g_spinor_field[0], source_filename, 0), "read_lime_spinor", NULL, 115);
             break;
           case 2:  // timeslice source
             if(g_source_momentum_set) {
@@ -703,11 +677,7 @@ int main(int argc, char **argv) {
               sprintf(source_filename, "%s.%.4d.%.2d.%.5d", filename_prefix2, Nconf, g_source_timeslice, isc);
             }
             fprintf(stdout, "# [invert_quda] reading source from file %s\n", source_filename);
-            status = read_lime_spinor(g_spinor_field[0], source_filename, 0);
-            if(status != 0) {
-              fprintf(stderr, "# [invert_quda] Errro, could not read source from file %s\n", source_filename);
-              exit(115);
-            }
+            check_error(read_lime_spinor(g_spinor_field[0], source_filename, 0), "read_lime_spinor", NULL, 115);
             break;
           default:
             if(g_cart_id==0) fprintf(stderr, "[] Error, unrecognized source type for reading\n");
@@ -726,15 +696,7 @@ int main(int argc, char **argv) {
       //fclose(ofs);
   
       if(g_write_source) {
-        status = write_propagator(g_spinor_field[0], source_filename, 0, g_propagator_precision);
-        if(status != 0) {
-          if(g_cart_id==0) fprintf(stderr, "Error from write_propagator, status was %d\n", status);
-#ifdef MPI
-          MPI_Abort(MPI_COMM_WORLD, 27);
-          MPI_Finalize();
-#endif
-          exit(27);
-        }
+        check_error(write_propagator(g_spinor_field[0], source_filename, 0, g_propagator_precision), "write_propagator", NULL, 27);
       }
   
       // smearing
@@ -777,9 +739,11 @@ int main(int argc, char **argv) {
       for(ix=0;ix<VOLUME;ix++) {
         _fv_eq_zero(g_spinor_field[1]+_GSI(ix) );
       }
-
+#ifdef MPI
+      testCG(g_spinor_field[1], g_spinor_field[2], &inv_param);
+#else
       invertQuda(g_spinor_field[1], g_spinor_field[2], &inv_param);
-  
+#endif
       retime = CLOCK;
       if(g_cart_id==0) {
         fprintf(stdout, "# [invert_quda] inversion done in %e seconds\n", retime-ratime);
@@ -855,21 +819,12 @@ int main(int argc, char **argv) {
        ***********************************************/
       sprintf(filename, "%s.inverted", source_filename);
       if(g_cart_id==0) fprintf(stdout, "# [invert_quda] writing propagator to file %s\n", filename);
-      status = write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision);
-      if(status != 0) {
-        fprintf(stderr, "Error from write_propagator, status was %d\n", status);
-#ifdef MPI
-        MPI_Abort(MPI_COMM_WORLD, 22);
-        MPI_Finalize();
-#endif
-        exit(22);
-      }
+      check_error(write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision), "write_propagator", NULL, 22);
       
-      sprintf(filename, "%s.ascii.%.2d", source_filename, g_cart_id);
-      ofs = fopen(filename, "w");
-      printf_spinor_field(g_spinor_field[1], ofs);
-      fclose(ofs);
- 
+      //sprintf(filename, "%s.ascii.%.2d", source_filename, g_cart_id);
+      //ofs = fopen(filename, "w");
+      //printf_spinor_field(g_spinor_field[1], ofs);
+      //fclose(ofs);
  
     }  // of loop on momenta
 

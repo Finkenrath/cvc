@@ -9,7 +9,7 @@
 #include "cvc_utils.h"
 #include "cvc_geometry.h"
 
-int *iup=NULL, *idn=NULL, *ipt=NULL , **ipt_=NULL, ***ipt__=NULL, ****ipt___=NULL;
+int *iup_5d=NULL, *idn_5d=NULL, *ipt_5d=NULL , **ipt_5d_=NULL, ***ipt_5d__=NULL, ****ipt_5d___=NULL;
 
 unsigned long int get_index_5d(const int s, const int t, const int x, const int y, const int z)
 {
@@ -163,6 +163,9 @@ void geometry_5d() {
 
     ix = get_index_5d(is, x0, x1, x2, x3);
 
+    //fprintf(stdout, "%d, %d, %d, %d, %d\n", is, y0, y1, y2, y3);
+    //fflush(stdout);
+
     g_ipt_5d[is][y0][y1][y2][y3] = ix;
 
     g_iup_5d[ix][0] = get_index_5d(is, x0+1, x1, x2, x3);
@@ -177,12 +180,12 @@ void geometry_5d() {
 
     // is even / odd
     if(isboundary == 0) {
-      g_iseven[ix] = ( is + x0 + T *g_proc_coords[0] + x1 + LX*g_proc_coords[1] \
+      g_iseven_5d[ix] = ( is + x0 + T *g_proc_coords[0] + x1 + LX*g_proc_coords[1] \
                      + x2 + LY*g_proc_coords[2] + x3 + LZ*g_proc_coords[3] ) % 2 == 0;
 
       // replace this by indext function
       itzyx = ( ( x0*LZ + x3 ) * LY + x2 ) * LX + x1 + is*T*LX*LY*LZ;
-      g_isevent[itzyx] = g_iseven[ix];
+      g_isevent_5d[itzyx] = g_iseven_5d[ix];
     }
 
   }}}} // of x3, x2, x1, x0
@@ -192,13 +195,13 @@ void geometry_5d() {
   i_even = 0; i_odd = 0;
   for(ix=0; ix<VOLUME*L5; ix++) {
     // this will have to be changed if to be used with MPI
-    if(g_iseven[ix]) {
-      g_lexic2eo[ix] = i_even;
-      g_eo2lexic[i_even] = ix;
+    if(g_iseven_5d[ix]) {
+      g_lexic2eo_5d[ix] = i_even;
+      g_eo2lexic_5d[i_even] = ix;
       i_even++;
     } else {
-      g_lexic2eo[ix] = i_odd + VOLUME/2;
-      g_eo2lexic[i_odd+VOLUME/2] = ix;
+      g_lexic2eo_5d[ix] = i_odd + VOLUME/2;
+      g_eo2lexic_5d[i_odd+VOLUME/2] = ix;
       i_odd++;
     }
   }
@@ -211,14 +214,14 @@ void geometry_5d() {
   for(x3=0;x3<LZ;x3++) {
   for(x2=0;x2<LY;x2++) {
   for(x1=0;x1<LX;x1++) {
-    ix = g_ipt[is][x0][x1][x2][x3];
-    if(g_isevent[itzyx]) {
-      g_lexic2eot[ix] = i_even;
-      g_eot2lexic[i_even] = ix;
+    ix = g_ipt_5d[is][x0][x1][x2][x3];
+    if(g_isevent_5d[itzyx]) {
+      g_lexic2eot_5d[ix] = i_even;
+      g_eot2lexic_5d[i_even] = ix;
       i_even++;
     } else {
-      g_lexic2eot[ix] = i_odd + VOLUME*L5/2;
-      g_eot2lexic[i_odd+VOLUME*L5/2] = ix;
+      g_lexic2eot_5d[ix] = i_odd + VOLUME*L5/2;
+      g_eot2lexic_5d[i_odd+VOLUME*L5/2] = ix;
       i_odd++;
     }
     itzyx++;
@@ -238,28 +241,27 @@ void geometry_5d() {
       if(x0==-1) y0 = T+1;
       if(x1==-1) y1 =LX+1;
       if(x2==-1) y2 =LY+1;
-      fprintf(stdout, "[%2d geometry] %3d%3d%3d%3d%6d\n", g_cart_id, x0, x1, x2, x3, g_ipt[y0][y1][y2][y3]);
+      fprintf(stdout, "[%2d geometry] %3d%3d%3d%3d%6d\n", g_cart_id, x0, x1, x2, x3, g_ipt_5d[is][y0][y1][y2][y3]);
     }}}}
 
   }
 */
 /*
   if(g_cart_id==0) {
+    for(is=0;is<L5;is++) {
     for(x0=-start_valuet; x0<T+start_valuet; x0++) {
     for(x1=0; x1<LX; x1++) {
     for(x2=0; x2<LY; x2++) {
     for(x3=0; x3<LZ; x3++) {
       y0=x0; y1=x1; y2=x2; y3=x3;
       if(x0==-1) y0=T+1;
-      ix = g_ipt[y0][y1][y2][y3];      
-      fprintf(stdout, "%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d\n", x0, x1, x2, x3, 
-        g_iup[ix][0], g_idn[ix][0], g_iup[ix][1], g_idn[ix][1],
-	g_iup[ix][2], g_idn[ix][2], g_iup[ix][3], g_idn[ix][3]);
-    }
-    }
-    }
-    }
+      ix = g_ipt_5d[is][y0][y1][y2][y3];      
+      fprintf(stdout, "%5d|%5d%5d%5d%5d||%8d%8d|%8d%8d|%8d%8d|%8d%8d\n", is, x0, x1, x2, x3, 
+        g_iup_5d[ix][0], g_idn_5d[ix][0], g_iup_5d[ix][1], g_idn_5d[ix][1],
+	g_iup_5d[ix][2], g_idn_5d[ix][2], g_iup_5d[ix][3], g_idn_5d[ix][3]);
+    }}}}}
   }
+  fflush(stdout);
 */
 /*
   if(g_cart_id==0) {
@@ -267,15 +269,15 @@ void geometry_5d() {
     for(x1=0; x1<LX; x1++) {
     for(x2=0; x2<LY; x2++) {
     for(x3=0; x3<LZ; x3++) {
-      ix = g_ipt[x0][x1][x2][x3];      
+      ix = g_ipt_5d[is][x0][x1][x2][x3];      
       fprintf(stdout, "%6d%3d%3d%3d%3d%6d%6d\n", ix, x0, x1, x2, x3, 
-        g_lexic2eo[ix], g_lexic2eot[ix] );      
+        g_lexic2eo_5d[ix], g_lexic2eot_5d[ix] );      
     }}}}
   }
 */
 }
 
-int init_geometry(void) {
+int init_geometry_5d(void) {
 
   int ix = 0;
   unsigned int V, V5;
@@ -313,49 +315,49 @@ int init_geometry(void) {
   V5 = L5 * VOLUMEPLUSRAND;
 
   g_idn_5d = (int**)calloc(V5, sizeof(int*));
-  if((void*)g_idn == NULL) return(1);
+  if((void*)g_idn_5d == NULL) return(1);
 
-  idn = (int*)calloc(4*V5, sizeof(int));
-  if((void*)idn == NULL) return(2);
+  idn_5d = (int*)calloc(4*V5, sizeof(int));
+  if((void*)idn_5d == NULL) return(2);
 
   g_iup_5d = (int**)calloc(V5, sizeof(int*));
-  if((void*)g_iup==NULL) return(3);
+  if((void*)g_iup_5d==NULL) return(3);
 
-  iup = (int*)calloc(4*V5, sizeof(int));
-  if((void*)iup==NULL) return(4);
+  iup_5d = (int*)calloc(4*V5, sizeof(int));
+  if((void*)iup_5d==NULL) return(4);
 
   g_ipt_5d = (int*****)calloc(L5, sizeof(int*));
-  if((void*)g_ipt == NULL) return(5);
+  if((void*)g_ipt_5d == NULL) return(5);
 
-  ipt___ = (int****)calloc(L5*(T+2), sizeof(int*));
-  if((void*)ipt__ == NULL) return(6);
+  ipt_5d___ = (int****)calloc(L5*(T+2), sizeof(int*));
+  if((void*)ipt_5d___ == NULL) return(6);
 
-  ipt__  = (int***)calloc(L5*(T+2)*(LX+dx), sizeof(int*));
-  if((void*)ipt__ == NULL) return(6);
+  ipt_5d__  = (int***)calloc(L5*(T+2)*(LX+dx), sizeof(int*));
+  if((void*)ipt_5d__ == NULL) return(6);
 
-  ipt_   =  (int**)calloc(L5*(T+2)*(LX+dx)*(LY+dy), sizeof(int*));
-  if((void*)ipt_ == NULL) return(7);
+  ipt_5d_   =  (int**)calloc(L5*(T+2)*(LX+dx)*(LY+dy), sizeof(int*));
+  if((void*)ipt_5d_ == NULL) return(7);
 
-  ipt    =  (int*)calloc(L5*(T+2)*(LX+dx)*(LY+dy)*LZ, sizeof(int));
-  if((void*)ipt == NULL) return(8);
+  ipt_5d    =  (int*)calloc(L5*(T+2)*(LX+dx)*(LY+dy)*LZ, sizeof(int));
+  if((void*)ipt_5d == NULL) return(8);
 
  
-  g_iup_5d[0] = iup;
-  g_idn_5d[0] = idn;
+  g_iup_5d[0] = iup_5d;
+  g_idn_5d[0] = idn_5d;
   for(ix=1; ix<V5; ix++) {
     g_iup_5d[ix] = g_iup_5d[ix-1] + 4;
     g_idn_5d[ix] = g_idn_5d[ix-1] + 4;
   }
 
-  ipt_[0]   = ipt;
-  ipt__[0]  = ipt_;
-  ipt___[0] = ipt__;
-  g_ipt_5d[0]  = ipt___;
-  for(ix=1; ix<(T+2)*(LX+dx)*(LY+dy); ix++) ipt_[ix]     = ipt_[ix-1]     + LZ;
+  ipt_5d_[0]   = ipt_5d;
+  ipt_5d__[0]  = ipt_5d_;
+  ipt_5d___[0] = ipt_5d__;
+  g_ipt_5d[0]  = ipt_5d___;
+  for(ix=1; ix<L5*(T+2)*(LX+dx)*(LY+dy); ix++) ipt_5d_[ix]     = ipt_5d_[ix-1]     + LZ;
 
-  for(ix=1; ix<(T+2)*(LX+dx);         ix++) ipt__[ix]    = ipt__[ix-1]    + (LY+dy);
+  for(ix=1; ix<L5*(T+2)*(LX+dx);         ix++) ipt_5d__[ix]    = ipt_5d__[ix-1]    + (LY+dy);
 
-  for(ix=1; ix<(T+2);                 ix++) ipt___[ix]   = ipt___[ix-1]   + (LX+dx);
+  for(ix=1; ix<L5*(T+2);                 ix++) ipt_5d___[ix]   = ipt_5d___[ix-1]   + (LX+dx);
 
   for(ix=1; ix<L5;                    ix++) g_ipt_5d[ix] = g_ipt_5d[ix-1] + (T+2);
 
@@ -383,12 +385,12 @@ int init_geometry(void) {
 
 void free_geometry_5d() {
 
-  free(idn);
-  free(iup);
-  free(ipt);
-  free(ipt_);
-  free(ipt__);
-  free(ipt___);
+  free(idn_5d);
+  free(iup_5d);
+  free(ipt_5d);
+  free(ipt_5d_);
+  free(ipt_5d__);
+  free(ipt_5d___);
   free(g_ipt_5d);
   free(g_idn_5d);
   free(g_iup_5d);

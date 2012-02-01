@@ -389,10 +389,81 @@ void xchange_gauge_field_timeslice(double *gfield) {
 }
 
 /*****************************************************
+ * exchange a 5-dim. spinor field
+ *****************************************************/
+void xchange_field_5d(double *phi) {
+#ifdef MPI
+#if (defined PARALLELTX) || (PARALLELTXY)
+  if(g_cart_id==0) fprintf(stderr, "[] Error, 2-, 3-dim. parallel version not implemented\n");
+  MPI_Abort(MPI_COMM_WORLD, 1);
+  MPI_Finalize();
+  exit(1);
+#endif
+  int cntr=0, id=0;
+  int is;
+  unsigned int recv_offset, send_offset;
+  unsigned int V5 = VOLUME * L5;
+
+
+  MPI_Request request[120];
+  MPI_Status status[120];
+
+  for(is=0; is<L5; is++) {
+    send_offset = 24*is*VOLUME;
+    recv_offset = 24*(V5 + is*RAND);
+
+    MPI_Isend(&phi[send_offset], 1, spinor_time_slice_cont, g_nb_t_dn, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    MPI_Irecv(&phi[recv_offset], 1, spinor_time_slice_cont, g_nb_t_up, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    id++;
+
+    send_offset = 24*(is*VOLUME + (T-1)*LX*LY*LZ);
+    recv_offset = 24*(V5 + is*RAND + LX*LY*LZ);
+    MPI_Isend(&phi[send_offset], 1, spinor_time_slice_cont, g_nb_t_up, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    MPI_Irecv(&phi[recv_offset], 1, spinor_time_slice_cont, g_nb_t_dn, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    id++;
+/*
+#if (defined PARALLELTX) || (defined PARALLELTXY)
+  MPI_Isend(&phi[0],                              1, spinor_x_slice_vector, g_nb_x_dn, id, g_cart_grid, &request[cntr]);
+  cntr++;
+  MPI_Irecv(&phi[24*(VOLUME+2*LX*LY*LZ)],         1, spinor_x_slice_cont,   g_nb_x_up, id, g_cart_grid, &request[cntr]);
+  cntr++;
+  id++;
+
+  MPI_Isend(&phi[24*(LX-1)*LY*LZ],                1, spinor_x_slice_vector, g_nb_x_up, id, g_cart_grid, &request[cntr]);
+  cntr++;
+  MPI_Irecv(&phi[24*(VOLUME+2*LX*LY*LZ+T*LY*LZ)], 1, spinor_x_slice_cont,   g_nb_x_dn, id, g_cart_grid, &request[cntr]);
+  cntr++;
+  id++;
+#endif
+
+#if defined PARALLELTXY
+  MPI_Isend(&phi[0],                                        1, spinor_y_slice_vector, g_nb_y_dn, id, g_cart_grid, &request[cntr]);
+  cntr++;
+  MPI_Irecv(&phi[24*(VOLUME+2*(LX*LY*LZ+T*LY*LZ))],         1, spinor_y_slice_cont,   g_nb_y_up, id, g_cart_grid, &request[cntr]);
+  cntr++;
+  id++;
+  
+  MPI_Isend(&phi[24*(LY-1)*LZ],                             1, spinor_y_slice_vector, g_nb_y_up, id, g_cart_grid, &request[cntr]);
+  cntr++;
+  MPI_Irecv(&phi[24*(VOLUME+2*(LX*LY*LZ+T*LY*LZ)+T*LX*LZ)], 1, spinor_y_slice_cont,   g_nb_y_dn, id, g_cart_grid, &request[cntr]);
+  cntr++;
+  id++;
+
+#endif
+*/
+  }
+  MPI_Waitall(cntr, request, status);
+#endif
+}
+
+/*****************************************************
  * exchange a spinor field
  *****************************************************/
 void xchange_field(double *phi) {
-
 #ifdef MPI
   int cntr=0;
 
@@ -419,7 +490,6 @@ void xchange_field(double *phi) {
   MPI_Irecv(&phi[24*(VOLUME+2*LX*LY*LZ+T*LY*LZ)], 1, spinor_x_slice_cont,   g_nb_x_dn, 86, g_cart_grid, &request[cntr]);
   cntr++;
 #endif
-
 #if defined PARALLELTXY
   MPI_Isend(&phi[0],                                        1, spinor_y_slice_vector, g_nb_y_dn, 87, g_cart_grid, &request[cntr]);
   cntr++;
@@ -1670,6 +1740,51 @@ int printf_spinor_field(double *s, FILE *ofs) {
   return(0);
 }
 
+int printf_spinor_field_5d(double *s, FILE *ofs) {
+
+  int i, start_valuet=0, start_valuex=0;
+  int x0, x1, x2, x3, ix, is;
+  int y0, y1, y2, y3;
+
+  if( (ofs == (FILE*)NULL) || (s==(double*)NULL) ) return(108);
+#ifdef MPI
+  start_valuet = 1;
+#  ifdef PARALLELTX
+  start_valuex = 1;
+#  else
+  start_valuex = 0;
+# endif
+#else
+  start_valuet = 0;
+#endif
+  for(is=0;is<L5;is++) {
+    for(x0=-start_valuet; x0<T +start_valuet; x0++) {
+    for(x1=-start_valuex; x1<LX+start_valuex; x1++) {
+      if( (x0==-1 || x0==T) && (x1==-1 || x1==LX)) continue;
+    for(x2= 0; x2<LX;  x2++) {
+    for(x3= 0; x3<LX;  x3++) {
+      y0=x0; y1=x1; y2=x2; y3=x3;
+      if(x0==-1) y0=T+1;
+      ix = _GSI(g_ipt_5d[is][y0][y1][y2][y3]);
+      fprintf(ofs, "# [%2d] s=%3d, t=%3d, x=%3d, y=%3d, z=%3d\n", g_cart_id, is, x0, x1, x2, x3);
+/*
+      fprintf(ofs, "%18.9e %18.9e\t%18.9e %18.9e\t%18.9e %18.9e\n"\
+                   "%18.9e %18.9e\t%18.9e %18.9e\t%18.9e %18.9e\n"\
+                   "%18.9e %18.9e\t%18.9e %18.9e\t%18.9e %18.9e\n"\
+                   "%18.9e %18.9e\t%18.9e %18.9e\t%18.9e %18.9e\n",
+                   s[ix   ], s[ix+ 1], s[ix+ 2], s[ix+ 3], s[ix+ 4], s[ix+ 5],
+                   s[ix +6], s[ix+ 7], s[ix+ 8], s[ix+ 9], s[ix+10], s[ix+11],
+                   s[ix+12], s[ix+13], s[ix+14], s[ix+15], s[ix+16], s[ix+17],
+                   s[ix+18], s[ix+19], s[ix+20], s[ix+21], s[ix+22], s[ix+23]);
+*/
+      for(i=0; i<12; i++) {
+        fprintf(ofs, "s[%2d,%2d,%2d] <- %18.9e + %18.9e*1.i\n", is+1, g_ipt[y0][y1][y2][y3]+1, i+1, s[ix+2*i], s[ix+2*i+1]);
+      }
+    }}}}  // of z,y,x,t
+  }       // of is
+
+  return(0);
+}
 
 int printf_spinor_field_tzyx(double *s, FILE *ofs) {
 
@@ -3505,23 +3620,46 @@ int init_rng_stat_file (int seed, char*filename) {
   int c, i;
   int *rng_state=NULL;
   FILE*ofs=NULL;
-  fprintf(stdout, "# [] ranldxd: using seed %u and level 2\n", seed);
-  rlxd_init(2, seed);
 
+  if(g_cart_id==0) {
+    fprintf(stdout, "# [] ranldxd: using seed %u and level 2\n", seed);
+    rlxd_init(2, seed);
+
+    c = rlxd_size();
+    if( (rng_state = (int*)malloc(c*sizeof(int))) == (int*)NULL ) {
+      fprintf(stderr, "Error, could not save the random number generator state\n");
+      return(102);
+    }
+    rlxd_get(rng_state);
+    if( (ofs = fopen(filename, "w")) == (FILE*)NULL) {
+      fprintf(stderr, "Error, could not save the random number generator state\n");
+      return(103);
+    }
+    fprintf(stdout, "# writing rng state to file %s\n", filename);
+    for(i=0; i<c; i++) fprintf(ofs, "%d\n", rng_state[i]);
+    fclose(ofs);
+    free(rng_state);
+  }
+  return(0);
+}
+
+int sync_rng_state(int id, int reset) {
+#ifdef MPI
+  int c;
+  int *rng_state=NULL;
+  if(g_cart_id==0) fprintf(stdout, "# [sync_rng_state] synchronize rng states with current state at process %d\n", id);
   c = rlxd_size();
-  if( (rng_state = (int*)malloc(c*sizeof(int))) == (int*)NULL ) {
-    fprintf(stderr, "Error, could not save the random number generator state\n");
-    return(102);
-  }
-  rlxd_get(rng_state);
-  if( (ofs = fopen(filename, "w")) == (FILE*)NULL) {
-    fprintf(stderr, "Error, could not save the random number generator state\n");
-    return(103);
-  }
-  fprintf(stdout, "# writing rng state to file %s\n", filename);
-  for(i=0; i<c; i++) fprintf(ofs, "%d\n", rng_state[i]);
-  fclose(ofs);
+  rng_state = (int*)malloc(c*sizeof(int));
+  if(g_cart_id == id) { rlxd_get(rng_state); }
+  MPI_Barrier(g_cart_grid);
+  MPI_Bcast(rng_state, c, MPI_INT, id, g_cart_grid);
+  rlxd_reset(rng_state);
   free(rng_state);
+#endif
+  if(reset) { 
+    if(g_cart_id==0) fprintf(stdout, "# [sync_rng_state] set global rng state to current state at process %d\n", id);
+    rlxd_get(g_rng_state);
+  }
   return(0);
 }
 
@@ -3531,7 +3669,7 @@ int init_rng_stat_file (int seed, char*filename) {
 int init_rng_state (int seed, int **rng_state) {
 
   int c;
-  fprintf(stdout, "# [init_rng_state] ranldxd: using seed %d and level 2\n", seed);
+  if(g_cart_id==0) fprintf(stdout, "# [init_rng_state] ranldxd: using seed %d and level 2\n", seed);
   rlxd_init(2, seed);
 
   if(*rng_state != NULL) {
@@ -3544,6 +3682,10 @@ int init_rng_state (int seed, int **rng_state) {
     return(102);
   }
   rlxd_get(*rng_state);
+#ifdef MPI
+  MPI_Bcast(*rng_state, c, MPI_INT, 0, g_cart_grid);
+  rlxd_reset(*rng_state);
+#endif
   return(0);
 }
 
@@ -3762,6 +3904,26 @@ void check_F_SU3(float*g, float*res) {
     + u[12]*u[12] + u[13]*u[13] +u[14]*u[14] +u[15]*u[15] +u[16]*u[16] +u[17]*u[17];
   return;
 }
+
+void check_error(int status, char*myname, int*success, int exitstatus) {
+  int suc = success != NULL ? *success : 0;
+  char msg[400];
+  if(status != suc) {
+    if(myname!=NULL) {
+      sprintf(msg, "[check_error] Error from %s; status was %d\n", myname, status);
+    } else {
+      sprintf(msg, "[check_error] Error; status was %d", status);
+    }
+    if(g_cart_id==0) fprintf(stderr, msg);
+#ifdef MPI
+    MPI_Abort(MPI_COMM_WORLD, exitstatus);
+    MPI_Finalize();
+#endif
+    exit(exitstatus);
+  }
+  return;
+}
+
 
 unsigned int lexic2eot_5d (unsigned int is, unsigned int ix) {
   int eoflag;

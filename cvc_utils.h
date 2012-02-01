@@ -22,6 +22,7 @@ void xchange_gauge_field(double*);
 void xchange_gauge_field_timeslice(double *);
 void xchange_field(double*);
 void xchange_field_timeslice(double *);
+void xchange_field_5d(double *phi);
 
 int write_contraction (double *s, int *nsource, char *filename, int Nmu,
                        int write_ascii, int append);
@@ -31,6 +32,7 @@ void init_gamma(void);
 
 int printf_gauge_field( double *gauge, FILE *ofs);
 int printf_spinor_field(double *s,     FILE *ofs);
+int printf_spinor_field_5d(double *s,     FILE *ofs);
 int printf_spinor_field_tzyx(double *s, FILE *ofs);
 
 void set_default_input_values(void);
@@ -79,25 +81,9 @@ void printf_sp(spinor_propagator_type f, char*name, FILE*ofs);
 int init_rng_stat_file (int seed, char*filename);
 int init_rng_state (int seed, int **rng_state);
 int fini_rng_state (int **rng_state);
+int sync_rng_state(int id, int reset);
 
-static inline void check_error(int status, char*myname, int*success, int exitstatus) {
-  int suc = success != NULL ? *success : 0;
-  char msg[400];
-  if(status != suc) {
-    if(myname!=NULL) {
-      sprintf(msg, "[check_error] Error from %s; status was %d\n", myname, status);
-    } else {
-      sprintf(msg, "[check_error] Error; status was %d", status);
-    }
-    if(g_cart_id==0) fprintf(stderr, msg);
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, exitstatus);
-    MPI_Finalize();
-#endif
-    exit(exitstatus);
-  }
-  return;
-}
+inline void check_error(int status, char*myname, int*success, int exitstatus);
 
 inline void check_F_SU3(float*g, float*res);
 inline unsigned int lexic2eot_5d (unsigned int is, unsigned int ix);

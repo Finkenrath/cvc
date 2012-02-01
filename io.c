@@ -337,6 +337,146 @@ int read_lime_gauge_field_doubleprec(const char * filename) {
 #endif
 
 #ifdef HAVE_LIBLEMON
+int read_lime_gauge_field_singleprec(const char * filename) {
+  MPI_File *ifs=NULL;
+  int t, x, y, z, status;
+  n_uint64_t bytes;
+  int latticeSize[] = {T_global, LX_global, LY_global, LZ};
+  int scidacMapping[] = {0, 3, 2, 1};
+  int prec;
+  char * header_type;
+  LemonReader * reader=NULL;
+  double tmp[72], tmp2[72];
+  int words_bigendian, mu, i, j;
+  int gauge_read_flag = 0;
+  DML_Checksum checksum;
+  DML_SiteRank rank;
+  uint64_t fbsu3;
+  char * filebuffer = NULL, * current = NULL;
+
+  DML_checksum_init(&checksum);
+  words_bigendian = big_endian();
+
+  ifs = (MPI_File*)malloc(sizeof(MPI_File));
+  status = MPI_File_open(g_cart_grid, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, ifs);
+  status = (status == MPI_SUCCESS) ? 0 : 1;
+  if(status) {
+    fprintf(stderr, "Could not open file for reading. Aborting...\n");
+    MPI_Abort(MPI_COMM_WORLD, 1);
+    MPI_Finalize();
+    exit(505);
+  }
+
+  if( (reader = lemonCreateReader(ifs, g_cart_grid)) == NULL ) {
+    fprintf(stderr, "Could not create reader. Aborting...\n");
+    MPI_Abort(MPI_COMM_WORLD, 1);
+    MPI_Finalize();
+    exit(503);
+  }
+
+  while ((status = lemonReaderNextRecord(reader)) != LIME_EOF) {
+    if (status != LIME_SUCCESS) {
+      fprintf(stderr, "lemonReaderNextRecord returned status %d.\n", status);
+      status = LIME_EOF;
+      break;
+    }
+    header_type = lemonReaderType(reader);
+    if (strcmp("ildg-binary-data", header_type) == 0) break;
+  }
+  if(status==LIME_EOF) {
+    fprintf(stderr, "no ildg-binary-data record found in file %s\n",filename);
+    lemonDestroyReader(reader);
+    fclose(ifs);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+    MPI_Finalize();
+    exit(502);
+  } 
+
+  bytes = lemonReaderBytes(reader);
+
+  if (bytes == (n_uint64_t)g_nproc * (n_uint64_t)VOLUME * 72 * (n_uint64_t)sizeof(double)) {
+    prec = 64;
+  } else {
+    if (bytes == (n_uint64_t)g_nproc * (n_uint64_t)VOLUME * 72 * (n_uint64_t)sizeof(float)) {
+      prec = 32;
+    } else {
+      fprintf(stderr, "Probably wrong lattice size or precision (bytes=%lu).\n", (unsigned long)bytes);
+      fprintf(stderr, "Panic! Aborting...\n");
+      fflush(stdout);
+      MPI_File_close(reader->fp);
+      MPI_Abort(MPI_COMM_WORLD, 1);
+      MPI_Finalize();
+      exit(501);
+    }
+  }
+  
+  if(g_cart_id==0) fprintf(stdout, "# %d Bit precision read.\n", prec);
+
+  fbsu3 = 18*sizeof(double);
+  if (prec == 32) fbsu3 /= 2;
+  bytes = 4 * fbsu3;
+
+  if((void*)(filebuffer = malloc(VOLUME * bytes)) == NULL) {
+    printf ("malloc errno in read_binary_gauge_data_parallel\n");
+    return 1;
+  }
+  status = lemonReadLatticeParallelMapped(reader, filebuffer, bytes, latticeSize, scidacMapping);
+
+  if (status < 0 && status != LEMON_EOR)  {
+    fprintf(stderr, "LEMON read error occured with status = %d while reading!\nPanic! Aborting...\n", status);
+    MPI_File_close(reader->fp);
+    MPI_Abort(MPI_COMM_WORLD, 1);
+    MPI_Finalize();
+    exit(500);
+  }
+
+  for (t = 0; t <  T; t++) {
+  for (z = 0; z < LZ; z++) {
+  for (y = 0; y < LY; y++) {
+  for (x = 0; x < LX; x++) {
+    rank = (DML_SiteRank)(LXstart + (((Tstart + t) * LZ + z) * LY*g_nproc_y + LYstart+y) * ((DML_SiteRank)LX * g_nproc_x) + x);
+    current = filebuffer + bytes * (x + (y + (t * LZ + z) * LY) * LX);
+    DML_checksum_accum(&checksum, rank, current, bytes);
+    if(!words_bigendian) {
+      if (prec == 32) {
+        byte_swap_assign_single2double(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 1)], current            , 18*sizeof(double) / 8);
+        byte_swap_assign_single2double(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 2)], current +     fbsu3, 18*sizeof(double) / 8);
+        byte_swap_assign_single2double(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 3)], current + 2 * fbsu3, 18*sizeof(double) / 8);
+        byte_swap_assign_single2double(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 0)], current + 3 * fbsu3, 18*sizeof(double) / 8);
+      } else  {
+        byte_swap_assign(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 1)], current            , 18*sizeof(double) / 8);
+        byte_swap_assign(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 2)], current +     fbsu3, 18*sizeof(double) / 8);
+        byte_swap_assign(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 3)], current + 2 * fbsu3, 18*sizeof(double) / 8);
+        byte_swap_assign(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 0)], current + 3 * fbsu3, 18*sizeof(double) / 8);
+      }
+    } else {
+      if (prec == 32) {
+        single2double(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 1)], current            , 18*sizeof(double) / 8);
+        single2double(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 2)], current +     fbsu3, 18*sizeof(double) / 8);
+        single2double(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 3)], current + 2 * fbsu3, 18*sizeof(double) / 8);
+        single2double(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 0)], current + 3 * fbsu3, 18*sizeof(double) / 8);
+      } else {
+        memcpy(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 1)], current            , 18*sizeof(double));
+        memcpy(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 2)], current +     fbsu3, 18*sizeof(double));
+        memcpy(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 3)], current + 2 * fbsu3, 18*sizeof(double));
+        memcpy(&g_gauge_field[ _GGI(g_ipt[t][x][y][z], 0)], current + 3 * fbsu3, 18*sizeof(double));
+      }
+    }
+  }}}}
+  DML_global_xor(&checksum.suma);
+  DML_global_xor(&checksum.sumb);
+  if(g_cart_id==0) {
+    fprintf(stdout, "# checksum for gaugefield %s\n is %#x %#x.\n", filename, checksum.suma, checksum.sumb);
+    fflush(stdout); 
+  }
+
+  lemonDestroyReader(reader);
+  MPI_File_close(ifs);
+  free(ifs);
+
+  free(filebuffer);
+  return(0);
+}
 #else
 int read_lime_gauge_field_singleprec(const char * filename) {
 

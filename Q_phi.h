@@ -34,6 +34,9 @@ void Q_Wilson_phi_threads(double *xi, double *phi);
 
 // functions for DWF
 void Q_DW_Wilson_4d_phi(double *xi, double *phi);
+void Q_DW_Wilson_dag_4d_phi(double *xi, double *phi);
 void Q_DW_Wilson_5th_phi(double *xi, double *phi);
+void Q_DW_Wilson_dag_5th_phi(double *xi, double *phi);
 void Q_DW_Wilson_phi(double *xi, double *phi);
+void Q_DW_Wilson_dag_phi(double *xi, double *phi);
 #endif

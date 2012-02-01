@@ -29,6 +29,7 @@
 #include "Q_phi.h"
 #include "read_input_parser.h"
 #include "dml.h"
+#include "invert_Qtm.h"
 
 void usage(void) {
   fprintf(stdout, "oldascii2binary -- usage:\n");
@@ -38,13 +39,12 @@ void usage(void) {
 int main(int argc, char **argv) {
   
   int c, mu;
-  int i, j, ncon=-1;
+  int i, j, k, ncon=-1;
   int filename_set = 0;
   int x0, x1, x2, x3, ix;
   double adiffre, adiffim, mdiffre, mdiffim, Mdiffre, Mdiffim, hre, him;
   double *chi=NULL, *psi=NULL, *eta=NULL, *lambda=NULL;
   double plaq, spinor1[24], *gfield=NULL;
-  int verbose = 0;
   char filename[200];
   char file1[200];
   char file2[200];
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
   while ((c = getopt(argc, argv, "h?vf:N:c:C:")) != -1) {
     switch (c) {
     case 'v':
-      verbose = 1;
+      g_verbose = 1;
       break;
     case 'f':
       strcpy(filename, optarg);
@@ -114,6 +114,8 @@ int main(int argc, char **argv) {
   }
 
   geometry();
+  init_geometry_5d();
+  geometry_5d();
 
   /* read the gauge field */
 /*
@@ -151,7 +153,7 @@ int main(int argc, char **argv) {
   }}}}
 */
 
-  no_fields=2;
+  no_fields=5;
   g_spinor_field = (double**)calloc(no_fields, sizeof(double*));
   for(i=0; i<no_fields; i++) alloc_spinor_field(&g_spinor_field[i], VOLUMEPLUSRAND);
 
@@ -159,11 +161,47 @@ int main(int argc, char **argv) {
    * read read the spinor fields
    ****************************************/
 
-  status = read_lime_spinor(g_spinor_field[0], filename_prefix, 0);
-  if(status != 0) {
-    fprintf(stderr, "[] Error, could not read from file %s\n", filename_prefix);
-    exit(1);
+  sprintf(filename, "sc/%s", filename_prefix);
+  check_error( read_lime_spinor(g_spinor_field[0], filename, 0), "read_lime_spinor", NULL, 1);
+
+  sprintf(filename, "sg/%s", filename_prefix);
+  check_error( read_lime_spinor(g_spinor_field[1], filename, 0), "read_lime_spinor", NULL, 2);
+
+  sprintf(filename, "mc/%s", filename_prefix);
+  check_error( read_lime_spinor(g_spinor_field[2], filename, 0), "read_lime_spinor", NULL, 3);
+
+  sprintf(filename, "mg/%s", filename_prefix);
+  check_error( read_lime_spinor(g_spinor_field[3], filename, 0), "read_lime_spinor", NULL, 4);
+
+
+  for(i=0;i<3;i++) {
+    for(j=i+1;j<4;j++) {
+      for(ix=0;ix<VOLUME;ix++) {
+        _fv_eq_fv_mi_fv(g_spinor_field[4]+_GSI(ix), g_spinor_field[i]+_GSI(ix), g_spinor_field[j]+_GSI(ix));
+      }
+//      for(ix=0;ix<LX*LY*LZ;ix++) {
+//        for(k=0;k<12;k++) {
+//          fprintf(stdout, "%8d%3d%25.16e%25.16e\n", ix, k, g_spinor_field[4][_GSI(ix)+2*k],  g_spinor_field[4][_GSI(ix)+2*k+1]);
+//        }
+//      }
+      spinor_scalar_product_re(&norm, g_spinor_field[4], g_spinor_field[4], VOLUME);
+      spinor_scalar_product_re(&norm2, g_spinor_field[i], g_spinor_field[i], VOLUME);
+      spinor_scalar_product_re(&norm3, g_spinor_field[j], g_spinor_field[j], VOLUME);
+      fprintf(stdout, "# [] difference for pair (%d, %d) is %e (%e, %e)\n", i, j, sqrt(norm/norm2), norm2, norm3);
+    }
   }
+/*
+  for(ix=0;ix<LX*LY*LZ;ix++) {
+    for(i=0;i<12;i++) {
+      fprintf(stdout, "%8d%3d%25.16e%25.16e%25.16e%25.16e%25.16e%25.16e%25.16e%25.16e\n", ix, i,
+          g_spinor_field[0][_GSI(ix)+2*i],  g_spinor_field[0][_GSI(ix)+2*i+1],
+          g_spinor_field[1][_GSI(ix)+2*i],  g_spinor_field[1][_GSI(ix)+2*i+1],
+          g_spinor_field[2][_GSI(ix)+2*i],  g_spinor_field[2][_GSI(ix)+2*i+1],
+          g_spinor_field[3][_GSI(ix)+2*i],  g_spinor_field[3][_GSI(ix)+2*i+1]);
+    }
+  }
+*/
+/*
   spinor_scalar_product_re(&norm2, g_spinor_field[0], g_spinor_field[0], VOLUME); 
 
   status = read_lime_spinor(g_spinor_field[1], filename_prefix2, 0);
@@ -180,7 +218,7 @@ int main(int argc, char **argv) {
   fprintf(stdout, "# [] norm = %e\n", norm);
   fprintf(stdout, "# [] norm2 = %e\n", norm2);
   fprintf(stdout, "# [] norm3 = %e\n", norm3);
-
+*/
 /*
   for(i=0; i<1; i++) { 
 
@@ -285,6 +323,11 @@ int main(int argc, char **argv) {
   for(i=0; i<no_fields; i++) free(g_spinor_field[i]);
   free(g_spinor_field);
 
+  g_the_time = time(NULL);
+  fprintf(stdout, "# [comp_spinor] %s# [comp_spinor] end fo run\n", ctime(&g_the_time));
+  fflush(stdout);
+  fprintf(stderr, "# [comp_spinor] %s# [comp_spinor] end fo run\n", ctime(&g_the_time));
+  fflush(stderr);
 
   return(0);
 

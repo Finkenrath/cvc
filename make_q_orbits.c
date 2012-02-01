@@ -1,7 +1,8 @@
 /*************************************************************
  * make_q_orbits.c
  *
- * Mon Sep 19 01:06:01 CEST 2011
+ * Tue Jan 31 10:46:40 EET 2012
+ * - changed the lattice size variables to global versions (LX_global, T_global)
  *
  *************************************************************/
 
@@ -34,37 +35,37 @@
   - (A_)[2]*(A_)[4]*(A_)[6]  }
 
 #define _QHATN(A_, B_) { \
-  (A_)[0] =   4.*( _sqr( sin(M_PI*(double)(B_)[0] / (double)T)  ) + _sqr( sin(M_PI*(double)(B_)[1] / (double)LX) )  \
-                 + _sqr( sin(M_PI*(double)(B_)[2] / (double)LX) ) + _sqr( sin(M_PI*(double)(B_)[3] / (double)LX) ) ); \
-  (A_)[1] =  16.*( _qrt( sin(M_PI*(double)(B_)[0] / (double)T)  ) + _qrt( sin(M_PI*(double)(B_)[1] / (double)LX) )  \
-                 + _qrt( sin(M_PI*(double)(B_)[2] / (double)LX) ) + _qrt( sin(M_PI*(double)(B_)[3] / (double)LX) ) ); \
-  (A_)[2] =  64.*( _hex( sin(M_PI*(double)(B_)[0] / (double)T)  ) + _hex( sin(M_PI*(double)(B_)[1] / (double)LX) )  \
-                 + _hex( sin(M_PI*(double)(B_)[2] / (double)LX) ) + _hex( sin(M_PI*(double)(B_)[3] / (double)LX) ) ); \
-  (A_)[3] = 256.*( _oct( sin(M_PI*(double)(B_)[0] / (double)T)  ) + _oct( sin(M_PI*(double)(B_)[1] / (double)LX) )  \
-                 + _oct( sin(M_PI*(double)(B_)[2] / (double)LX) ) + _oct( sin(M_PI*(double)(B_)[3] / (double)LX) ) ); \
+  (A_)[0] =   4.*( _sqr( sin(M_PI*(double)(B_)[0] / (double)T_global)  ) + _sqr( sin(M_PI*(double)(B_)[1] / (double)LX_global) )  \
+                 + _sqr( sin(M_PI*(double)(B_)[2] / (double)LX_global) ) + _sqr( sin(M_PI*(double)(B_)[3] / (double)LX_global) ) ); \
+  (A_)[1] =  16.*( _qrt( sin(M_PI*(double)(B_)[0] / (double)T_global)  ) + _qrt( sin(M_PI*(double)(B_)[1] / (double)LX_global) )  \
+                 + _qrt( sin(M_PI*(double)(B_)[2] / (double)LX_global) ) + _qrt( sin(M_PI*(double)(B_)[3] / (double)LX_global) ) ); \
+  (A_)[2] =  64.*( _hex( sin(M_PI*(double)(B_)[0] / (double)T_global)  ) + _hex( sin(M_PI*(double)(B_)[1] / (double)LX_global) )  \
+                 + _hex( sin(M_PI*(double)(B_)[2] / (double)LX_global) ) + _hex( sin(M_PI*(double)(B_)[3] / (double)LX_global) ) ); \
+  (A_)[3] = 256.*( _oct( sin(M_PI*(double)(B_)[0] / (double)T_global)  ) + _oct( sin(M_PI*(double)(B_)[1] / (double)LX_global) )  \
+                 + _oct( sin(M_PI*(double)(B_)[2] / (double)LX_global) ) + _oct( sin(M_PI*(double)(B_)[3] / (double)LX_global) ) ); \
 }
 
 #define _QHAT2(A_, B_) { \
-  (A_)[0] =   4.*( _sqr( sin(M_PI*(double)(B_)[0] / (double)T)  ) + _sqr( sin(M_PI*(double)(B_)[1] / (double)LX) )  \
-                 + _sqr( sin(M_PI*(double)(B_)[2] / (double)LX) ) + _sqr( sin(M_PI*(double)(B_)[3] / (double)LX) ) ); \
+  (A_)[0] =   4.*( _sqr( sin(M_PI*(double)(B_)[0] / (double)T_global)  ) + _sqr( sin(M_PI*(double)(B_)[1] / (double)LX_global) )  \
+                 + _sqr( sin(M_PI*(double)(B_)[2] / (double)LX_global) ) + _sqr( sin(M_PI*(double)(B_)[3] / (double)LX_global) ) ); \
 }
 
 #define _QHATN_3D(A_, B_) { \
-  (A_)[0] =   4.*( _sqr( sin(M_PI*(double)(B_)[1] / (double)LX) )  \
-                 + _sqr( sin(M_PI*(double)(B_)[2] / (double)LX) ) + _sqr( sin(M_PI*(double)(B_)[3] / (double)LX) ) ); \
-  (A_)[1] =  16.*( _qrt( sin(M_PI*(double)(B_)[1] / (double)LX) )  \
-                 + _qrt( sin(M_PI*(double)(B_)[2] / (double)LX) ) + _qrt( sin(M_PI*(double)(B_)[3] / (double)LX) ) ); \
-  (A_)[2] =  64.*( _hex( sin(M_PI*(double)(B_)[1] / (double)LX) )  \
-                 + _hex( sin(M_PI*(double)(B_)[2] / (double)LX) ) + _hex( sin(M_PI*(double)(B_)[3] / (double)LX) ) ); \
-  (A_)[3] = 256.*( _oct( sin(M_PI*(double)(B_)[1] / (double)LX) )  \
-                 + _oct( sin(M_PI*(double)(B_)[2] / (double)LX) ) + _oct( sin(M_PI*(double)(B_)[3] / (double)LX) ) ); \
+  (A_)[0] =   4.*( _sqr( sin(M_PI*(double)(B_)[1] / (double)LX_global) )  \
+                 + _sqr( sin(M_PI*(double)(B_)[2] / (double)LX_global) ) + _sqr( sin(M_PI*(double)(B_)[3] / (double)LX_global) ) ); \
+  (A_)[1] =  16.*( _qrt( sin(M_PI*(double)(B_)[1] / (double)LX_global) )  \
+                 + _qrt( sin(M_PI*(double)(B_)[2] / (double)LX_global) ) + _qrt( sin(M_PI*(double)(B_)[3] / (double)LX_global) ) ); \
+  (A_)[2] =  64.*( _hex( sin(M_PI*(double)(B_)[1] / (double)LX_global) )  \
+                 + _hex( sin(M_PI*(double)(B_)[2] / (double)LX_global) ) + _hex( sin(M_PI*(double)(B_)[3] / (double)LX_global) ) ); \
+  (A_)[3] = 256.*( _oct( sin(M_PI*(double)(B_)[1] / (double)LX_global) )  \
+                 + _oct( sin(M_PI*(double)(B_)[2] / (double)LX_global) ) + _oct( sin(M_PI*(double)(B_)[3] / (double)LX_global) ) ); \
 }
 
 #define _QN_3D(A_, B_) { \
-  (A_)[0] =   _sqr( 2.*M_PI/(double)LX ) * ( _sqr( (double)(B_)[1] ) +  _sqr( (double)(B_)[2] ) + _sqr( (double)(B_)[3] ) ); \
-  (A_)[1] =   _qrt( 2.*M_PI/(double)LX ) * ( _qrt( (double)(B_)[1] ) +  _qrt( (double)(B_)[2] ) + _qrt( (double)(B_)[3] ) ); \
-  (A_)[2] =   _hex( 2.*M_PI/(double)LX ) * ( _hex( (double)(B_)[1] ) +  _hex( (double)(B_)[2] ) + _hex( (double)(B_)[3] ) ); \
-  (A_)[3] =   _oct( 2.*M_PI/(double)LX ) * ( _oct( (double)(B_)[1] ) +  _oct( (double)(B_)[2] ) + _oct( (double)(B_)[3] ) ); \
+  (A_)[0] =   _sqr( 2.*M_PI/(double)LX_global ) * ( _sqr( (double)(B_)[1] ) +  _sqr( (double)(B_)[2] ) + _sqr( (double)(B_)[3] ) ); \
+  (A_)[1] =   _qrt( 2.*M_PI/(double)LX_global ) * ( _qrt( (double)(B_)[1] ) +  _qrt( (double)(B_)[2] ) + _qrt( (double)(B_)[3] ) ); \
+  (A_)[2] =   _hex( 2.*M_PI/(double)LX_global ) * ( _hex( (double)(B_)[1] ) +  _hex( (double)(B_)[2] ) + _hex( (double)(B_)[3] ) ); \
+  (A_)[3] =   _oct( 2.*M_PI/(double)LX_global ) * ( _oct( (double)(B_)[1] ) +  _oct( (double)(B_)[2] ) + _oct( (double)(B_)[3] ) ); \
 }
 
 /*************************************************************************************
@@ -157,10 +158,10 @@ int make_q_orbits_3d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
   int it, ix, iy, iz, iix, n;
   int x0;
   int isign, isign2, isign3;
-  int Thp1  = T/2+1;
-  int Thalf = T/2; 
-  int Thm1  = T/2-1;
-  int L     = LX;
+  int Thp1  = T_global/2+1;
+  int Thalf = T_global/2; 
+  int Thm1  = T_global/2-1;
+  int L     = LX_global;
   int Lhalf = L/2;
   int Lhp1  = L/2+1;
   int Lhm1  = L/2-1;
@@ -173,7 +174,7 @@ int make_q_orbits_3d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
    * determine the number of classes
    * - at the moment: set to some large enough value
    ************************************************/
-  Nclasses = T*L*L*L/4;
+  Nclasses = T_global*L*L*L/4;
   fprintf(stdout, "# Nclasses = %d\n", Nclasses);
   
   status = init_q_orbits(xid, xid_count, xid_val, xid_rep, Nclasses);
@@ -188,9 +189,9 @@ int make_q_orbits_3d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
   init_perm_tabs();
 
   iclass = -1;
-  for(it=0; it<T; it++) {
+  for(it=0; it<T_global; it++) {
     if(it<=Thalf) { x0 = it;   }
-    else          { x0 = it-T; }
+    else          { x0 = it-T_global; }
     iclass++;
     (*xid_rep)[iclass][0] = x0;
     (*xid_rep)[iclass][1] = 0; 
@@ -504,7 +505,7 @@ int make_q_orbits_3d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
    ************************/
 /*
   fprintf(stdout, "# t\tx\ty\tz\txid\n");
-  for(it=0; it<T; it++) {
+  for(it=0; it<T_global; it++) {
   for(ix=0; ix<L; ix++) {
   for(iy=0; iy<L; iy++) {
   for(iz=0; iz<L; iz++) {
@@ -523,7 +524,7 @@ int make_q_orbits_3d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
 /*
   for(i=0; i<Nclasses; i++) {
     fprintf(stdout, "# class number %d; members: %d; qhat2=%e\n", i, (*xid_count)[i], (*xid_val)[i][0]);
-    for(it=0; it<T; it++) {
+    for(it=0; it<T_global; it++) {
     for(ix=0; ix<L; ix++) {
     for(iy=0; iy<L; iy++) {
     for(iz=0; iz<L; iz++) {
@@ -544,10 +545,10 @@ int make_qlatt_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
   int it, ix, iy, iz, iix, n;
   int x0;
   int isign, isign2, isign3;
-  int Thp1  = T/2+1;
-  int Thalf = T/2; 
-  int Thm1  = T/2-1;
-  int L     = LX;
+  int Thp1  = T_global/2+1;
+  int Thalf = T_global/2; 
+  int Thm1  = T_global/2-1;
+  int L     = LX_global;
   int Lhalf = L/2;
   int Lhp1  = L/2+1;
   int Lhm1  = L/2-1;
@@ -576,7 +577,7 @@ int make_qlatt_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
   init_perm_tabs();
 
   iclass = -1;
-//  for(it=0; it<T; it++) {
+//  for(it=0; it<T_global; it++) {
   it = 0;
   x0 = 0;
     iclass++;
@@ -910,10 +911,10 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
   int it, ix, iy, iz, iix, n;
   int x0;
   int isign, isign2, isign3;
-  int Thp1  = T/2+1;
-  int Thalf = T/2; 
-  int Thm1  = T/2-1;
-  int L     = LX;
+  int Thp1  = T_global/2+1;
+  int Thalf = T_global/2; 
+  int Thm1  = T_global/2-1;
+  int L     = LX_global;
   int Lhalf = L/2;
   int Lhp1  = L/2+1;
   int Lhm1  = L/2-1;
@@ -942,7 +943,7 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
   init_perm_tabs();
 
   iclass = -1;
-//  for(it=0; it<T; it++) {
+//  for(it=0; it<T_global; it++) {
   it = 0;
   x0 = 0;
     iclass++;
