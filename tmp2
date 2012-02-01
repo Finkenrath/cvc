@@ -1,0 +1,80 @@
+int read_binary_contraction_data(double * const s, LimeReader * limereader, 
+			    const int prec, const int N, DML_Checksum *ans) {
+
+  int status=0, mu;
+  n_uint64_t bytes, ix;
+  double *tmp;
+  DML_SiteRank rank;
+  float *tmp2;
+  int t, x, y, z;
+  int words_bigendian = big_endian();
+
+  DML_checksum_init(ans);
+  rank = (DML_SiteRank) 0;
+ 
+  if( (tmp = (double*)malloc(2*N*sizeof(double))) == (double*)NULL ) {
+#ifdef MPI
+    MPI_Abort(MPI_COMM_WORLD, 1);
+    MPI_Finalize();
+#endif
+    exit(500);
+  }
+  if( (tmp2 = (float*)malloc(2*N*sizeof(float))) == (float*)NULL ) {
+#ifdef MPI
+    MPI_Abort(MPI_COMM_WORLD, 1);
+    MPI_Finalize();
+#endif
+    exit(501);
+  }
+ 
+ 
+  if(prec == 32) bytes = 2*N*sizeof(float);
+  else bytes = 2*N*sizeof(double);
+#ifdef MPI
+  limeReaderSeek(limereader,(n_uint64_t) (Tstart*(LX*g_nproc_x)*(LY*g_nproc_y)*LZ + LXstart*(LY*g_nproc_y)*LZ + LYstart*LZ)*bytes, SEEK_SET);
+#endif
+  for(t = 0; t < T; t++){
+  for(x = 0; x < LX; x++){
+  for(y = 0; y < LY; y++){
+  for(z = 0; z < LZ; z++){
+    ix = g_ipt[t][x][y][z];
+    rank = (DML_SiteRank) (((t+Tstart)*(LX*g_nproc_x) + LXstart + x)*(LY*g_nproc_y) + LYstart + y)*LZ + z;
+    if(prec == 32) {
+      status = limeReaderReadData(tmp2, &bytes, limereader);
+      DML_checksum_accum(ans,rank,(char *) tmp2, bytes);	    
+    }
+    else {
+      status = limeReaderReadData(tmp, &bytes, limereader);
+      DML_checksum_accum(ans,rank,(char *) tmp, bytes);
+    }
+ 
+    for(mu=0; mu<N; mu++) {
+      if(!words_bigendian) {
+        if(prec == 32) {
+          byte_swap_assign_single2double(s + _GWI(mu,ix,VOLUME), (float*)(tmp2+2*mu), 2);
+        } else {
+          byte_swap_assign(s + _GWI(mu,ix,VOLUME), (float*)(tmp+2*mu), 2);
+        }
+      } else {  // words_bigendian true
+        if(prec == 32) {
+          single2double(s + _GWI(mu,ix,VOLUME), (float*)(tmp2+2*mu), 2);
+        }
+        else {
+          s[_GWI(mu, ix,VOLUME)  ] = tmp[2*mu  ];
+          s[_GWI(mu, ix,VOLUME)+1] = tmp[2*mu+1];
+        }
+      }
+    }
+
+    if(status < 0 && status != LIME_EOR) {
+      return(-1);
+    }
+  }}}}
+#ifdef MPI
+  DML_checksum_combine(ans);
+#endif
+  if(g_cart_id == 0) printf("\n# [read_binary_contraction_data] The final checksum is %#lx %#lx\n", (*ans).suma, (*ans).sumb);
+
+  free(tmp2); free(tmp);
+  return(0);
+}

@@ -1,0 +1,69 @@
+# ##########
+srcdir=$(HOME)/cvc_parallel
+limedir=$(HOME)/LIME37/build
+fftwdir=$(HOME)/fftw-2.1.5/build
+analysisdir=$(srcdir)/analysis
+
+CXX=gcc
+CXXFLAGS=-g -Wall -O3 -DF_ -pedantic  -DCVC  
+CCDEP = gcc
+DEPFLAGS = -MM
+
+INCLUDE = -I$(limedir)/include/ -I$(srcdir) -I$(fftwdir)/include/
+LIBS = -L$(limedir)/lib/ -llime  -L/usr/lib/atlas/ -llapack -lblas -L$(fftwdir)/lib -lfftw -lm /usr/lib/libgfortran.so.3  
+LDFLAGS = -L$(limedir)/lib/ -L$(fftwdir)/lib/ -lfftw -L/usr/lib/atlas/ -lm 
+
+LINK = $(CXX) -o $@ ${LDFLAGS}
+COMPILE = ${CXX} $(INCLUDE) -o $@ ${CXXFLAGS}
+
+MODULES = DML_crc32 dml getopt cvc_utils cvc_geometry mpi_init io io_utils propagator_io Q_phi make_H3orbits make_q2orbits make_cutlist get_index uwerr incomp_gamma
+
+HEADERS = Q_phi getopt cvc_complex cvc_geometry cvc_linalg cvc_utils default_input_values dml global io io_utils mpi_init propagator_io make_H3orbits make_q2orbits make_cutlist get_index incomp_gamma stats dquant uwerr
+
+PROGRAM = cvc_stochastic cvc_stochastic2 cvc_2pt avc_exact check_traceop avc_stochastic \
+          avc_disc_stochastic avc_disc_WI lvc_exact lvc_disc_stochastic lvc_check \
+          get_rho_corr lmux trjmux_stochastic gss avc_disc_vst jc_ud_x jc_ud_p
+
+ANALYSIS = analyse_piq analyseH3
+
+all: dep $(PROGRAM) $(ANALYSIS)
+
+analysis: dep $(ANALYSIS)
+
+# ##########
+
+$(addsuffix .d,$(MODULES)): %.d: ${srcdir}/%.c Makefile
+	 @ $(CCDEP) ${DEPFLAGS} ${INCLUDE} $< > $@
+
+$(addsuffix .d,$(PROGRAM)): %.d: ${srcdir}/%.c Makefile
+	 @ $(CCDEP) ${DEPFLAGS} ${INCLUDE} $< > $@
+
+$(addsuffix .d,$(ANALYSIS)): %.d: ${srcdir}/%.c Makefile
+	 @ $(CCDEP) ${DEPFLAGS} ${INCLUDE} $< > $@
+
+dep: $(addsuffix .d,$(MODULES) ${PROGRAM})
+
+$(addsuffix .o,${MODULES}): %.o: ${srcdir}/%.c $(addprefix ${srcdir}/, $(addsuffix .h, ${HEADERS})) %.d Makefile
+	${COMPILE} ${OPTARGS} -c $< 
+
+$(addsuffix .o,${PROGRAM}): %.o: ${srcdir}/%.c %.d Makefile
+	${COMPILE} ${OPTARGS} -c $< 
+
+$(addsuffix .o,${ANALYSIS}): %.o: ${srcdir}/%.c %.d Makefile
+	${COMPILE} ${OPTARGS} -c $< 
+
+${PROGRAM}: %: %.o $(addsuffix .o,${MODULES}) Makefile
+	${LINK}  $(addsuffix .o,${MODULES}) $@.o $(LIBS)
+
+${ANALYSIS}: %: %.o $(addsuffix .o,${MODULES}) Makefile
+	${LINK}  $(addsuffix .o,${MODULES}) $@.o $(LIBS)
+
+# ##########
+
+
+clean:
+	rm -f *~ *.o *.d $(PROGRAM) $(ANALYSIS)
+
+.PHONY: clean
+
+# ##########

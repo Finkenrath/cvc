@@ -1,0 +1,11 @@
+# Fr 25. Nov 14:18:51 EET 2011
+- test the new linalg makros for sp and fp
+
+# Mon Nov 28 17:42:05 EET 2011
+- check proton_2pt_v3 in tm case
+- modify disc_tqdep and analyse_njn
+- include initialization to zero in contraction makros
+- add proton 2-pt function with backward propagagors
+
+# Sun Dec  4 12:10:39 EET 2011
+- implement and check OpenMP of proton_2pt_v3

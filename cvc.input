@@ -1,0 +1,44 @@
+# *******************************************************
+# * input parameters for cvc-code
+# *******************************************************
+
+# T  =
+# LX =
+# LY =
+# LZ =
+# L  =
+
+# kappa =
+# mu    =
+
+# sourceid      =
+# sourceid2     =
+# sourceid_step =
+# gaugeid       =
+# gaugeid2      =
+# gaugeid_step  =
+
+# Nconf  =
+# Nsave  =
+# format =
+
+# BCangleT =
+# BCangleX =
+# BCangleY =
+# BCangleZ =
+
+# filename_prefix      =
+# filename_prefix2     =
+# gaugefilename_prefix =
+
+# resume   =
+# subtract =
+
+# source_location =
+
+# hpe_order     =
+# hpe_order_min =
+# hpe_order_max =
+
+# *******************************************************
+

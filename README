@@ -1,0 +1,52 @@
+# Sa 26. Nov 16:45:30 EET 2011
+
+ The gamma matrices.
+
+ Standard choice (as in gwc):
+
+ gamma_0:
+
+ |  0  0 -1  0 |
+ |  0  0  0 -1 |
+ | -1  0  0  0 |
+ |  0 -1  0  0 |
+
+ gamma_1:
+
+ |  0  0  0 -i |
+ |  0  0 -i  0 |
+ |  0 +i  0  0 |
+ | +i  0  0  0 |
+
+ gamma_2:
+
+ |  0  0  0 -1 |
+ |  0  0 +1  0 |
+ |  0 +1  0  0 |
+ | -1  0  0  0 |
+
+ gamma_3:
+
+ |  0  0 -i  0 |
+ |  0  0  0 +i |
+ | +i  0  0  0 |
+ |  0 -i  0  0 |
+
+ Permutation of the eight elements of a spinor (re0, im0, re1, im1, ...).
+
+
+# Wed Nov 30 15:10:30 EET 2011
+- gamma identification number:
+
+  combination | g0 g1 g2 g3 id g5 g0g5 g1g5 g2g5 g3g5 g0g1 g0g2 g0g3 g1g2 g1g3 g2g3
+  ---------------------------------------------------------------------------------
+  id          |  0  1  2  3  4  5    6    7    8    9   10   11   12   13   14   15
+
+- nomenclature: if i1 and not i2: id_full = id1
+                if i2 and not i1: id_full = id2
+                if i1 and i2    : id_full = ( id1 * 16 + id2 ) + 16
+
+- isimag id: if i1 is imag: isimag_id += 1 
+             if i2 is imag: isimag_id += 2
+
+  (i.e.: isimag_id takes values 0, 1, 2 or 3)

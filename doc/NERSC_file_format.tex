@@ -1,0 +1,62 @@
+\chapter{The NERSC file format}
+
+The NERSC file format for gauge configurations is as follows.
+
+The first part of the file consists of a header in ASCII format describing the gauge configuration stored in the
+second part of the file in binary format.
+
+\section{Header}
+
+The beginning of the header is marked by the keyword \texttt{BEGIN\_HEADER}, the end is marked
+by \texttt{END\_HEADER}. All lines between these two have the format \\
+\texttt{keyword = value}.\\
+
+The number of lines in the header (between mandatory beginning and ending keyword) can vary. There is a
+set of minimum keywords that have to appear; these include \texttt{DIMENSION\_[1234]}, \ldots (?)
+
+
+A a generic header will thus look as follows. \\
+\texttt{
+BEGIN\_HEADER \\
+HDR\_VERSION = 1.0 \\
+DATATYPE = 4D\_SU3\_GAUGE \\
+STORAGE\_FORMAT = 1.0 \\
+DIMENSION\_1 = 32 \\
+DIMENSION\_2 = 32 \\
+DIMENSION\_3 = 32 \\
+DIMENSION\_4 = 64 \\
+PLAQUETTE = 0.59371401 \\
+LINK\_TRACE = -0.00007994 \\
+CHECKSUM = 5523B964 \\
+BOUNDARY\_1 = PERIODIC \\
+BOUNDARY\_2 = PERIODIC \\
+BOUNDARY\_3 = PERIODIC \\
+BOUNDARY\_4 = PERIODIC \\
+ENSEMBLE\_ID = Nf0\_b6p00\_L32T64 \\
+SEQUENCE\_NUMBER = 10000 \\
+FLOATING\_POINT = IEEE32BIG \\
+CREATION\_DATE = 06:58:49 11/07/2011  \\
+CREATOR = hopper06 \\
+END\_HEADER \\
+}
+
+\section{Binary data}
+
+We now give the space-time, spinor and color structure in the binary data block.
+We consider the case where the for each color matrix only the first two lines are stored, such the third line must
+be reconstructed. The binary data part of the file thus contains 
+$LX\cdot LY\cdot LZ\cdot T\cdot 4 \cdot 2 \cdot 3 \cdot 2 \cdot \mathrm{prec}$ bytes, where prec is 4 (single precision) or
+8 (double precision).
+
+
+To access an element $U_\mu(w)[a,b]$ of color matrix $U$ at lattice site $w = (x,y,z,t)$ in direction 
+$\mu=\hat{x}(0),\,\hat{y}(1),\,\hat{z}(2),\,\hat{t}(3)$ and with $a=0,1$ and $b=0,1,2$ we must use the offset
+\begin{equation}
+  \mathrm{offset} = ( ( ( t\cdot LZ + z ) \cdot LY + y ) \cdot LX + x ) \cdot 48 + \mu\cdot 12 + 2\cdot (3\cdot a + b)
+\end{equation}
+for the real part and $\mathrm{offset}+1$ for the imaginary part.
+
+With the label $\hat{i}$, $i=x,y,z,t$, we associate the direction that is dictated by one of the standard choices
+of Dirac matrices, $\gamma^{j}$, $j=1,2,3,4$, such that $j=1 \Leftrightarrow i=x$ etc..
+
+Note that the spacetime indices run $(t,z,y,x)$, whereas the directions run $(\hat{x},\hat{y},\hat{z},\hat{t})$.

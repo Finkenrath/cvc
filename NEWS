@@ -1,0 +1,48 @@
+# Fr 25. Nov 14:49:06 EET 2011
+# Sa 26. Nov 15:59:30 EET 2011
+_fp_eq_fp(_r, _s)                                  checked
+_fp_pl_eq_fp(_r, _s)                               checked
+_fp_mi_eq_fp(_r, _s)                               checked
+_fp_eq_fp_ti_re(_r, _s, _c)                        checked
+_fp_eq_fp_ti_im(_r, _s, _c)                        checked
+_fp_eq_fp_spin_transposed(_r, _s)                  checked 
+_fp_eq_gamma_ti_fp(_r, _mu, _s)                    checked
+_fp_eq_gamma_transposed_ti_fp(_r, _mu, _s)         checked
+_fp_eq_fp_ti_gamma(_r, _s)                         checked
+_fp_eq_fp_ti_gamma_transposed(_r, _s)              checked    
+_fp_eq_zero(_r)                                    checked                          
+_fp_eq_Cg5_ti_fp(_r, _s, _w)                       checked
+_fp_eq_fp_ti_Cg5(_r, _s, _w)                       checked
+_fp_eq_rot_ti_fp( _r, _s, _sign, _type, _w)        checked
+_fp_eq_fp_ti_rot( _r, _s, _sign, _type, _w)        checked
+
+
+# Sa 26. Nov 18:25:24 EET 2011
+_sp_eq_zero(_r)                                    checked
+_sp_eq_sp(_r, _s)                                  checked  
+_sp_eq_sp_transposed(_r, _s)                       checked
+_sp_pl_eq_sp(_r, _s)                               checked
+_sp_mi_eq_sp(_r, _s)                               checked
+_sp_eq_sp_ti_re(_r, _s, _c)                        checked
+_sp_eq_sp_ti_im(_r, _s, _c)                        checked
+_sp_eq_gamma_ti_sp(_r, _mu, _s)                    checked 
+_co_eq_tr_sp(_c, _s)                               checked
+
+# Mon Nov 28 16:23:42 EET 2011
+- started modification of contraction code at state:
+URL: svn+ssh://pub/afs/ifh.de/group/nic/scratch/marcuspe/svn2/cvc_parallel/eps_contract_13.h
+Repository Root: svn+ssh://pub/afs/ifh.de/group/nic/scratch/marcuspe/svn2
+Repository UUID: 4164bacf-e891-4c7d-85fd-553c83fb1ce9
+Revision: 635
+Node Kind: file
+Schedule: normal
+Last Changed Author: marcuspe
+Last Changed Rev: 625
+Last Changed Date: 2011-11-24 17:18:37 +0200 (Thu, 24 Nov 2011)
+Text Last Updated: 2011-11-28 12:47:27 +0200 (Mon, 28 Nov 2011)
+Checksum: 6a17b5ae744b2271ac87906ac92a5fd8
+
+
+# Mon Nov 28 17:54:46 EET 2011
+- proton 2-pt function with forward propagators and new contraction makros
+  (proton_2pt_v3) tested against proton_2pt_v2; agreement up to overall sign
