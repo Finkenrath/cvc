@@ -131,6 +131,7 @@ SDIGIT {SIGN}?[[:digit:]]
 %x ROTATE
 %x PROPPOS
 %x GPUDEVICENUMBER
+%x GPUPERNODE
 %x RELDELTA
 %x COHSRC
 %x COHSRCBASE
@@ -239,6 +240,7 @@ SDIGIT {SIGN}?[[:digit:]]
 ^rotate_etmc_ukqcd{SPC}*={SPC}*            BEGIN(ROTATE);
 ^propagator_position{SPC}*={SPC}*          BEGIN(PROPPOS);
 ^gpu_device_number{SPC}*={SPC}*            BEGIN(GPUDEVICENUMBER);
+^gpu_per_node{SPC}*={SPC}*                 BEGIN(GPUPERNODE);
 ^coherent_source{SPC}*={SPC}*              BEGIN(COHSRC);
 ^coherent_source_base{SPC}*={SPC}*         BEGIN(COHSRCBASE);
 ^coherent_source_delta{SPC}*={SPC}*        BEGIN(COHSRCDELTA);
@@ -606,12 +608,16 @@ SDIGIT {SIGN}?[[:digit:]]
 }
 <PROPPOS>{DIGIT}+ {
   g_propagator_position = atoi(yytext);
-  if(myverbose!=0) printf("set set propagator position to %s\n", yytext);
+  if(myverbose!=0) printf("set propagator position to %s\n", yytext);
 }
 
 <GPUDEVICENUMBER>{DIGIT}+ {
   g_gpu_device_number = atoi(yytext);
-  if(myverbose!=0) printf("set set GPU device number to %s\n", yytext);
+  if(myverbose!=0) printf("set GPU device number to %s\n", yytext);
+}
+<GPUPERNODE>{DIGIT}+ {
+  g_gpu_per_node = atoi(yytext);
+  if(myverbose!=0) printf("set number of GPUs per node to %s\n", yytext);
 }
 
 <COHSRC>{DIGIT}+ {

@@ -94,6 +94,7 @@
 #define _default_propagator_position 0
 
 #define _default_gpu_device_number 0
+#define _default_gpu_per_node 1
 
 #define _default_coherent_source 0
 #define _default_coherent_source_base 0

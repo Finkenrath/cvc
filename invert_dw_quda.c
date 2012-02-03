@@ -265,7 +265,10 @@ int main(int argc, char **argv) {
    **************************************/
   if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] initializing quda\n");
 #ifdef HAVE_QUDA
-  cudaGetDeviceCount(&num_gpu_on_node);
+  if(g_gpu_per_node == 0) {
+    if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] get numer of GPUs per node from QUDA\n");
+    num_gpu_on_node = getGpuCount();
+  } else { num_gpu_on_node = g_gpu_per_node;}
 #ifdef MPI
   rank            = comm_rank();
 #else
@@ -785,7 +788,15 @@ int main(int argc, char **argv) {
         _fv_eq_zero(g_spinor_field[1]+_GSI(ix) );
       }
 #ifdef MPI
-      testCG(g_spinor_field[1], g_spinor_field[2], &inv_param);
+      switch(inv_param.solve_type) {
+        case QUDA_CG_INVERTER:
+          testCG(g_spinor_field[1], g_spinor_field[2], &inv_param);
+          break;
+        case QUDA_BICGSTAB_INVERTER:
+        case QUDA_GCR_INVERTER:
+          invertQuda(g_spinor_field[1], g_spinor_field[2], &inv_param);
+          break;
+      }
 #else
       invertQuda(g_spinor_field[1], g_spinor_field[2], &inv_param);
 #endif

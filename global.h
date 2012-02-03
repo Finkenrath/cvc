@@ -140,7 +140,7 @@ EXTERN int g_rotate_ETMC_UKQCD;
 EXTERN time_t g_the_time;
 EXTERN int g_propagator_position;
 
-EXTERN int g_gpu_device_number;
+EXTERN int g_gpu_device_number, g_gpu_per_node;
 
 EXTERN int g_coherent_source, g_coherent_source_base, g_coherent_source_delta;
 
