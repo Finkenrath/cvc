@@ -780,7 +780,7 @@ int main(int argc, char **argv) {
       if(status < 0) {
         fprintf(stderr, "[] Error from inversion routine, status was %d\n", status);
 #ifdef MPI
-        MPI_Abort(MPI_COMM_WOLD, 5);
+        MPI_Abort(MPI_COMM_WORLD, 5);
         MPI_Finalize();
 #endif
         exit(5);
