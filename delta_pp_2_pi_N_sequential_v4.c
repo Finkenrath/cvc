@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
   int sx0, sx1, sx2, sx3;
   int write_ascii=0;
   int fermion_type = _WILSON_FERMION;  // Wilson fermion type
+  int smear_seq_source = 0;
   int threadid;
   char filename[200], contype[200], gauge_field_filename[200], line[200];
   double ratime, retime;
@@ -144,7 +145,7 @@ int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
 #endif
 
-  while ((c = getopt(argc, argv, "ah?vgf:F:p:P:s:m:")) != -1) {
+  while ((c = getopt(argc, argv, "Sah?vgf:F:p:P:s:m:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -193,6 +194,10 @@ int main(int argc, char **argv) {
         mode = 2;
       }
       fprintf(stdout, "# [] will use mode %d\n", mode);
+      break;
+    case 'S':
+      smear_seq_source = 1;
+      fprintf(stdout, "# [] will smear sequential soucre\n");
       break;
     case 'h':
     case '?':
@@ -407,31 +412,33 @@ if(mode == 1) {
     // (1) read the prop., smear, multiply with gamma_5, save as source 
 
     // read timeslice of the gauge field
-//    if( N_Jacobi>0) {
-//      switch(g_gauge_file_format) {
-//        case 0:
-//          status = read_lime_gauge_field_doubleprec_timeslice(g_gauge_field, gauge_field_filename, sx0, &ildg_gauge_field_checksum);
-//          break;
-//        case 1:
-//          status = read_nersc_gauge_field_timeslice(g_gauge_field, gauge_field_filename, sx0, &nersc_gauge_field_checksum);
-//          break;
-//      }
-//      if(status != 0) {
-//        if(status != 8) { // exit status 8 refers to mismatch in checksums
-//          fprintf(stderr, "[] Error, could not read gauge field\n");
-//          exit(21);
-//        } else {
-//          fprintf(stdout, "# [] Warning, mismatch in checksums\n");
-//        }
-//      }
-//#ifdef OPENMP
-//      status = APE_Smearing_Step_Timeslice_threads(g_gauge_field, N_ape, alpha_ape);
-//#else
-//      for(i=0; i<N_ape; i++) {
-//        status = APE_Smearing_Step_Timeslice(g_gauge_field, alpha_ape);
-//      }
-//#endif
-//    }
+    if( N_Jacobi>0 && smear_seq_source) {
+      switch(g_gauge_file_format) {
+        case 0:
+          status = read_lime_gauge_field_doubleprec_timeslice(g_gauge_field, gauge_field_filename, sx0, &ildg_gauge_field_checksum);
+          break;
+        case 1:
+          status = read_nersc_gauge_field_timeslice(g_gauge_field, gauge_field_filename, sx0, &nersc_gauge_field_checksum);
+          break;
+      }
+      if(status != 0) {
+        if(status != 8) { // exit status 8 refers to mismatch in checksums
+          fprintf(stderr, "[] Error, could not read gauge field\n");
+          exit(21);
+        } else {
+          fprintf(stdout, "# [] Warning, mismatch in checksums\n");
+        }
+      }
+      if(N_ape>0) {
+#ifdef OPENMP
+        status = APE_Smearing_Step_Timeslice_threads(g_gauge_field, N_ape, alpha_ape);
+#else
+        for(i=0; i<N_ape; i++) {
+          status = APE_Smearing_Step_Timeslice(g_gauge_field, alpha_ape);
+        }
+#endif
+      }
+    }
     // read timeslice of the 12 down-type propagators and smear them
     for(is=0;is<n_s*n_c;is++) {
       if(fermion_type != _TM_FERMION) {
@@ -445,17 +452,17 @@ if(mode == 1) {
         exit(102);
       }
       
-//      if(N_Jacobi > 0) {
-//        fprintf(stdout, "# [] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
-//            is, N_Jacobi, kappa_Jacobi);
-//#ifdef OPENMP
-//        Jacobi_Smearing_Step_one_Timeslice_threads(g_gauge_field, g_spinor_field[0], work, N_Jacobi, kappa_Jacobi);
-//#else
-//        for(c=0; c<N_Jacobi; c++) {
-//          Jacobi_Smearing_Step_one_Timeslice(g_gauge_field, g_spinor_field[0], work, kappa_Jacobi);
-//        }
-//#endif
-//      }
+      if(N_Jacobi > 0 && smear_seq_source) {
+        fprintf(stdout, "# [] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
+            is, N_Jacobi, kappa_Jacobi);
+#ifdef OPENMP
+        Jacobi_Smearing_Step_one_Timeslice_threads(g_gauge_field, g_spinor_field[0], work, N_Jacobi, kappa_Jacobi);
+#else
+        for(c=0; c<N_Jacobi; c++) {
+          Jacobi_Smearing_Step_one_Timeslice(g_gauge_field, g_spinor_field[0], work, kappa_Jacobi);
+        }
+#endif
+      }
 
       for(imom=0;imom<rel_momentum_no;imom++) {
         for(ix=0;ix<VOLUME;ix++) { _fv_eq_zero(g_spinor_field[2]+_GSI(ix)); }

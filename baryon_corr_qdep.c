@@ -84,15 +84,15 @@ int main(int argc, char **argv) {
  /*
   * list of gamma projections to used:
   */
-  const int gamma_proj_no = 1;
-  int gamma_proj1[] = {4};
-  int gamma_proj2[] = {0};
-  int gamma_proj_isimag1[] = {0};
-  int gamma_proj_isimag2[] = {0};
-  double gamma_proj_sign1[] = {0.25};
-  double gamma_proj_sign2[] = {0.25};
-  int gamma_proj_fw_bw[] = {3};
-/*
+//  const int gamma_proj_no = 1;
+//  int gamma_proj1[] = {4};
+//  int gamma_proj2[] = {0};
+//  int gamma_proj_isimag1[] = {0};
+//  int gamma_proj_isimag2[] = {0};
+//  double gamma_proj_sign1[] = {0.25};
+//  double gamma_proj_sign2[] = {0.25};
+//  int gamma_proj_fw_bw[] = {3};
+
   const int gamma_proj_no = 16;
   int gamma_proj1[] = { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15};
   int gamma_proj2[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
   double gamma_proj_sign1[] = {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.};   
   double gamma_proj_sign2[] = {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.};    
   int gamma_proj_fw_bw[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-*/
+
 
   char gamma_proj_string[10];
   int gamma_proj_id, gamma_proj_isimag_id;
@@ -316,6 +316,15 @@ int main(int argc, char **argv) {
       }
     }
   }  // of if momentum_filename_set
+
+  // check source momentum
+  if(g_source_momentum_set) {
+    if(g_source_momentum[0] < 0) g_source_momentum[0] += LX_global;
+    if(g_source_momentum[1] < 0) g_source_momentum[1] += LY_global;
+    if(g_source_momentum[2] < 0) g_source_momentum[2] += LZ_global;
+    fprintf(stdout, "# [] final source momentum = (%d, %d, %d)\n", g_source_momentum[0], g_source_momentum[1], g_source_momentum[2]);
+  }
+
 
   /****************************************
    * allocate memory for the contractions *

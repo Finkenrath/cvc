@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 #ifdef HAVE_QUDA
   QudaPrecision cpu_prec         = QUDA_DOUBLE_PRECISION;
   QudaPrecision cuda_prec        = QUDA_DOUBLE_PRECISION;
-  QudaPrecision cuda_prec_sloppy = QUDA_DOUBLE_PRECISION;
+  QudaPrecision cuda_prec_sloppy = QUDA_SINGLE_PRECISION;
 
   QudaGaugeParam gauge_param = newQudaGaugeParam();
   QudaInvertParam inv_param = newQudaInvertParam();
@@ -536,8 +536,7 @@ int main(int argc, char **argv) {
   /***********************************************
    * loop on spin-color-index
    ***********************************************/
-//  for(isc=g_source_index[0]; isc<=g_source_index[1]; isc++)
-  for(isc=g_source_index[0]; isc<=g_source_index[0]; isc++)
+  for(isc=g_source_index[0]; isc<=g_source_index[1]; isc++)
   {
     ispin = isc / n_c;
     icol  = isc % n_c;

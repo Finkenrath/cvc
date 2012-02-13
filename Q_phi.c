@@ -2418,7 +2418,7 @@ void Q_DW_Wilson_dag_5th_phi(double *xi, double *phi) {
     xi_  = xi  + _GSI(index_s);
     phi_ = phi + _GSI(index_s);
 
-    _fv_pl_eq_PLi_fv_ti_re(xi_, phi+_GSI((L5-1)*VOLUME+ix), g_m5);
+    _fv_pl_eq_PLi_fv_ti_re(xi_, phi+_GSI((L5-1)*VOLUME+ix), g_m0);
     _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s+VOLUME));
     index_s++;
   }
@@ -2441,7 +2441,7 @@ void Q_DW_Wilson_dag_5th_phi(double *xi, double *phi) {
     phi_ = phi + _GSI(index_s);
 
     _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s - VOLUME));
-    _fv_pl_eq_PRe_fv_ti_re(xi_, phi+_GSI(ix), g_m5);
+    _fv_pl_eq_PRe_fv_ti_re(xi_, phi+_GSI(ix), g_m0);
     index_s++;
   }
   return;
@@ -2459,7 +2459,7 @@ void Q_DW_Wilson_5th_phi(double *xi, double *phi) {
     xi_  = xi  + _GSI(index_s);
     phi_ = phi + _GSI(index_s);
 
-    _fv_pl_eq_PRe_fv_ti_re(xi_, phi+_GSI((L5-1)*VOLUME+ix), g_m5);
+    _fv_pl_eq_PRe_fv_ti_re(xi_, phi+_GSI((L5-1)*VOLUME+ix), g_m0);
     _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s+VOLUME));
     index_s++;
   }
@@ -2482,7 +2482,7 @@ void Q_DW_Wilson_5th_phi(double *xi, double *phi) {
     phi_ = phi + _GSI(index_s);
 
     _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s - VOLUME));
-    _fv_pl_eq_PLi_fv_ti_re(xi_, phi+_GSI(ix), g_m5);
+    _fv_pl_eq_PLi_fv_ti_re(xi_, phi+_GSI(ix), g_m0);
     index_s++;
   }
 
