@@ -123,6 +123,8 @@ int main(int argc, char **argv) {
   int source_momentum_runs = 1;
   int imom;
   int num_gpu_on_node=0, rank;
+  int source_location_5d_iseven;
+
   /****************************************************************************/
 #if (defined HAVE_QUDA) && (defined MULTI_GPU)
   int x_face_size, y_face_size, z_face_size, t_face_size, pad_size;
@@ -230,7 +232,8 @@ int main(int argc, char **argv) {
   // the volume of a timeslice
   VOL3 = LX*LY*LZ;
   V5   = T*LX*LY*LZ*L5;
-  g_kappa5d = 0.5 / (5. + g_m0);
+  g_kappa5d = 0.5 / (5. + g_m5);
+  if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] kappa5d = %e\n", g_kappa5d);
 
   fprintf(stdout, "# [%2d] parameters:\n"\
                   "# [%2d] T            = %3d\n"\
@@ -265,12 +268,15 @@ int main(int argc, char **argv) {
    **************************************/
   if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] initializing quda\n");
 #ifdef HAVE_QUDA
-  if(g_gpu_per_node == 0) {
-    if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] get numer of GPUs per node from QUDA\n");
-    num_gpu_on_node = getGpuCount();
-  } else { num_gpu_on_node = g_gpu_per_node;}
+  // cudaGetDeviceCount(&num_gpu_on_node);
+  if(g_gpu_per_node<0) {
+    if(g_cart_id==0) fprintf(stderr, "[] Error, number of GPUs per node not set\n");
+    EXIT(106);
+  } else {
+    num_gpu_on_node = g_gpu_per_node;
+  }
 #ifdef MPI
-  rank            = comm_rank();
+  rank = comm_rank();
 #else
   rank = 0;
 #endif
@@ -357,6 +363,25 @@ int main(int argc, char **argv) {
     }
   }
 
+  // QUDA precision parameters
+  switch(g_cpu_prec) {
+    case 0: cpu_prec = QUDA_HALF_PRECISION; break;
+    case 1: cpu_prec = QUDA_SINGLE_PRECISION; break;
+    case 2: cpu_prec = QUDA_DOUBLE_PRECISION; break;
+    default: cpu_prec = QUDA_DOUBLE_PRECISION; break;
+  }
+  switch(g_gpu_prec) {
+    case 0: cuda_prec = QUDA_HALF_PRECISION; break;
+    case 1: cuda_prec = QUDA_SINGLE_PRECISION; break;
+    case 2: cuda_prec = QUDA_DOUBLE_PRECISION; break;
+    default: cuda_prec = QUDA_DOUBLE_PRECISION; break;
+  }
+  switch(g_gpu_prec_sloppy) {
+    case 0: cuda_prec_sloppy = QUDA_HALF_PRECISION; break;
+    case 1: cuda_prec_sloppy = QUDA_SINGLE_PRECISION; break;
+    case 2: cuda_prec_sloppy = QUDA_DOUBLE_PRECISION; break;
+    default: cuda_prec_sloppy = QUDA_SINGLE_PRECISION; break;
+  }
 
   // QUDA gauge parameters
   gauge_param.X[0] = LX;
@@ -476,33 +501,59 @@ int main(int argc, char **argv) {
   }
 
 #ifdef HAVE_QUDA
-  // QUDA inverter parameters
+  /*************************************************************
+   * QUDA inverter parameters
+   *************************************************************/
   inv_param.dslash_type    = QUDA_DOMAIN_WALL_DSLASH;
-//  inv_param.inv_type       = QUDA_BICGSTAB_INVERTER;
-  inv_param.inv_type       = QUDA_CG_INVERTER;
-  inv_param.m5             = g_m0;
-  inv_param.kappa          = 0.5 / (5. + inv_param.m5);
-  inv_param.mass           = g_m5;
 
-//  inv_param.gcrNkrylov     = 30;
+  if(strcmp(g_inverter_type_name, "cg") == 0) {
+    inv_param.inv_type       = QUDA_CG_INVERTER;
+    if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] using cg inverter\n"); 
+  } else if(strcmp(g_inverter_type_name, "bicgstab") == 0) {
+    inv_param.inv_type       = QUDA_BICGSTAB_INVERTER;
+    if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] using bicgstab inverter\n"); 
+  } else if(strcmp(g_inverter_type_name, "gcr") == 0) {
+    inv_param.inv_type       = QUDA_GCR_INVERTER;
+    if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] using gcr inverter\n"); 
+  } else {
+    if(g_cart_id==0) fprintf(stderr, "[invert_dw_quda] Error, unrecognized inverter type %s\n", g_inverter_type_name);
+    EXIT(123);
+  }
+
+
+  if(inv_param.inv_type == QUDA_CG_INVERTER) {
+    inv_param.solution_type = QUDA_MAT_SOLUTION;
+    inv_param.solve_type    = QUDA_NORMEQ_PC_SOLVE;
+  } else if(inv_param.inv_type == QUDA_BICGSTAB_INVERTER) {
+    inv_param.solution_type = QUDA_MAT_SOLUTION;
+    inv_param.solve_type    = QUDA_DIRECT_PC_SOLVE;
+  } else {
+    inv_param.solution_type = QUDA_MATPC_SOLUTION;
+    inv_param.solve_type    = QUDA_DIRECT_PC_SOLVE;
+  }
+
+  inv_param.m5             = g_m5;
+  inv_param.kappa          = 0.5 / (5. + inv_param.m5);
+  inv_param.mass           = g_m0;
+
   inv_param.tol            = solver_precision;
   inv_param.maxiter        = niter_max;
   inv_param.reliable_delta = reliable_delta;
 
 #ifdef MPI
   // domain decomposition preconditioner parameters
-//  inv_param.inv_type_precondition = QUDA_MR_INVERTER;
-//  inv_param.tol_precondition = 1e-1;
-//  inv_param.maxiter_precondition = 10;
-//  inv_param.verbosity_precondition = QUDA_SILENT;
-//  inv_param.prec_precondition = cuda_prec_sloppy;
-//  inv_param.omega = 0.7;
+  if(inv_param.inv_type == QUDA_GCR_INVERTER) {
+    inv_param.gcrNkrylov     = 15;
+    inv_param.inv_type_precondition = QUDA_MR_INVERTER;
+    inv_param.tol_precondition = 1e-6;
+    inv_param.maxiter_precondition = 200;
+    inv_param.verbosity_precondition = QUDA_VERBOSE;
+    inv_param.prec_precondition = cuda_prec_sloppy;
+    inv_param.omega = 0.7;
+  }
 #endif
 
-  inv_param.solution_type      = QUDA_MAT_SOLUTION;
-//  inv_param.solve_type         = QUDA_DIRECT_PC_SOLVE;
-  inv_param.solve_type         = QUDA_NORMEQ_PC_SOLVE;
-  inv_param.matpc_type         = QUDA_MATPC_EVEN_EVEN; // QUDA_MATPC_EVEN_EVEN;
+  inv_param.matpc_type         = QUDA_MATPC_EVEN_EVEN;
   inv_param.dagger             = QUDA_DAG_NO;
   inv_param.mass_normalization = QUDA_KAPPA_NORMALIZATION; //;QUDA_MASS_NORMALIZATION;
 
@@ -518,7 +569,7 @@ int main(int argc, char **argv) {
   inv_param.preserve_dirac = QUDA_PRESERVE_DIRAC_YES;
   inv_param.prec_precondition = cuda_prec_sloppy;
   inv_param.gamma_basis = QUDA_DEGRAND_ROSSI_GAMMA_BASIS;
-  inv_param.dirac_tune = QUDA_TUNE_YES;
+  inv_param.dirac_tune = QUDA_TUNE_NO;
 #endif
  
   //set the T dimension partitioning flag
@@ -568,8 +619,8 @@ int main(int argc, char **argv) {
   /***********************************************
    * loop on spin-color-index
    ***********************************************/
-//  for(isc=g_source_index[0]; isc<=g_source_index[1]; isc++)
-  for(isc=g_source_index[0]; isc<=g_source_index[0]; isc++)
+  for(isc=g_source_index[0]; isc<=g_source_index[1]; isc++)
+//  for(isc=g_source_index[0]; isc<=g_source_index[0]; isc++)
   {
     ispin = isc / n_c;
     icol  = isc % n_c;
@@ -608,7 +659,7 @@ int main(int argc, char **argv) {
           case 0:
             // point source
             if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] Creating point source\n");
-            for(ix=0;ix<24*VOLUME;ix++) g_spinor_field[0][ix] = 0.;
+            for(ix=0;ix<L5*VOLUME;ix++) { _fv_eq_zero(g_spinor_field[0]+ix); }
             if(have_source_flag) {
               if(g_source_momentum_set) {
                 phase = 2*M_PI*( source_momentum[0]*sl1/(double)LX_global + source_momentum[1]*sl2/(double)LY_global + source_momentum[2]*sl3/(double)LZ_global );
@@ -624,6 +675,17 @@ int main(int argc, char **argv) {
             } else {
               sprintf(source_filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d", filename_prefix, Nconf, sl0, sl1, sl2, sl3, n_c*ispin+icol);
             }
+#ifdef HAVE_QUDA
+            // set matpc_tpye
+            source_location_5d_iseven = ( (g_iseven[g_source_location] && ispin<n_s/2) || (!g_iseven[g_source_location] && ispin>=n_s/2) ) ? 1 : 0;
+            if(source_location_5d_iseven) {
+              inv_param.matpc_type = QUDA_MATPC_EVEN_EVEN;
+              if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] matpc type is MATPC_EVEN_EVEN\n");
+            } else {
+              inv_param.matpc_type = QUDA_MATPC_ODD_ODD;
+              if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] matpc type is MATPC_ODD_ODD\n");
+            }
+#endif
             break;
           case 2:
             // timeslice source
@@ -775,7 +837,6 @@ int main(int argc, char **argv) {
        * perform the inversion
        ***********************************************/
       if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] starting inversion\n");
-      ratime = CLOCK;
 
 #ifdef HAVE_QUDA 
       //for(ix=0;ix<24*VOLUME*L5;ix++) g_spinor_field[2][ix] = 1.;
@@ -787,21 +848,23 @@ int main(int argc, char **argv) {
       for(ix=0;ix<VOLUME*L5;ix++) {
         _fv_eq_zero(g_spinor_field[1]+_GSI(ix) );
       }
+      xchange_field_5d(g_spinor_field[1]);
+      ratime = CLOCK;
 #ifdef MPI
-      switch(inv_param.solve_type) {
-        case QUDA_CG_INVERTER:
-          testCG(g_spinor_field[1], g_spinor_field[2], &inv_param);
-          break;
-        case QUDA_BICGSTAB_INVERTER:
-        case QUDA_GCR_INVERTER:
-          invertQuda(g_spinor_field[1], g_spinor_field[2], &inv_param);
-          break;
+      if(inv_param.inv_type == QUDA_BICGSTAB_INVERTER  || inv_param.inv_type == QUDA_GCR_INVERTER) {
+        if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] calling invertQuda\n");
+        invertQuda(g_spinor_field[1], g_spinor_field[2], &inv_param);
+      } else if(inv_param.inv_type == QUDA_CG_INVERTER) {
+        if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] calling testCG\n");
+        testCG(g_spinor_field[1], g_spinor_field[2], &inv_param);
+      } else {
+        if(g_cart_id==0) fprintf(stderr, "# [invert_dw_quda] unrecognized inverter\n");
       }
 #else
       invertQuda(g_spinor_field[1], g_spinor_field[2], &inv_param);
 #endif
-
       retime = CLOCK;
+
       if(g_cart_id==0) {
         fprintf(stdout, "# [invert_dw_quda] inversion done in %e seconds\n", retime-ratime);
         fprintf(stdout, "# [invert_dw_quda] Device memory used:\n\tSpinor: %f GiB\n\tGauge: %f GiB\n",
@@ -864,6 +927,8 @@ int main(int argc, char **argv) {
 #ifdef MPI
         xchange_field_5d(g_spinor_field[1]);
 #endif
+        for(ix=0;ix<L5*VOLUME;ix++) { _fv_eq_zero(g_spinor_field[2]); }
+        //xchange_field_5d(g_spinor_field[2]);
 
         //sprintf(filename, "%s.inverted.ascii.%.2d", source_filename, g_cart_id);
         //ofs = fopen(filename, "w");

@@ -19,8 +19,6 @@
 #endif
 #include <getopt.h>
 
-#define MAIN_PROGRAM
-
 #include "cvc_complex.h"
 #include "cvc_linalg.h"
 #include "global.h"

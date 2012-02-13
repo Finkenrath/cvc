@@ -39,4 +39,6 @@ void Q_DW_Wilson_5th_phi(double *xi, double *phi);
 void Q_DW_Wilson_dag_5th_phi(double *xi, double *phi);
 void Q_DW_Wilson_phi(double *xi, double *phi);
 void Q_DW_Wilson_dag_phi(double *xi, double *phi);
+void spinor_4d_to_5d(double *s, double*t);
+void spinor_5d_to_4d(double *s, double*t);
 #endif

@@ -1926,6 +1926,7 @@ void set_default_input_values(void) {
   g_smeared_smeared   = _default_smeared_smeared;
 
   g_gpu_device_number = _default_gpu_device_number;
+  g_gpu_per_node      = _default_gpu_per_node;
 
   g_coherent_source = _default_coherent_source;
   g_coherent_source_base  = _default_coherent_source_base;
@@ -1966,6 +1967,10 @@ void set_default_input_values(void) {
 
   g_m5 = _default_m5;
   g_m0 = _default_m0;
+
+  g_cpu_prec = _default_cpu_prec;
+  g_gpu_prec = _default_gpu_prec;
+  g_gpu_prec_sloppy = _default_gpu_prec_sloppy;
 }
 
 void  TraceAB(complex *w, double A[12][24], double B[12][24]) {

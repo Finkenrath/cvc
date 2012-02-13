@@ -94,7 +94,7 @@
 #define _default_propagator_position 0
 
 #define _default_gpu_device_number 0
-#define _default_gpu_per_node 1
+#define _default_gpu_per_node -1
 
 #define _default_coherent_source 0
 #define _default_coherent_source_base 0
@@ -123,4 +123,10 @@
 #define _default_verbose  0
 #define _default_m0 0.
 #define _default_m5 0.
+
+#define _default_cpu_prec 2
+#define _default_gpu_prec 2
+#define _default_gpu_prec_sloppy 1
+#define _default_inverter_type_name "none"
+
 #endif
