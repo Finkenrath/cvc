@@ -153,6 +153,10 @@ SDIGIT {SIGN}?[[:digit:]]
 %x SNKMOMX
 %x SNKMOMY
 %x SNKMOMZ
+%x CPUPREC
+%x GPUPREC
+%x GPUPRECSLOPPY
+%x INVERTERTYPE
 
 %x COMMENT
 %x ERROR
@@ -261,6 +265,10 @@ SDIGIT {SIGN}?[[:digit:]]
 ^sink_momentum_x{SPC}*={SPC}*              BEGIN(SNKMOMX);
 ^sink_momentum_y{SPC}*={SPC}*              BEGIN(SNKMOMY);
 ^sink_momentum_z{SPC}*={SPC}*              BEGIN(SNKMOMZ);
+^cpu_precision{SPC}*={SPC}*                BEGIN(CPUPREC);
+^gpu_precision{SPC}*={SPC}*                BEGIN(GPUPREC);
+^gpu_precision_sloppy{SPC}*={SPC}*         BEGIN(GPUPRECSLOPPY);
+^inverter_type{SPC}*={SPC}*                BEGIN(INVERTERTYPE);
 
 <TT>{DIGIT}+                  {
   T_global = atoi(yytext);
@@ -617,7 +625,7 @@ SDIGIT {SIGN}?[[:digit:]]
 }
 <GPUPERNODE>{DIGIT}+ {
   g_gpu_per_node = atoi(yytext);
-  if(myverbose!=0) printf("set number of GPUs per node to %s\n", yytext);
+  if(myverbose!=0) printf("set number of GPUs  per node to %s\n", yytext);
 }
 
 <COHSRC>{DIGIT}+ {
@@ -735,6 +743,40 @@ SDIGIT {SIGN}?[[:digit:]]
   g_sink_momentum[2] = atoi(yytext);
   g_sink_momentum_set = 1;
   if(myverbose!=0) printf("z-comp. of sink momentum set to %d\n", g_sink_momentum[2]);
+}
+<CPUPREC>{NAME} {
+  if(strcmp(yytext, "half")==0 ) {
+    g_cpu_prec = 0;
+  } else if(strcmp(yytext, "single")==0 ) {
+    g_cpu_prec = 1;
+  } else if(strcmp(yytext, "double")==0 ) {
+    g_cpu_prec = 2;
+  }
+  if(myverbose!=0) printf("CPU precision (for QUDA library) set to %s\n",yytext);
+}
+<GPUPREC>{NAME} {
+  if(strcmp(yytext, "half")==0 ) {
+    g_gpu_prec = 0;
+  } else if(strcmp(yytext, "single")==0 ) {
+    g_gpu_prec = 1;
+  } else if(strcmp(yytext, "double")==0 ) {
+    g_gpu_prec = 2;
+  }
+  if(myverbose!=0) printf("GPU precision (for QUDA library) set to %s\n",yytext);
+}
+<GPUPRECSLOPPY>{NAME} {
+  if(strcmp(yytext, "half")==0 ) {
+    g_gpu_prec_sloppy = 0;
+  } else if(strcmp(yytext, "single")==0 ) {
+    g_gpu_prec_sloppy = 1;
+  } else if(strcmp(yytext, "double")==0 ) {
+    g_gpu_prec_sloppy = 2;
+  }
+  if(myverbose!=0) printf("GPU sloppy precision (for QUDA library) set to %s\n",yytext);
+}
+<INVERTERTYPE>{NAME} {
+  strcpy(g_inverter_type_name, yytext);
+  if(myverbose!=0) printf("inverter type name set to %s\n",yytext);
 }
 
 <*>^#   {
