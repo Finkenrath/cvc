@@ -3937,3 +3937,122 @@ unsigned int lexic2eot_5d (unsigned int is, unsigned int ix) {
   shift  = (unsigned int)(is*VOLUME/2 + ( eoflag ? 0 : L5*VOLUME/2 ) );
   return( shift + ( g_iseven[ix] ? g_lexic2eot[ix] : (g_lexic2eot[ix] - VOLUME/2) ) );
 }
+
+/****************************************************************************
+ * exchange x- and z-decomposition
+ ****************************************************************************/
+void xchange_revert_decomp_5d(double*phix, double*phiz, double*buffer, int dir) {
+#ifdef MPI
+  int cntr=0;
+//  MPI_Request request[120];
+//  MPI_Status status[120];
+
+  int x0, x1, x2, x3, ix, iix, iy, iiy, x5;
+  int send_count=0, recv_count=0;
+  int src_offset, dest_offset, src_step, dest_step;
+  int Lloc, Lglob, nloc;
+  size_t bytes;
+
+  // use spinor_x_slice_vector, g_ts_comm,
+  
+#if (defined PARALLELTX) && !(defined PARALLELTXY)
+if(dir==0) {
+  Lglob = LZ_global;
+  Lloc  = Lglob / g_nproc_x;
+  if(Lloc != LX) {
+    if(g_cart_id==0) fprintf(stderr, "# [xchange_revert_decomp] Error, Lloc and LX must be equal\n");
+    EXIT(1);
+  }
+  nloc = g_nproc_x;
+  send_count = L5*T*LX*LY*Lloc;
+  recv_count = send_count;
+  src_step = Lloc*24;
+  dest_step = Lloc*T*LX*LY*24;
+
+  bytes = 24*Lloc*sizeof(double);
+
+  for(x5=0;x5<L5;x5++) {
+  for(x0=0;x0<T;x0++) {
+  for(x1=0;x1<LX;x1++) {
+  for(x2=0;x2<LY;x2++) {
+    src_offset  = ((x0*LX+x1)*LY+x2) * Lglob * 24;
+    dest_offset = ((x0*LX+x1)*LY+x2) * Lloc  * 24;
+
+    for(x3=0; x3<nloc; x3++) {
+      memcpy( (void*)(phiz+dest_offset), (void*)(phix+src_offset), bytes);
+      src_offset  += src_step;
+      dest_offset += dest_step;
+    }
+  }}}}
+  
+  MPI_Alltoall((void*)phiz, send_count, MPI_DOUBLE, (void*)buffer, recv_count, MPI_DOUBLE, g_ts_comm);
+
+  // transcribe to new lexicographical order (t,z,y,x)
+  for(cntr=0; cntr<nloc; cntr++) {
+    iix = cntr * L5*T*LX*LY*Lloc;
+    for(x5=0; x5<L5; x5++) {
+    for(x0=0; x0<T;  x0++) {
+    for(x1=0; x1<LX; x1++) {
+    for(x2=0; x2<LY; x2++) {
+    for(x3=0; x3<Lloc; x3++) {
+      iy = ((x0*LX*nloc+x1+cntr*LX)*LY + x2) * Lloc + x3;
+      iiy = lexic2eot_5d(x5, iy)
+      _fv_eq_fv( phiz+_GSI(iiy), buffer+_GSI(iix) );
+      iix++;
+    }}}}}
+  }
+} else if(dir==1) {
+  Lglob = LZ_global;
+  Lloc  = Lglob / g_nproc_x;
+  if(Lloc != LX) {
+    if(g_cart_id==0) fprintf(stderr, "# [xchange_revert_decomp] Error, Lloc and LX must be equal\n");
+    EXIT(1);
+  }
+  nloc = g_nproc_x;
+  send_count = L5*T*LX*LY*Lloc;
+  recv_count = send_count;
+  src_step = Lloc*24;
+  dest_step = Lloc*T*LX*LY*24;
+
+  bytes = 24*Lloc*sizeof(double);
+
+  for(x5=0;x5<L5;x5++) {
+  for(x0=0;x0<T;x0++) {
+  for(x1=0;x1<LX;x1++) {
+  for(x2=0;x2<LY;x2++) {
+    src_offset  = ((x0*LX+x1)*LY+x2) * Lglob * 24;
+    dest_offset = ((x0*LX+x1)*LY+x2) * Lloc  * 24;
+
+    for(x3=0; x3<nloc; x3++) {
+      memcpy( (void*)(phiz+dest_offset), (void*)(phix+src_offset), bytes);
+      src_offset  += src_step;
+      dest_offset += dest_step;
+    }
+  }}}}
+  
+  MPI_Alltoall((void*)phiz, send_count, MPI_DOUBLE, (void*)buffer, recv_count, MPI_DOUBLE, g_ts_comm);
+
+  // transcribe to new lexicographical order (t,z,y,x)
+  for(cntr=0; cntr<nloc; cntr++) {
+    iix = cntr * L5*T*LX*LY*Lloc;
+    for(x5=0; x5<L5; x5++) {
+    for(x0=0; x0<T;  x0++) {
+    for(x1=0; x1<LX; x1++) {
+    for(x2=0; x2<LY; x2++) {
+    for(x3=0; x3<Lloc; x3++) {
+      iy = ((x0*LX*nloc+x1+cntr*LX)*LY + x2) * Lloc + x3;
+      iiy = lexic2eot_5d(x5, iy)
+      _fv_eq_fv( phiz+_GSI(iiy), buffer+_GSI(iix) );
+      iix++;
+    }}}}}
+  }
+
+}
+
+#elif !(defined PARALLELTX) && (defined PARALLELTXY)
+  if(g_cart_id==0) fprintf(stdout, "# [xchange_revert_decomp] not yet implemented\n");
+  return(1);
+#endif
+
+#endif
+}
