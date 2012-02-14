@@ -136,6 +136,12 @@ int main(int argc, char **argv) {
   int *qlatt_id=NULL, *qlatt_count=NULL, **qlatt_rep=NULL, **qlatt_map=NULL;
   double **qlatt_list=NULL;
   /************************************************/
+
+  /************************************************/
+  double boundary_condition_factor;
+  int boundary_condition_factor_set = 0;
+  /************************************************/
+
 //#ifdef MPI       
 //  kernelPackT = true;
 //#endif
@@ -152,7 +158,7 @@ int main(int argc, char **argv) {
   QudaInvertParam inv_param = newQudaInvertParam();
 #endif
 
-  while ((c = getopt(argc, argv, "soch?vgf:p:")) != -1) {
+  while ((c = getopt(argc, argv, "soch?vgf:p:b:")) != -1) {
     switch (c) {
     case 'v':
       g_verbose = 1;
@@ -178,6 +184,11 @@ int main(int argc, char **argv) {
     case 's':
       smear_source = 1;
       fprintf(stdout, "# [invert_dw_quda] will smear the sources if they are read from file\n");
+      break;
+    case 'b':
+      boundary_condition_factor = atof(optarg);
+      boundary_condition_factor_set = 1;
+      fprintf(stdout, "# [invert_dw_quda] const. boundary condition factor set to %e\n", boundary_condition_factor);
       break;
     case 'h':
     case '?':
@@ -351,7 +362,9 @@ int main(int argc, char **argv) {
   }
   // multiply timeslice T-1 with factor of -1 (antiperiodic boundary condition)
   if(g_proc_coords[0]==g_nproc_t-1) {
-    fprintf(stdout, "# [] process %d multiplies gauge-field timeslice T_global-1 with -1\n", g_cart_id);
+    if(!boundary_condition_factor_set) boundary_condition_factor = -1.;
+    fprintf(stdout, "# [] process %d multiplies gauge-field timeslice T_global-1 with boundary condition factor %e\n", g_cart_id,
+      boundary_condition_factor);
 #ifdef OPENMP
   omp_set_num_threads(g_num_threads);
 #pragma omp parallel for private(ix,iy)
@@ -569,7 +582,7 @@ int main(int argc, char **argv) {
   inv_param.preserve_dirac = QUDA_PRESERVE_DIRAC_YES;
   inv_param.prec_precondition = cuda_prec_sloppy;
   inv_param.gamma_basis = QUDA_DEGRAND_ROSSI_GAMMA_BASIS;
-  inv_param.dirac_tune = QUDA_TUNE_NO;
+  inv_param.dirac_tune = QUDA_TUNE_YES;
 #endif
  
   //set the T dimension partitioning flag
@@ -866,7 +879,9 @@ int main(int argc, char **argv) {
       retime = CLOCK;
 
       if(g_cart_id==0) {
-        fprintf(stdout, "# [invert_dw_quda] inversion done in %e seconds\n", retime-ratime);
+        fprintf(stdout, "# [invert_dw_quda] QUDA time:  %e seconds\n", inv_param.secs);
+        fprintf(stdout, "# [invert_dw_quda] QUDA Gflops: %e\n", inv_param.gflops/inv_param.secs);
+        fprintf(stdout, "# [invert_dw_quda] wall time:  %e seconds\n", retime-ratime);
         fprintf(stdout, "# [invert_dw_quda] Device memory used:\n\tSpinor: %f GiB\n\tGauge: %f GiB\n",
         inv_param.spinorGiB, gauge_param.gaugeGiB);
       }
