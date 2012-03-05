@@ -405,8 +405,8 @@ void xchange_field_5d(double *phi) {
   unsigned int V5 = VOLUME * L5;
 
 
-  MPI_Request request[120];
-  MPI_Status status[120];
+  MPI_Request request[1025];
+  MPI_Status status[1025];
 
   for(is=0; is<L5; is++) {
     send_offset = 24*is*VOLUME;
