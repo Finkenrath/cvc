@@ -430,6 +430,7 @@ if(mode == 1) {
         }
       }
       if(N_ape>0) {
+        fprintf(stdout, "# [] APE smearing gauge field timeslice no %d with parameters N_ape=%d and alpha_ape=%e\n", sx0, N_ape, alpha_ape);
 #ifdef OPENMP
         status = APE_Smearing_Step_Timeslice_threads(g_gauge_field, N_ape, alpha_ape);
 #else
@@ -1086,6 +1087,7 @@ if(mode == 2) {
         rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
   
     for(icomp=0; icomp<num_component; icomp++) {
+/*
       ir = sx0;
       fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], 0,
           connt[2*((imom*2*num_component+num_component+icomp)*T+ir)], 0., Nconf,
@@ -1101,6 +1103,14 @@ if(mode == 2) {
       fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], it,
           connt[2*((imom*2*num_component+num_component+icomp)*T+ir)], 0., Nconf,
           rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
+*/
+      for(it=0;it<T;it++) {
+        ir  = ( it + sx0 ) % T_global;
+        fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], it,
+            connt[2*((imom*2*num_component+num_component+icomp)*T+ir)  ],
+            connt[2*((imom*2*num_component+num_component+icomp)*T+ir)+1], Nconf,
+            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
+      }
     }
   }
   fclose(ofs);
