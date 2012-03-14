@@ -283,6 +283,13 @@ int main(int argc, char **argv) {
         _cm_eq_id(g_gauge_field+_GGI(ix,mu));
       }
     }
+  } else if(strcmp( gaugefilename_prefix, "random")==0 ) {
+    if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] Setting up random gauge field with seed = %d\n", g_seed);
+    init_rng_state(g_seed, &g_rng_state);
+    random_gauge_field(g_gauge_field, 1.);
+    plaquette(&plaq_m);
+    sprintf(filename, "%s.%.4d", gaugefilename_prefix, Nconf);
+    check_error(write_lime_gauge_field(filename, plaq_m, Nconf, 64), "write_lime_gauge_field", NULL, 12);
   } else {
     if(g_gauge_file_format == 0) {
       // ILDG
@@ -582,7 +589,7 @@ int main(int argc, char **argv) {
                 g_spinor_field[0][_GSI(g_source_location) + 2*(n_c*ispin+icol)  ] = cos(phase);
                 g_spinor_field[0][_GSI(g_source_location) + 2*(n_c*ispin+icol)+1] = sin(phase);
               } else {
-                g_spinor_field[0][_GSI(g_source_location) + 2*(n_c*ispin+icol)  ] = 1.;
+                g_spinor_field[0][_GSI(g_ipt[lsl0][lsl1][lsl2][lsl3]) + 2*(n_c*ispin+icol)  ] = 1.;
               }
             }
             if(g_source_momentum_set) {
@@ -700,8 +707,8 @@ int main(int argc, char **argv) {
   
       // smearing
       if(!g_read_source || (g_read_source && smear_source ) ) {
-        if(g_cart_id==0) fprintf(stdout, "#  [invert_quda] smearing source with N_Jacobi=%d, kappa_Jacobi=%e\n", N_Jacobi, kappa_Jacobi);
         if(N_Jacobi > 0) {
+          if(g_cart_id==0) fprintf(stdout, "#  [invert_quda] smearing source with N_Jacobi=%d, kappa_Jacobi=%e\n", N_Jacobi, kappa_Jacobi);
 #ifdef OPENMP
           Jacobi_Smearing_Step_one_threads(gauge_field_smeared, g_spinor_field[0], g_spinor_field[1], N_Jacobi, kappa_Jacobi);
 #else
@@ -711,7 +718,6 @@ int main(int argc, char **argv) {
 #endif
         }
       }
-
       xchange_field(g_spinor_field[0]);
 
 #ifdef HAVE_QUDA  
@@ -820,7 +826,7 @@ int main(int argc, char **argv) {
       if(g_cart_id==0) fprintf(stdout, "# [invert_quda] writing propagator to file %s\n", filename);
       check_error(write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision), "write_propagator", NULL, 22);
       
-      //sprintf(filename, "%s.ascii.%.2d", source_filename, g_cart_id);
+      //sprintf(filename, "prop.ascii.%.2d.%.2d", g_nproc, g_cart_id);
       //ofs = fopen(filename, "w");
       //printf_spinor_field(g_spinor_field[1], ofs);
       //fclose(ofs);

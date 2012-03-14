@@ -109,44 +109,68 @@ int main(int argc, char **argv) {
   /****************************************
    * allocate memory for the contractions
    ****************************************/
-  disc = (double*)calloc( 2*ncon*VOLUME, sizeof(double));
-  if( disc == (double*)NULL ) { 
-    fprintf(stderr, "could not allocate memory for disc\n");
-    exit(3);
-  }
-
-  if(ncon==-1) {
-    fprintf(stdout, "# No contraction type specified; exit\n");
-    exit(100);
-  } else {
-    fprintf(stdout, "# Using contraction type %d\n", ncon);
-  }
-
-  /****************************************
-   * loop on gauge id's 
-   ****************************************/
-  for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
-  for(sid=g_sourceid; sid<=g_sourceid2; sid+=g_sourceid_step) {
-    fprintf(stdout, "# Starting gid %d\n", gid);
-      sprintf(filename, "%s.%.4d.%.4d", filename_prefix, gid, sid);
-//      sprintf(filename, "%s.%.4d", filename_prefix, gid);
-      fprintf(stdout, "# Reading binary from file %s\n", filename);
-      if( read_lime_contraction(disc, filename, ncon, 0) == 106) {
-        fprintf(stderr, "Error, could not read from file %s; continue\n", filename);
-        continue;
+  switch(ncon) {
+    case -24:
+      disc = (double*)calloc( 24*VOLUME, sizeof(double));
+      if( disc == (double*)NULL ) { 
+        fprintf(stderr, "could not allocate memory for disc\n");
+        exit(3);
       }
-
-      sprintf(filename, "%s.%.4d.%.4d.ascii", filename_prefix, gid, sid);
-//      sprintf(filename, "%s.%.4d.ascii", filename_prefix, gid);
-      fprintf(stdout, "# Writing ascii data to file %s\n", filename);
-      if( (status=write_contraction(disc, NULL, filename, ncon, 2, 0)) != 0 ) {
-        fprintf(stderr, "Error, could not write to file %s; exit\n", filename);
-        fflush(stderr);
-        exit(123);
+      strcpy(filename, filename_prefix);
+      check_error(read_lime_spinor(disc, filename, 0), "read_lime_spinor", NULL, 1);
+      strcat(filename, ".ascii");
+      if( (ifs = fopen(filename, "w")) == NULL ) {
+        EXIT_WITH_MSG(2, "Error, could not open file for reading\n");
       }
-
-    fprintf(stdout, "# Finished gid %d\n", gid);
-  }}
+      for(ix=0;ix<VOLUME;ix++) {
+        for(mu=0;mu<24;mu+=2) {
+          fprintf(ifs, "%8d%3d%25.16e%25.16e\n", ix, mu/2, disc[_GSI(ix)+mu], disc[_GSI(ix)+mu+1]);
+      }}
+      fclose(ifs); ifs=NULL;
+      break;
+    case -72:
+      disc = (double*)calloc( 72*VOLUME, sizeof(double));
+      if( disc == (double*)NULL ) { 
+        fprintf(stderr, "could not allocate memory for disc\n");
+        exit(3);
+      }
+      break;
+    case -1:
+      fprintf(stdout, "# No contraction type specified; exit\n");
+      exit(100);
+      break;
+    default:
+      fprintf(stdout, "# Using contraction type %d\n", ncon);
+      disc = (double*)calloc( 2*ncon*VOLUME, sizeof(double));
+      if( disc == (double*)NULL ) { 
+        fprintf(stderr, "could not allocate memory for disc\n");
+        exit(3);
+      }
+      // loop on gauge id's 
+      for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
+      for(sid=g_sourceid; sid<=g_sourceid2; sid+=g_sourceid_step) {
+        fprintf(stdout, "# Starting gid %d\n", gid);
+          sprintf(filename, "%s.%.4d.%.4d", filename_prefix, gid, sid);
+    //      sprintf(filename, "%s.%.4d", filename_prefix, gid);
+          fprintf(stdout, "# Reading binary from file %s\n", filename);
+          if( read_lime_contraction(disc, filename, ncon, 0) == 106) {
+            fprintf(stderr, "Error, could not read from file %s; continue\n", filename);
+            continue;
+          }
+    
+          sprintf(filename, "%s.%.4d.%.4d.ascii", filename_prefix, gid, sid);
+    //      sprintf(filename, "%s.%.4d.ascii", filename_prefix, gid);
+          fprintf(stdout, "# Writing ascii data to file %s\n", filename);
+          if( (status=write_contraction(disc, NULL, filename, ncon, 2, 0)) != 0 ) {
+            fprintf(stderr, "Error, could not write to file %s; exit\n", filename);
+            fflush(stderr);
+            exit(123);
+          }
+    
+        fprintf(stdout, "# Finished gid %d\n", gid);
+      }}
+      break;
+  }
 
   /***********************************************
    * free the allocated memory, finalize 

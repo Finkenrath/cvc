@@ -116,6 +116,7 @@ int write_binary_spinor_data(double * const s, LimeWriter * limewriter,
   }  /* of if g_cart_id == 0 */
 #ifdef MPI
 #if (defined PARALLELTX) || (defined PARALLELTXY)
+  return(1);
 #else
   tgeom[0] = Tstart;
   tgeom[1] = T;
@@ -173,12 +174,8 @@ int write_binary_spinor_data(double * const s, LimeWriter * limewriter,
     if(g_cart_id==iproc) {
     
       MPI_Send((void*)tgeom, 2, MPI_INT, 0, 100+iproc, g_cart_grid);
-      if(prec == 32) {
-        MPI_Send((void*) s, 24*LX*LY*LZ*T, MPI_FLOAT,  0, 200+iproc, g_cart_grid);
-      }
-      else {
-        MPI_Send((void*) s, 24*LX*LY*LZ*T, MPI_DOUBLE, 0, 200+iproc, g_cart_grid);
-      }
+
+      MPI_Send((void*) s, 24*LX*LY*LZ*T, MPI_DOUBLE, 0, 200+iproc, g_cart_grid);
 
     }
     MPI_Barrier(g_cart_grid);

@@ -676,10 +676,10 @@ int main(int argc, char **argv) {
             if(have_source_flag) {
               if(g_source_momentum_set) {
                 phase = 2*M_PI*( source_momentum[0]*sl1/(double)LX_global + source_momentum[1]*sl2/(double)LY_global + source_momentum[2]*sl3/(double)LZ_global );
-                g_spinor_field[0][_GSI(g_source_location) + 2*(n_c*ispin+icol)  ] = cos(phase);
-                g_spinor_field[0][_GSI(g_source_location) + 2*(n_c*ispin+icol)+1] = sin(phase);
+                g_spinor_field[0][_GSI(g_ipt[lsl0][lsl1][lsl2][lsl3]) + 2*(n_c*ispin+icol)  ] = cos(phase);
+                g_spinor_field[0][_GSI(g_ipt[lsl0][lsl1][lsl2][lsl3]) + 2*(n_c*ispin+icol)+1] = sin(phase);
               } else {
-                g_spinor_field[0][_GSI(g_source_location) + 2*(n_c*ispin+icol)  ] = 1.;
+                g_spinor_field[0][_GSI(g_ipt[lsl0][lsl1][lsl2][lsl3]) + 2*(n_c*ispin+icol)  ] = 1.;
               }
             }
             if(g_source_momentum_set) {
@@ -690,7 +690,7 @@ int main(int argc, char **argv) {
             }
 #ifdef HAVE_QUDA
             // set matpc_tpye
-            source_location_5d_iseven = ( (g_iseven[g_source_location] && ispin<n_s/2) || (!g_iseven[g_source_location] && ispin>=n_s/2) ) ? 1 : 0;
+            source_location_5d_iseven = ( (g_iseven[g_ipt[lsl0][lsl1][lsl2][lsl3]] && ispin<n_s/2) || (!g_iseven[g_ipt[lsl0][lsl1][lsl2][lsl3]] && ispin>=n_s/2) ) ? 1 : 0;
             if(source_location_5d_iseven) {
               inv_param.matpc_type = QUDA_MATPC_EVEN_EVEN;
               if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] matpc type is MATPC_EVEN_EVEN\n");
