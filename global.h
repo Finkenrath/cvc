@@ -22,21 +22,15 @@
 #endif
 
 #ifdef MPI
-#define EXIT(_i) { MPI_Abort(MPI_COMM_WORLD, (_i)); MPI_Finalize(); exit((_i)); }
-#else
-#define EXIT(_i) { exit(_i); }
-#endif
-
-#ifdef MPI
 #define EXIT_WITH_MSG(_i, _msg) {\
-    if(g_cart_id==0) fprintf(stderr, _msg);\
-    MPI_Abort(MPI_COMM_WORLD, (_i));\
-    MPI_Finalize(); exit((_i));\
+  if(g_cart_id==0) fprintf(stderr, "%s", _msg);\
+  MPI_Abort(MPI_COMM_WORLD, (_i));\
+  MPI_Finalize(); exit((_i));\
 }
 #else
 #define EXIT_WITH_MSG(_i, _msg) { \
-    fprintf(stderr, _msg);\
-    exit(_i);\
+  fprintf(stderr, "%s", _msg);\
+  exit(_i);\
 }
 #endif
 

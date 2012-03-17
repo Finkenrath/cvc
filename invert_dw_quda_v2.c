@@ -1,8 +1,8 @@
 /****************************************************
  *
- * invert_dw_quda.c
+ * invert_dw_quda_v2.c
  *
- * Mon Jan 30 20:13:38 EET 2012
+ * Sat Mar 10 19:22:05 EET 2012
  *
  * PURPOSE:
  * - invert using the QUDA library provided by
@@ -11,13 +11,18 @@
  *   Comput. Phys. Commun. 181, 1517 (2010) [arXiv:0911.3191 [hep-lat]].
  * - use QUDA inverter for domain wall fermions
  * - ATTENTION: for MPI usage the parameter kernelPackT must be set to true
+ *
+ * - like invert_dw_quda, but without qdp reordering, using rotation of gamma-basis
+ *   instead
  * TODO:
- * -finish and test MPI implementation with code from Alexei
- *
- * - DO NOT USE WITH PARALLELTX OR PARALLELTXY !!
- *
  * DONE:
  * CHANGES:
+ * - if HAVE_QUDA is defined and either PARALLELTX or PARALLELTXY
+ *   a new MPI grid layout is used:
+ *   grid size = (nz, ny, nx, nt)
+ *   g_proc_coords = (pz, py, px, pt)
+ * - e.g. for multiplication with boundary phase factor need to check g_proc_coords[3] now
+ * - g_proc_coords should coincide with quda_proc_coords now
  ****************************************************/
 
 #include <stdlib.h>
@@ -105,20 +110,20 @@ int main(int argc, char **argv) {
   int sl0, sl1, sl2, sl3, have_source_flag=0;
   int source_proc_coords[4], lsl0, lsl1, lsl2, lsl3;
   int check_residuum = 0;
-  unsigned int VOL3, V5;
+  unsigned int VOL3, VOL5;
   int do_gt   = 0;
   int full_orbit = 0;
   int smear_source = 0;
   char filename[200], source_filename[200];
   double ratime, retime;
   double plaq_r=0., plaq_m=0., norm, norm2;
-  // double spinor1[24], spinor2[24];
+  double spinor1[24], spinor2[24];
   double *gauge_qdp[4], *gauge_field_timeslice=NULL, *gauge_field_smeared=NULL;
   double _1_2_kappa, _2_kappa, phase;
   FILE *ofs;
-  int mu_trans[4] = {3, 0, 1, 2};
+  int mu_trans[4];
   int threadid, nthreads;
-  int timeslice, source_timeslice;
+  int timeslice, source_timeslice, source_location;
   char rng_file_in[100], rng_file_out[100];
   int *source_momentum=NULL;
   int source_momentum_class = -1;
@@ -127,6 +132,8 @@ int main(int argc, char **argv) {
   int imom;
   int num_gpu_on_node=0, rank;
   int source_location_5d_iseven;
+  int quda_proc_coords[4];
+  complex w;
 
   /****************************************************************************/
 #if (defined HAVE_QUDA) && (defined MULTI_GPU)
@@ -222,15 +229,16 @@ int main(int argc, char **argv) {
 
 #ifdef MPI
 #ifdef HAVE_QUDA
-  grid_size[0] = g_nproc_x;
+  grid_size[0] = g_nproc_z;
   grid_size[1] = g_nproc_y;
-  grid_size[2] = g_nproc_z;
+  grid_size[2] = g_nproc_x;
   grid_size[3] = g_nproc_t;
-  fprintf(stdout, "# [] g_nproc = (%d,%d,%d,%d)\n", g_nproc_x, g_nproc_y, g_nproc_z, g_nproc_t);
+  fprintf(stdout, "# [] QUDA process layout = (%d,%d,%d,%d)\n", grid_size[0], grid_size[1], grid_size[2], grid_size[3]);
   initCommsQuda(argc, argv, grid_size, 4);
 #else
   MPI_Init(&argc, &argv);
 #endif
+#else
 #endif
 
 
@@ -242,10 +250,37 @@ int main(int argc, char **argv) {
 
   // initialize MPI parameters
   mpi_init(argc, argv);
-  
+
+#ifdef MPI
+  rank = comm_rank();
+#ifdef HAVE_QUDA
+  quda_proc_coords[0] = rank / (grid_size[1]*grid_size[2]*grid_size[3]);
+  quda_proc_coords[1] =( rank % (grid_size[1]*grid_size[2]*grid_size[3]) ) / (grid_size[2]*grid_size[3]);
+  quda_proc_coords[2] =( rank % (grid_size[2]*grid_size[3]) ) / grid_size[3];
+  quda_proc_coords[3] =( rank % grid_size[3]);
+#else
+  quda_proc_coords[0] = g_proc_coords[0];
+  quda_proc_coords[1] = g_proc_coords[1];
+  quda_proc_coords[2] = g_proc_coords[2];
+  quda_proc_coords[3] = g_proc_coords[3];
+#endif
+#else
+  rank = comm_rank();
+  quda_proc_coords[0] = 0;
+  quda_proc_coords[1] = 0;
+  quda_proc_coords[2] = 0;
+  quda_proc_coords[3] = 0;
+#endif
+  fprintf(stdout, "# [] proc %d process coordinates %2d/%2d\t%2d/%2d\t%2d/%2d\t%2d/%2d\n", g_cart_id,
+      g_proc_coords[0], quda_proc_coords[0], g_proc_coords[1], quda_proc_coords[1],
+      g_proc_coords[2], quda_proc_coords[2], g_proc_coords[3], quda_proc_coords[3]);
+
+//  MPI_Barrier(MPI_COMM_WORLD);
+//  EXIT_WITH_MSG(255, "\n\nAbort on request\n\n");
+
   // the volume of a timeslice
   VOL3 = LX*LY*LZ;
-  V5   = T*LX*LY*LZ*L5;
+  VOL5   = T*LX*LY*LZ*L5;
   g_kappa5d = 0.5 / (5. + g_m5);
   if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] kappa5d = %e\n", g_kappa5d);
 
@@ -291,10 +326,10 @@ int main(int argc, char **argv) {
   }
 #ifdef MPI
   rank = comm_rank();
+  g_gpu_device_number = rank % num_gpu_on_node;
 #else
   rank = 0;
 #endif
-  g_gpu_device_number = rank % num_gpu_on_node;
   fprintf(stdout, "# [] process %d/%d uses device %d\n", rank, g_cart_id, g_gpu_device_number);
 
   initQuda(g_gpu_device_number);
@@ -331,8 +366,6 @@ int main(int argc, char **argv) {
       sprintf(filename, "%s.%.5d", gaugefilename_prefix, Nconf);
       if(g_cart_id==0) fprintf(stdout, "# Reading gauge field from file %s\n", filename);
       status = read_nersc_gauge_field(g_gauge_field, filename, &plaq_r);
-      //status = read_nersc_gauge_field_3x3(g_gauge_field, filename, &plaq_r);
-
     }
     if(status != 0) {
       fprintf(stderr, "[invert_dw_quda] Error, could not read gauge field");
@@ -362,58 +395,68 @@ int main(int argc, char **argv) {
 
 #ifdef HAVE_QUDA
   // transcribe the gauge field
+  mu_trans[0] = 3;
+  mu_trans[1] = 2;
+  mu_trans[2] = 1;
+  mu_trans[3] = 0;
 #ifdef OPENMP
   omp_set_num_threads(g_num_threads);
 #pragma omp parallel for private(ix,iy,mu)
 #endif
   for(ix=0;ix<VOLUME;ix++) {
-    iy = g_lexic2eot[ix];
+    iy = g_lexic2eo[ix];
     for(mu=0;mu<4;mu++) {
       _cm_eq_cm(gauge_qdp[mu_trans[mu]]+18*iy, g_gauge_field+_GGI(ix,mu));
     }
   }
   // multiply timeslice T-1 with factor of -1 (antiperiodic boundary condition)
+#if (defined HAVE_QUDA) && ( (defined PARALLELTX) || (defined PARALLELTXY) )
+  if(g_proc_coords[3]==g_nproc_t-1) {
+#else
   if(g_proc_coords[0]==g_nproc_t-1) {
+#endif
     if(!boundary_condition_factor_set) boundary_condition_factor = -1.;
     fprintf(stdout, "# [] process %d multiplies gauge-field timeslice T_global-1 with boundary condition factor %e\n", g_cart_id,
       boundary_condition_factor);
 #ifdef OPENMP
-  omp_set_num_threads(g_num_threads);
+    omp_set_num_threads(g_num_threads);
 #pragma omp parallel for private(ix,iy)
 #endif
     for(ix=0;ix<VOL3;ix++) {
       iix = (T-1)*VOL3 + ix;
-      iy = g_lexic2eot[iix];
+      iy = g_lexic2eo[iix];
       _cm_ti_eq_re(gauge_qdp[mu_trans[0]]+18*iy, -1.);
     }
   }
 
   // QUDA precision parameters
   switch(g_cpu_prec) {
-    case 0: cpu_prec = QUDA_HALF_PRECISION; if(g_cart_id==0) fprintf(stdout, "# [] CPU prec = half\n"); break;
-    case 1: cpu_prec = QUDA_SINGLE_PRECISION; if(g_cart_id==0) fprintf(stdout, "# [] CPU prec = single\n"); break;
-    case 2: cpu_prec = QUDA_DOUBLE_PRECISION; if(g_cart_id==0) fprintf(stdout, "# [] CPU prec = double\n"); break;
+    case 0: cpu_prec = QUDA_HALF_PRECISION; break;
+    case 1: cpu_prec = QUDA_SINGLE_PRECISION; break;
+    case 2: cpu_prec = QUDA_DOUBLE_PRECISION; break;
     default: cpu_prec = QUDA_DOUBLE_PRECISION; break;
   }
   switch(g_gpu_prec) {
-    case 0: cuda_prec = QUDA_HALF_PRECISION; if(g_cart_id==0) fprintf(stdout, "# [] GPU prec = half\n"); break;
-    case 1: cuda_prec = QUDA_SINGLE_PRECISION; if(g_cart_id==0) fprintf(stdout, "# [] GPU prec = single\n"); break;
-    case 2: cuda_prec = QUDA_DOUBLE_PRECISION; if(g_cart_id==0) fprintf(stdout, "# [] GPU prec = double\n"); break;
+    case 0: cuda_prec = QUDA_HALF_PRECISION; break;
+    case 1: cuda_prec = QUDA_SINGLE_PRECISION; break;
+    case 2: cuda_prec = QUDA_DOUBLE_PRECISION; break;
     default: cuda_prec = QUDA_DOUBLE_PRECISION; break;
   }
   switch(g_gpu_prec_sloppy) {
-    case 0: cuda_prec_sloppy = QUDA_HALF_PRECISION; if(g_cart_id==0) fprintf(stdout, "# [] GPU sloppy prec = half\n"); break;
-    case 1: cuda_prec_sloppy = QUDA_SINGLE_PRECISION; if(g_cart_id==0) fprintf(stdout, "# [] GPU sloppy prec = single\n"); break;
-    case 2: cuda_prec_sloppy = QUDA_DOUBLE_PRECISION; if(g_cart_id==0) fprintf(stdout, "# [] GPU sloppy prec = double\n"); break;
+    case 0: cuda_prec_sloppy = QUDA_HALF_PRECISION; break;
+    case 1: cuda_prec_sloppy = QUDA_SINGLE_PRECISION; break;
+    case 2: cuda_prec_sloppy = QUDA_DOUBLE_PRECISION; break;
     default: cuda_prec_sloppy = QUDA_SINGLE_PRECISION; break;
   }
 
   // QUDA gauge parameters
-  gauge_param.X[0] = LX;
+  // - this is how we would need it
+  gauge_param.X[0] = LZ;
   gauge_param.X[1] = LY;
-  gauge_param.X[2] = LZ;
-  gauge_param.X[3] = T;
+  gauge_param.X[2] = LX;
+  gauge_param.X[3] = T; 
   inv_param.Ls = L5;
+  if(g_cart_id==0) fprintf(stdout, "# [] QUDA geometry parameters: Ls=%d; gauge_param.X = (%d, %d, %d, %d)\n", inv_param.Ls, gauge_param.X[0], gauge_param.X[1], gauge_param.X[2], gauge_param.X[3]);
 
   gauge_param.anisotropy  = 1.0;
   gauge_param.type        = QUDA_WILSON_LINKS;
@@ -441,7 +484,6 @@ int main(int argc, char **argv) {
   pad_size = _MAX(pad_size, z_face_size);
   pad_size = _MAX(pad_size, t_face_size);
   gauge_param.ga_pad = pad_size;
-  if(g_cart_id==0) printf("# [invert_dw_quda] pad_size = %d\n", pad_size);
 #endif
 
   // load the gauge field
@@ -465,6 +507,7 @@ int main(int argc, char **argv) {
 #else
     for(i=0; i<N_ape; i++) {
        APE_Smearing_Step(gauge_field_smeared, alpha_ape);
+       xchange_gauge_field_timeslice(gauge_field_smeared);
      }
 #endif
     xchange_gauge_field(gauge_field_smeared);
@@ -477,15 +520,19 @@ int main(int argc, char **argv) {
   no_fields = 6;
 #endif
   g_spinor_field = (double**)calloc(no_fields, sizeof(double*));
-  for(i=0; i<no_fields; i++) alloc_spinor_field(&g_spinor_field[i], VOLUMEPLUSRAND*L5);
+  for(i=0; i<no_fields; i++) {
+    alloc_spinor_field(&g_spinor_field[i], (VOLUME+RAND)*L5);
+    memset(g_spinor_field[i], 0, 24*(VOLUME+RAND)*L5*sizeof(double));
+  }
+
 
   switch(g_source_type) {
     case 0:
       // the source locaton
-      sl0 =   g_source_location                              / (LX_global*LY_global*LZ);
-      sl1 = ( g_source_location % (LX_global*LY_global*LZ) ) / (          LY_global*LZ);
-      sl2 = ( g_source_location % (          LY_global*LZ) ) / (                    LZ);
-      sl3 =   g_source_location %                      LZ;
+      sl0 =   g_source_location / (LX_global*LY_global*LZ_global);
+      sl1 = ( g_source_location % (LX_global*LY_global*LZ_global) ) / (          LY_global*LZ_global);
+      sl2 = ( g_source_location % (          LY_global*LZ_global) ) / (                    LZ_global);
+      sl3 =   g_source_location %                      LZ_global;
       if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] global sl = (%d, %d, %d, %d)\n", sl0, sl1, sl2, sl3);
       source_proc_coords[0] = sl0 / T;
       source_proc_coords[1] = sl1 / LX;
@@ -502,8 +549,10 @@ int main(int argc, char **argv) {
       lsl1 = sl1 % LX;
       lsl2 = sl2 % LY;
       lsl3 = sl3 % LZ;
+      source_location = g_ipt[lsl0][lsl1][lsl2][lsl3];
       if(have_source_flag) {
-        fprintf(stdout, "# [invert_dw_quda] process %d has the source at (%d, %d, %d, %d)\n", g_cart_id, lsl0, lsl1, lsl2, lsl3);
+        fprintf(stdout, "# [invert_dw_quda] process %d has the source at %d = (%d, %d, %d, %d)\n",
+            g_cart_id, source_location, lsl0, lsl1, lsl2, lsl3);
       }
       break;
     case 2:
@@ -512,11 +561,28 @@ int main(int argc, char **argv) {
       // the source timeslice
 #ifdef MPI
       source_proc_coords[0] = g_source_timeslice / T;
+#if (defined PARALLELTX) || (defined PARALLELTXY)
+      if(source_proc_coords[0] == g_proc_coords[0]) {
+        source_proc_coords[1] = g_proc_coords[1];
+      } else {
+        source_proc_coords[1] = -1;
+      }
+#else
       source_proc_coords[1] = 0;
+#endif
+
+#ifdef PARALLELTXY
+      if(source_proc_coords[0] == g_proc_coords[0]) {
+        source_proc_coords[2] = g_proc_coords[2];
+      } else {
+        source_proc_coords[2] = -1;
+      }
+#else
       source_proc_coords[2] = 0;
-      source_proc_coords[3] = 0;
+#endif
+      source_proc_coords[3] = -1;
       MPI_Cart_rank(g_cart_grid, source_proc_coords, &g_source_proc_id);
-      have_source_flag = ( g_source_proc_id == g_cart_id );
+      have_source_flag = ( source_proc_coords[0] == g_proc_coords[0] );
       source_timeslice = have_source_flag ? g_source_timeslice % T : -1;
 #else
       g_source_proc_id = 0;
@@ -537,8 +603,8 @@ int main(int argc, char **argv) {
     if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] using cg inverter\n"); 
   } else if(strcmp(g_inverter_type_name, "bicgstab") == 0) {
     inv_param.inv_type       = QUDA_BICGSTAB_INVERTER;
-    if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] using bicgstab inverter\n");
-#ifdef MULTI_GPU    
+    if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] using bicgstab inverter\n"); 
+#ifdef MULTI_GPU
   } else if(strcmp(g_inverter_type_name, "gcr") == 0) {
     inv_param.inv_type       = QUDA_GCR_INVERTER;
     if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] using gcr inverter\n"); 
@@ -571,7 +637,6 @@ int main(int argc, char **argv) {
 #ifdef MPI
   // domain decomposition preconditioner parameters
   if(inv_param.inv_type == QUDA_GCR_INVERTER) {
-    if(g_cart_id == 0) printf("# [] settup DD parameters\n");
     inv_param.gcrNkrylov     = 15;
     inv_param.inv_type_precondition = QUDA_MR_INVERTER;
     inv_param.tol_precondition = 1e-6;
@@ -598,7 +663,7 @@ int main(int argc, char **argv) {
   inv_param.preserve_dirac = QUDA_PRESERVE_DIRAC_YES;
   inv_param.prec_precondition = cuda_prec_sloppy;
   inv_param.gamma_basis = QUDA_DEGRAND_ROSSI_GAMMA_BASIS;
-  inv_param.dirac_tune = QUDA_TUNE_YES;
+  inv_param.dirac_tune = QUDA_TUNE_NO;
 #endif
  
   //set the T dimension partitioning flag
@@ -688,14 +753,16 @@ int main(int argc, char **argv) {
           case 0:
             // point source
             if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] Creating point source\n");
-            for(ix=0;ix<L5*VOLUME;ix++) { _fv_eq_zero(g_spinor_field[0]+ix); }
+            for(ix=0;ix<VOL5;ix++) { _fv_eq_zero(g_spinor_field[0]+ix); }
             if(have_source_flag) {
               if(g_source_momentum_set) {
-                phase = 2*M_PI*( source_momentum[0]*sl1/(double)LX_global + source_momentum[1]*sl2/(double)LY_global + source_momentum[2]*sl3/(double)LZ_global );
-                g_spinor_field[0][_GSI(g_ipt[lsl0][lsl1][lsl2][lsl3]) + 2*(n_c*ispin+icol)  ] = cos(phase);
-                g_spinor_field[0][_GSI(g_ipt[lsl0][lsl1][lsl2][lsl3]) + 2*(n_c*ispin+icol)+1] = sin(phase);
+                phase = 2*M_PI*( source_momentum[0]*sl1/(double)LX_global 
+                               + source_momentum[1]*sl2/(double)LY_global 
+                               + source_momentum[2]*sl3/(double)LZ_global );
+                g_spinor_field[0][_GSI(source_location) + 2*(n_c*ispin+icol)  ] = cos(phase);
+                g_spinor_field[0][_GSI(source_location) + 2*(n_c*ispin+icol)+1] = sin(phase);
               } else {
-                g_spinor_field[0][_GSI(g_ipt[lsl0][lsl1][lsl2][lsl3]) + 2*(n_c*ispin+icol)  ] = 1.;
+                g_spinor_field[0][_GSI(source_location) + 2*(n_c*ispin+icol)  ] = 1.;
               }
             }
             if(g_source_momentum_set) {
@@ -706,7 +773,8 @@ int main(int argc, char **argv) {
             }
 #ifdef HAVE_QUDA
             // set matpc_tpye
-            source_location_5d_iseven = ( (g_iseven[g_ipt[lsl0][lsl1][lsl2][lsl3]] && ispin<n_s/2) || (!g_iseven[g_ipt[lsl0][lsl1][lsl2][lsl3]] && ispin>=n_s/2) ) ? 1 : 0;
+/*
+            source_location_5d_iseven = ( (g_iseven[source_location] && ispin<n_s/2) || (!g_iseven[source_location] && ispin>=n_s/2) ) ? 1 : 0;
             if(source_location_5d_iseven) {
               inv_param.matpc_type = QUDA_MATPC_EVEN_EVEN;
               if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] matpc type is MATPC_EVEN_EVEN\n");
@@ -714,6 +782,7 @@ int main(int argc, char **argv) {
               inv_param.matpc_type = QUDA_MATPC_ODD_ODD;
               if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] matpc type is MATPC_ODD_ODD\n");
             }
+*/
 #endif
             break;
           case 2:
@@ -821,15 +890,17 @@ int main(int argc, char **argv) {
       }
   
       // smearing
-      if( ( !g_read_source || (g_read_source && smear_source ) ) && N_Jacobi > 0 ) {
-        if(g_cart_id==0) fprintf(stdout, "#  [invert_dw_quda] smearing source with N_Jacobi=%d, kappa_Jacobi=%e\n", N_Jacobi, kappa_Jacobi);
+      if(!g_read_source || (g_read_source && smear_source ) ) {
+        if(N_Jacobi > 0) {
+          if(g_cart_id==0) fprintf(stdout, "#  [invert_dw_quda] smearing source with N_Jacobi=%d, kappa_Jacobi=%e\n", N_Jacobi, kappa_Jacobi);
 #ifdef OPENMP
-        Jacobi_Smearing_Step_one_threads(gauge_field_smeared, g_spinor_field[0], g_spinor_field[1], N_Jacobi, kappa_Jacobi);
+          Jacobi_Smearing_Step_one_threads(gauge_field_smeared, g_spinor_field[0], g_spinor_field[1], N_Jacobi, kappa_Jacobi);
 #else
-        for(c=0; c<N_Jacobi; c++) {
-          Jacobi_Smearing_Step_one(gauge_field_smeared, g_spinor_field[0], g_spinor_field[1], kappa_Jacobi);
-        }
+          for(c=0; c<N_Jacobi; c++) {
+            Jacobi_Smearing_Step_one(gauge_field_smeared, g_spinor_field[0], g_spinor_field[1], kappa_Jacobi);
+          }
 #endif
+        }
       }
       xchange_field(g_spinor_field[0]);
 
@@ -839,24 +910,25 @@ int main(int argc, char **argv) {
       spinor_4d_to_5d(g_spinor_field[0], g_spinor_field[0]);
       xchange_field_5d(g_spinor_field[0]);
 
-      //sprintf(filename, "%s.ascii.5d.%.2d", source_filename, g_cart_id);
-      //ofs = fopen(filename, "w");
-      //printf_spinor_field_5d(g_spinor_field[0], ofs);
-      //fclose(ofs);
+      sprintf(filename, "source.ascii.5d.%.2d.%.2d", g_nproc, g_cart_id);
+      ofs = fopen(filename, "w");
+      printf_spinor_field_5d(g_spinor_field[0], ofs);
+      fclose(ofs);
 
       
 #ifdef HAVE_QUDA  
       // reorder, multiply with g2
-      for(ix=0;ix<L5*VOLUME;ix++) {
-        _fv_eq_zero(g_spinor_field[2]+_GSI(ix));
-      }
-      for(ix=0;ix<VOLUME;ix++) {
-        iy = lexic2eot_5d(0, ix);
-        _fv_eq_gamma_ti_fv(g_spinor_field[2]+_GSI(iy), 2, g_spinor_field[0]+_GSI(ix));
-      }
-      for(ix=0;ix<VOLUME;ix++) {
-        iy = lexic2eot_5d(L5-1, ix);
-        _fv_eq_gamma_ti_fv(g_spinor_field[2]+_GSI(iy), 2, g_spinor_field[0]+_GSI(ix+(L5-1)*VOLUME));
+      memset(g_spinor_field[2], 0, 24*L5*(VOLUME+RAND)*sizeof(double));
+      for(ix=0;ix<VOL5;ix++) {
+        iy = g_lexic2eo_5d[ix];
+
+        _fv_eq_gamma_ti_fv(spinor1, 0, g_spinor_field[0]+_GSI(ix));
+        _fv_eq_gamma_ti_fv(spinor2, 1, spinor1);
+        _fv_eq_gamma_ti_fv(g_spinor_field[2]+_GSI(iy), 3, spinor1);
+        _fv_pl_eq_fv(g_spinor_field[2]+_GSI(iy), spinor2);
+        _fv_ti_eq_re(g_spinor_field[2]+_GSI(iy), _ONE_OVER_SQRT2);
+        _co_eq_fv_dag_ti_fv(&w, g_spinor_field[2]+_GSI(iy), g_spinor_field[2]+_GSI(iy));
+
       }
 #endif
 
@@ -866,16 +938,25 @@ int main(int argc, char **argv) {
       if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] starting inversion\n");
 
 #ifdef HAVE_QUDA 
-      //for(ix=0;ix<24*VOLUME*L5;ix++) g_spinor_field[2][ix] = 1.;
-      //sprintf(filename, "source.ascii.5d.%.2d.%.2d", g_nproc, g_cart_id);
-      //ofs = fopen(filename, "w");
-      //printf_spinor_field_5d(g_spinor_field[2], ofs);
-      //fclose(ofs);
+      //for(ix=0;ix<24*VOL5;ix++) g_spinor_field[2][ix] = 1.;
 
-      for(ix=0;ix<VOLUME*L5;ix++) {
-        _fv_eq_zero(g_spinor_field[1]+_GSI(ix) );
-      }
-      xchange_field_5d(g_spinor_field[1]);
+      // TEST   
+      //memset(g_spinor_field[2], 0, 24*L5*(VOLUME+RAND)*sizeof(double));
+      //fprintf(stdout, "# [] %d have_source_flag = %d\n", g_cart_id, have_source_flag);
+      //if(have_source_flag) {
+      //  fprintf(stdout, "# [] process %d setting source\n", g_cart_id);
+      //  g_spinor_field[2][0] = 1.;
+      //}
+
+      sprintf(filename, "source.ascii.rot_5d.%.2d.%.2d", g_nproc, g_cart_id);
+      ofs = fopen(filename, "w");
+      printf_spinor_field_5d(g_spinor_field[2], ofs);
+      fclose(ofs);
+
+      //for(ix=0;ix<VOL5;ix++) { _fv_eq_zero(g_spinor_field[1]+_GSI(ix) ); }
+      //xchange_field_5d(g_spinor_field[1]);
+      memset(g_spinor_field[1], 0, 24*L5*(VOLUME+RAND)*sizeof(double));
+
       ratime = CLOCK;
 #ifdef MPI
       if(inv_param.inv_type == QUDA_BICGSTAB_INVERTER  || inv_param.inv_type == QUDA_GCR_INVERTER) {
@@ -900,49 +981,53 @@ int main(int argc, char **argv) {
         inv_param.spinorGiB, gauge_param.gaugeGiB);
       }
   
-      //sprintf(filename, "prop.ascii.5d.%.2d.%.2d", g_nproc, g_cart_id);
-      //ofs = fopen(filename, "w");
-      //printf_spinor_field_5d(g_spinor_field[1], ofs);
-      //fclose(ofs);
+      sprintf(filename, "prop.ascii.5d.%.2d.%.2d", g_nproc, g_cart_id);
+      ofs = fopen(filename, "w");
+      printf_spinor_field_5d(g_spinor_field[1], ofs);
+      fclose(ofs);
 
       if(inv_param.mass_normalization == QUDA_KAPPA_NORMALIZATION) {
         _2_kappa = 2. * g_kappa5d;
-        for(ix=0;ix<VOLUME*L5;ix++) {
+        for(ix=0;ix<VOL5;ix++) {
           _fv_ti_eq_re(g_spinor_field[1]+_GSI(ix), _2_kappa );
         }
       }
   
-      // reorder, multiply with g2
-      for(is=0;is<L5;is++) {
-      for(ix=0;ix<VOLUME;ix++) {
-        iy  = lexic2eot_5d(is, ix);
-        iix = is*VOLUME + ix;
-        _fv_eq_fv(g_spinor_field[2]+_GSI(iix), g_spinor_field[1]+_GSI(iy));
-      }}
-      for(ix=0;ix<VOLUME*L5;ix++) {
-        _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, g_spinor_field[2]+_GSI(ix));
+      // transcribe from qdp+eo to cvc+lexicographical, rotate back, multiply with g0
+      memcpy(g_spinor_field[2], g_spinor_field[1], 24*VOLUME*L5*sizeof(double));
+      for(ix=0;ix<VOL5;ix++) {
+        iy = g_lexic2eo_5d[ix];
+        _fv_eq_gamma_ti_fv(spinor1, 0, g_spinor_field[2]+_GSI(iy));
+        _fv_eq_gamma_ti_fv(spinor2, 1, spinor1);
+        _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 3, spinor1);
+        _fv_pl_eq_fv(g_spinor_field[1]+_GSI(ix), spinor2);
+        _fv_ti_eq_re(g_spinor_field[1]+_GSI(ix), -_ONE_OVER_SQRT2);
       }
-#ifdef MPI
       xchange_field_5d(g_spinor_field[1]);
-#endif
 #else
-      for(ix=0;ix<VOLUME*L5;ix++) { _fv_eq_zero(g_spinor_field[1]+_GSI(ix) ); }
+      //for(ix=0;ix<VOL5;ix++) { _fv_eq_zero(g_spinor_field[1]+_GSI(ix) ); }
       //g_spinor_field[1][_GSI(g_ipt[lsl0][lsl1][lsl2][lsl3])] = 1.;
-      xchange_field_5d(g_spinor_field[1]);
+      //xchange_field_5d(g_spinor_field[1]);
+      memset(g_spinor_field[1], 0, 24*L5*(VOLUME+RAND)*sizeof(double));
 //      if(strcmp(gaugefilename_prefix, "identity")==0) {
 //        if(g_cart_id==0) fprintf(stdout, "# [] calling invert_Q_DW_Wilson_her\n");
 //        status = invert_Q_DW_Wilson_her(g_spinor_field[1], g_spinor_field[0], 2)
 //      } else {
         if(g_cart_id==0) fprintf(stdout, "# [] calling invert_Q_Wilson\n");
-        ratime = CLOCK;
         // status = invert_Q_DW_Wilson(g_spinor_field[1], g_spinor_field[0], 2);
+        ratime = CLOCK;
         status = invert_Q_DW_Wilson_her(g_spinor_field[1], g_spinor_field[0], 2);
+        retime = CLOCK;
 //      }
-      retime = CLOCK;
-      if(status < 0) {
-        if(g_cart_id==0) fprintf(stderr, "[invert_dw_quda] Error from inversion, status was %d\n", status);
-        EXIT(5);
-      }
+        if(status < 0) {
+          if(g_cart_id==0) fprintf(stderr, "[invert_dw_quda] Error from inversion, status was %d\n", status);
+          EXIT(5);
+        }
+        //sprintf(filename, "prop.ascii.5d.%.2d.%.2d", g_nproc, g_cart_id);
+        //ofs = fopen(filename, "w");
+        //printf_spinor_field_5d(g_spinor_field[1], ofs);
+        //fclose(ofs);
+
 #endif
       if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] inversion done in %e seconds\n", retime-ratime);
 
@@ -957,8 +1042,9 @@ int main(int argc, char **argv) {
 #ifdef MPI
         xchange_field_5d(g_spinor_field[1]);
 #endif
-        for(ix=0;ix<L5*VOLUME;ix++) { _fv_eq_zero(g_spinor_field[2]); }
+        //for(ix=0;ix<VOL5;ix++) { _fv_eq_zero(g_spinor_field[2]); }
         //xchange_field_5d(g_spinor_field[2]);
+        memset(g_spinor_field[2], 0, 24*L5*(VOLUME+RAND)*sizeof(double));
 
         //sprintf(filename, "%s.inverted.ascii.%.2d", source_filename, g_cart_id);
         //ofs = fopen(filename, "w");
@@ -967,12 +1053,12 @@ int main(int argc, char **argv) {
 
         Q_DW_Wilson_phi(g_spinor_field[2], g_spinor_field[1]);
   
-        for(ix=0;ix<VOLUME*L5;ix++) {
+        for(ix=0;ix<VOL5;ix++) {
           _fv_mi_eq_fv(g_spinor_field[2]+_GSI(ix), g_spinor_field[0]+_GSI(ix));
         }
   
-        spinor_scalar_product_re(&norm, g_spinor_field[2], g_spinor_field[2], VOLUME*L5);
-        spinor_scalar_product_re(&norm2, g_spinor_field[0], g_spinor_field[0], VOLUME*L5);
+        spinor_scalar_product_re(&norm, g_spinor_field[2], g_spinor_field[2], VOL5);
+        spinor_scalar_product_re(&norm2, g_spinor_field[0], g_spinor_field[0], VOL5);
         if(g_cart_id==0) fprintf(stdout, "\n# [invert_dw_quda] absolut residuum squared: %e; relative residuum %e\n", norm, sqrt(norm/norm2) );
       }
   

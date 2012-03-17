@@ -1638,8 +1638,13 @@ void Q_DW_Wilson_4d_phi(double *xi, double *phi) {
   unsigned int VOL3 = LX*LY*LZ;
   double xi_[24], *phi_, *U_, SU3_1[18];
   double spinor1[24], spinor2[24];
-  double psign = ( g_proc_coords[0]==g_nproc_t-1 ) ? -1. : 1.;
-  double nsign = ( g_proc_coords[0]==0 ) ? -1. : 1.;
+#if (defined HAVE_QUDA) && ( (defined PARALLELTX) || (defined PARALLELTXY) )
+  int tproc_dir = 3;
+#else
+  int tproc_dir = 0;
+#endif
+  double psign = ( g_proc_coords[tproc_dir] == g_nproc_t-1 ) ? -1. : 1.;
+  double nsign = ( g_proc_coords[tproc_dir] == 0           ) ? -1. : 1.;
  
   for(is=0; is<L5; is++) {
 
@@ -2031,8 +2036,13 @@ void Q_DW_Wilson_dag_4d_phi(double *xi, double *phi) {
   unsigned int VOL3 = LX*LY*LZ;
   double xi_[24], *phi_, *U_, SU3_1[18];
   double spinor1[24], spinor2[24];
-  double psign = ( g_proc_coords[0]==g_nproc_t-1 ) ? -1. : 1.;
-  double nsign = ( g_proc_coords[0]==0 ) ? -1. : 1.;
+#if (defined HAVE_QUDA) && ( (defined PARALLELTX) || (defined PARALLELTXY) )
+  int tproc_dir = 3;
+#else
+  int tproc_dir = 0;
+#endif
+  double psign = ( g_proc_coords[tproc_dir] == g_nproc_t-1 ) ? -1. : 1.;
+  double nsign = ( g_proc_coords[tproc_dir] == 0           ) ? -1. : 1.;
  
   for(is=0; is<L5; is++) {
 
@@ -2417,9 +2427,13 @@ void Q_DW_Wilson_dag_5th_phi(double *xi, double *phi) {
   for(ix=0;ix<VOLUME;ix++) {
     xi_  = xi  + _GSI(index_s);
     phi_ = phi + _GSI(index_s);
-
+#if (defined RIGHTHANDED_FWD)
     _fv_pl_eq_PLi_fv_ti_re(xi_, phi+_GSI((L5-1)*VOLUME+ix), g_m0);
     _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s+VOLUME));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_pl_eq_PRe_fv_ti_re(xi_, phi+_GSI((L5-1)*VOLUME+ix), g_m0);
+    _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s+VOLUME));
+#endif
     index_s++;
   }
 
@@ -2429,8 +2443,13 @@ void Q_DW_Wilson_dag_5th_phi(double *xi, double *phi) {
     xi_  = xi  + _GSI(index_s);
     phi_ = phi + _GSI(index_s);
 
+#if (defined RIGHTHANDED_FWD)
     _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s - VOLUME));
     _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s + VOLUME));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s - VOLUME));
+    _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s + VOLUME));
+#endif
     index_s++;
   }
   }
@@ -2440,8 +2459,13 @@ void Q_DW_Wilson_dag_5th_phi(double *xi, double *phi) {
     xi_  = xi  + _GSI(index_s);
     phi_ = phi + _GSI(index_s);
 
+#if (defined RIGHTHANDED_FWD)
     _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s - VOLUME));
     _fv_pl_eq_PRe_fv_ti_re(xi_, phi+_GSI(ix), g_m0);
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s - VOLUME));
+    _fv_pl_eq_PLi_fv_ti_re(xi_, phi+_GSI(ix), g_m0);
+#endif
     index_s++;
   }
   return;
@@ -2459,8 +2483,13 @@ void Q_DW_Wilson_5th_phi(double *xi, double *phi) {
     xi_  = xi  + _GSI(index_s);
     phi_ = phi + _GSI(index_s);
 
+#if (defined RIGHTHANDED_FWD)
     _fv_pl_eq_PRe_fv_ti_re(xi_, phi+_GSI((L5-1)*VOLUME+ix), g_m0);
     _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s+VOLUME));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_pl_eq_PLi_fv_ti_re(xi_, phi+_GSI((L5-1)*VOLUME+ix), g_m0);
+    _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s+VOLUME));
+#endif
     index_s++;
   }
 
@@ -2470,8 +2499,13 @@ void Q_DW_Wilson_5th_phi(double *xi, double *phi) {
     xi_  = xi  + _GSI(index_s);
     phi_ = phi + _GSI(index_s);
 
+#if (defined RIGHTHANDED_FWD)
     _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s - VOLUME));
     _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s + VOLUME));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s - VOLUME));
+    _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s + VOLUME));
+#endif
     index_s++;
   }
   }
@@ -2481,8 +2515,13 @@ void Q_DW_Wilson_5th_phi(double *xi, double *phi) {
     xi_  = xi  + _GSI(index_s);
     phi_ = phi + _GSI(index_s);
 
+#if (defined RIGHTHANDED_FWD)
     _fv_mi_eq_PRe_fv(xi_, phi+_GSI(index_s - VOLUME));
     _fv_pl_eq_PLi_fv_ti_re(xi_, phi+_GSI(ix), g_m0);
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_mi_eq_PLi_fv(xi_, phi+_GSI(index_s - VOLUME));
+    _fv_pl_eq_PRe_fv_ti_re(xi_, phi+_GSI(ix), g_m0);
+#endif
     index_s++;
   }
 
@@ -2490,6 +2529,9 @@ void Q_DW_Wilson_5th_phi(double *xi, double *phi) {
 }
 
 void Q_DW_Wilson_phi(double *xi, double *phi) {
+#if !(defined RIGHTHANDED_BWD) && !(defined RIGHTHANDED_FWD)
+  EXIT_WITH_MSG(1, "[Q_DW_Wilson_phi] Error, chiral projectors undefined\n");
+#else
   double _1_2_kappa = 0.5 / g_kappa5d;
   unsigned int ix;
 
@@ -2501,9 +2543,13 @@ void Q_DW_Wilson_phi(double *xi, double *phi) {
   Q_DW_Wilson_4d_phi(xi, phi);
   Q_DW_Wilson_5th_phi(xi, phi);
   return;
+#endif
 }
 
 void Q_DW_Wilson_dag_phi(double *xi, double *phi) {
+#if !(defined RIGHTHANDED_BWD) && !(defined RIGHTHANDED_FWD)
+  EXIT_WITH_MSG(1, "[Q_DW_Wilson_dag_phi] Error, chiral projectors undefined\n");
+#else
   double _1_2_kappa = 0.5 / g_kappa5d;
   unsigned int ix;
 
@@ -2515,6 +2561,7 @@ void Q_DW_Wilson_dag_phi(double *xi, double *phi) {
   Q_DW_Wilson_dag_4d_phi(xi, phi);
   Q_DW_Wilson_dag_5th_phi(xi, phi);
   return;
+#endif
 }
 
 /*********************************************
@@ -2525,11 +2572,19 @@ void spinor_5d_to_4d(double*s, double*t) {
   unsigned int ix, iy;
 
   for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
     _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
   }
 
   for(ix=0, iy=(L5-1)*VOLUME;ix<VOLUME;ix++, iy++) {
+#if (defined RIGHTHANDED_FWD)
     _fv_pl_eq_PRe_fv(s+_GSI(ix), t+_GSI(iy));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_pl_eq_PLi_fv(s+_GSI(ix), t+_GSI(iy));
+#endif
   }
  return;
 }
@@ -2543,11 +2598,19 @@ void spinor_4d_to_5d(double *s, double*t) {
   unsigned int ix, iy;
 
   for(ix=0, iy=(L5-1)*VOLUME;ix<VOLUME;ix++, iy++) {
+#if (defined RIGHTHANDED_FWD)
     _fv_eq_PLi_fv(s+_GSI(iy), t+_GSI(ix) );
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_eq_PRe_fv(s+_GSI(iy), t+_GSI(ix) );
+#endif
   }
 
   for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
     _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
   }
 
   for(ix=VOLUME;ix<(L5-1)*VOLUME;ix++) {

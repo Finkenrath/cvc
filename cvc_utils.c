@@ -393,12 +393,6 @@ void xchange_gauge_field_timeslice(double *gfield) {
  *****************************************************/
 void xchange_field_5d(double *phi) {
 #ifdef MPI
-#if (defined PARALLELTX) || (PARALLELTXY)
-  if(g_cart_id==0) fprintf(stderr, "[] Error, 2-, 3-dim. parallel version not implemented\n");
-  MPI_Abort(MPI_COMM_WORLD, 1);
-  MPI_Finalize();
-  exit(1);
-#endif
   int cntr=0, id=0;
   int is;
   unsigned int recv_offset, send_offset;
@@ -425,36 +419,42 @@ void xchange_field_5d(double *phi) {
     MPI_Irecv(&phi[recv_offset], 1, spinor_time_slice_cont, g_nb_t_dn, id, g_cart_grid, &request[cntr]);
     cntr++;
     id++;
-/*
-#if (defined PARALLELTX) || (defined PARALLELTXY)
-  MPI_Isend(&phi[0],                              1, spinor_x_slice_vector, g_nb_x_dn, id, g_cart_grid, &request[cntr]);
-  cntr++;
-  MPI_Irecv(&phi[24*(VOLUME+2*LX*LY*LZ)],         1, spinor_x_slice_cont,   g_nb_x_up, id, g_cart_grid, &request[cntr]);
-  cntr++;
-  id++;
 
-  MPI_Isend(&phi[24*(LX-1)*LY*LZ],                1, spinor_x_slice_vector, g_nb_x_up, id, g_cart_grid, &request[cntr]);
-  cntr++;
-  MPI_Irecv(&phi[24*(VOLUME+2*LX*LY*LZ+T*LY*LZ)], 1, spinor_x_slice_cont,   g_nb_x_dn, id, g_cart_grid, &request[cntr]);
-  cntr++;
-  id++;
+#if (defined PARALLELTX) || (defined PARALLELTXY)
+    send_offset = 24*is*VOLUME;
+    recv_offset = 24*(V5 + is*RAND + 2*LX*LY*LZ);
+    MPI_Isend(&phi[send_offset], 1, spinor_x_slice_vector, g_nb_x_dn, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    MPI_Irecv(&phi[recv_offset], 1, spinor_x_slice_cont,   g_nb_x_up, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    id++;
+
+    send_offset = 24*(is*VOLUME + (LX-1)*LY*LZ);
+    recv_offset = 24*(V5 + is*RAND + 2*LX*LY*LZ + T*LY*LZ);
+    MPI_Isend(&phi[send_offset], 1, spinor_x_slice_vector, g_nb_x_up, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    MPI_Irecv(&phi[recv_offset], 1, spinor_x_slice_cont,   g_nb_x_dn, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    id++;
 #endif
 
 #if defined PARALLELTXY
-  MPI_Isend(&phi[0],                                        1, spinor_y_slice_vector, g_nb_y_dn, id, g_cart_grid, &request[cntr]);
-  cntr++;
-  MPI_Irecv(&phi[24*(VOLUME+2*(LX*LY*LZ+T*LY*LZ))],         1, spinor_y_slice_cont,   g_nb_y_up, id, g_cart_grid, &request[cntr]);
-  cntr++;
-  id++;
-  
-  MPI_Isend(&phi[24*(LY-1)*LZ],                             1, spinor_y_slice_vector, g_nb_y_up, id, g_cart_grid, &request[cntr]);
-  cntr++;
-  MPI_Irecv(&phi[24*(VOLUME+2*(LX*LY*LZ+T*LY*LZ)+T*LX*LZ)], 1, spinor_y_slice_cont,   g_nb_y_dn, id, g_cart_grid, &request[cntr]);
-  cntr++;
-  id++;
+    send_offset = 24*is*VOLUME;
+    recv_offset = 24*(V5 + is*RAND + 2*(LX*LY*LZ+T*LY*LZ) );
+    MPI_Isend(&phi[send_offset], 1, spinor_y_slice_vector, g_nb_y_dn, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    MPI_Irecv(&phi[recv_offset], 1, spinor_y_slice_cont,   g_nb_y_up, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    id++;
 
+    send_offset = 24*(is*VOLUME + (LY-1)*LZ );
+    recv_offset = 24*(V5 + is*RAND + 2*(LX*LY*LZ+T*LY*LZ)+T*LX*LZ );
+    MPI_Isend(&phi[send_offset], 1, spinor_y_slice_vector, g_nb_y_up, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    MPI_Irecv(&phi[recv_offset], 1, spinor_y_slice_cont,   g_nb_y_dn, id, g_cart_grid, &request[cntr]);
+    cntr++;
+    id++;
 #endif
-*/
   }
   MPI_Waitall(cntr, request, status);
 #endif
@@ -1742,31 +1742,44 @@ int printf_spinor_field(double *s, FILE *ofs) {
 
 int printf_spinor_field_5d(double *s, FILE *ofs) {
 
-  int i, start_valuet=0, start_valuex=0;
+  int i, start_valuet=0, start_valuex=0, start_valuey=0;
   int x0, x1, x2, x3, ix, is;
+  int gx0, gx1, gx2, gx3;
   int y0, y1, y2, y3;
 
   if( (ofs == (FILE*)NULL) || (s==(double*)NULL) ) return(108);
 #ifdef MPI
   start_valuet = 1;
-#  ifdef PARALLELTX
+#ifdef PARALLELTX
   start_valuex = 1;
-#  else
-  start_valuex = 0;
-# endif
-#else
-  start_valuet = 0;
+#elif defined PARALLELTXY
+  start_valuex = 1;
+  start_valuey = 1;
+#endif
 #endif
   for(is=0;is<L5;is++) {
     for(x0=-start_valuet; x0<T +start_valuet; x0++) {
     for(x1=-start_valuex; x1<LX+start_valuex; x1++) {
-      if( (x0==-1 || x0==T) && (x1==-1 || x1==LX)) continue;
-    for(x2= 0; x2<LX;  x2++) {
-    for(x3= 0; x3<LX;  x3++) {
+    for(x2=-start_valuey; x2<LY+start_valuey; x2++) {
+    for(x3= 0; x3<LZ;  x3++) {
+      boundary = 0;
+      if( x0==-1 || x0==T ) boundary++;
+      if( x1==-1 || x1==LX) boundary++;
+      if( x2==-1 || x2==LY) boundary++;
+      if(boundary>1) continue;
+
       y0=x0; y1=x1; y2=x2; y3=x3;
-      if(x0==-1) y0=T+1;
+      if(x0==-1) y0= T  + 1;
+      if(x1==-1) y1= LX + 1;
+      if(x2==-1) y2= LY + 1;
+
+      gx0 = x0 + g_proc_coords[0] * T;
+      gx1 = x1 + g_proc_coords[1] * LX;
+      gx2 = x2 + g_proc_coords[2] * LY;
+      gx3 = x3 + g_proc_coords[3] * LZ;
+
       ix = _GSI(g_ipt_5d[is][y0][y1][y2][y3]);
-      fprintf(ofs, "# [%2d] s=%3d, t=%3d, x=%3d, y=%3d, z=%3d\n", g_cart_id, is, x0, x1, x2, x3);
+      fprintf(ofs, "# [%2d] s=%3d, t=%3d, x=%3d, y=%3d, z=%3d; %3d\n", g_cart_id, is, gx0, gx1, gx2, gx3, ix/24);
 /*
       fprintf(ofs, "%18.9e %18.9e\t%18.9e %18.9e\t%18.9e %18.9e\n"\
                    "%18.9e %18.9e\t%18.9e %18.9e\t%18.9e %18.9e\n"\

@@ -935,6 +935,9 @@ int read_nersc_gauge_binary_data_3col(FILE*ifs, double*s, DML_Checksum*ans) {
 
 
 int read_nersc_gauge_field_3x3(double*s, char*filename, double *plaq) {
+#if (defined PARALLELTX) || (defined PARALLELTXY)
+  EXIT_WITH_MSG(1, "\n[read_nersc_gauge_field_3x3] Error, 2- and 3-dim. parallel versions not yet implemented; exit\n");
+#endif
 /*
   this is the NERSC header format:
   BEGIN_HEADER
@@ -975,23 +978,27 @@ int read_nersc_gauge_field_3x3(double*s, char*filename, double *plaq) {
   int words_bigendian = big_endian();
   int nu[4];
   double u[12], U_[18];
+#ifdef MPI
+  int ibuf;
+  long int offset;
+#endif
 
   ifs = fopen(filename, "r");
   if(ifs == NULL) {
-    fprintf(stderr, "[] Error, could not open file %s for reading\n", filename);
-    return(1);
+    if(g_cart_id==0) fprintf(stderr, "[] Error, could not open file %s for reading\n", filename);
+    EXIT(1);
   }
 
   if( fgets(line, linelength, ifs) == NULL ) {
-    fprintf(stderr, "[] Error, could not read first line\n");
-    return(2);
+    if(g_cart_id==0) fprintf(stderr, "[] Error, could not read first line\n");
+    EXIT(2);
   }
   length=strlen(line);
   line[length-1] = '\0';
 
   if(strcmp(line, "BEGIN_HEADER") != 0 ) {
-    fprintf(stderr, "[] Error, could not find beginning of header\n");
-    return(3);
+    if(g_cart_id==0) fprintf(stderr, "[] Error, could not find beginning of header\n");
+    EXIT(3);
   }
 
   while( fgets(line, linelength, ifs) != NULL ) {
@@ -1014,31 +1021,38 @@ int read_nersc_gauge_field_3x3(double*s, char*filename, double *plaq) {
   }
 
   if(!end_flag) {
-    fprintf(stderr, "[] Error, could not reach end of header\n");
-    return(4);
+    if(g_cart_id==0) fprintf(stderr, "[] Error, could not reach end of header\n");
+    EXIT(4);
   }
 
-  fprintf(stdout, "# [] Reached end of header, read binary section\n");
+  if(g_cart_id==0) fprintf(stdout, "# [] Reached end of header, read binary section\n");
   
-  fprintf(stdout, "# [] l1=%d, l2=%d, l3=%d, l4=%d\n",l1, l2, l3, l4);
+  if(g_cart_id==0) fprintf(stdout, "# [] l1=%d, l2=%d, l3=%d, l4=%d\n",l1, l2, l3, l4);
 
-  lvol = l1 * l2 * l3 * l4;
+//  lvol = l1 * l2 * l3 * l4;
+  lvol = l1 * l2 * l3 * T;
 
   if(lvol==0) {
-    fprintf(stderr, "[] Error, zero volume\n");
-    return(5);
+    if(g_cart_id==0) fprintf(stderr, "[] Error, zero volume\n");
+    EXIT(5);
   }
  
   ftmp = (double*)malloc(lvol*72*sizeof(double));
   if(ftmp == NULL) {
-    fprintf(stderr, "[] Error, could not alloc ftmp\n");
-    return(6);
+    if(g_cart_id==0) fprintf(stderr, "[] Error, could not alloc ftmp\n");
+    EXIT(6);
   }
-
+#ifdef MPI
+    offset = 72*(long int)l1*l2*l3*g_proc_coords[0]*T*sizeof(double);
+    //fprintf(stdout, "# [%d] offset = %ld\n", g_cart_id, offset);
+    if(fseek(ifs, offset, SEEK_CUR) != 0) {
+      EXIT(10);
+    }
+#endif
   iread = fread(ftmp, sizeof(double), 72*lvol, ifs);
   if(iread != 72*lvol) {
-    fprintf(stderr, "[] Error, could not read proper amount of data\n");
-    return(7);
+    if(g_cart_id==0) fprintf(stderr, "[] Error, could not read proper amount of data\n");
+    EXIT(7);
   }
   fclose(ifs);
 
@@ -1049,7 +1063,7 @@ int read_nersc_gauge_field_3x3(double*s, char*filename, double *plaq) {
 
   bytes = 72*lvol*sizeof(double);
   step=sizeof(uint32_t);
-  fprintf(stdout, "# [] step size = %u bytes\n", step);
+  if(g_cart_id==0) fprintf(stdout, "# [] step size = %u bytes\n", step);
   iptr = (uint32_t*)ftmp;
   checksum = 0;
   for(ix=0;ix<bytes;ix+=step) {
@@ -1057,11 +1071,15 @@ int read_nersc_gauge_field_3x3(double*s, char*filename, double *plaq) {
     iptr++;
   }
 
-  fprintf(stdout, "# [] checksum: read  %#lx; calculated %#lx\n", cks, checksum);
+#ifdef MPI
+    MPI_Allreduce(&checksum, &ibuf, 1, MPI_INT, MPI_SUM, g_cart_grid);
+    checksum = ibuf;
+#endif
+  if(g_cart_id==0) fprintf(stdout, "# [] checksum: read  %#lx; calculated %#lx\n", cks, checksum);
 
   if(cks != checksum) {
-    fprintf(stderr, "[] Error, checksums do not match\n");
-    return(8);
+    if(g_cart_id==0) fprintf(stderr, "[] Error, checksums do not match\n");
+    EXIT(8);
   }
 
   nu[0] = 1;
@@ -1072,7 +1090,7 @@ int read_nersc_gauge_field_3x3(double*s, char*filename, double *plaq) {
   // - assume index formula idx = (((t*LX+x)*LY+y)*LZ+z)*(4*3*3*2) + mu*(3*3*2) + 2*(3*u+c)+r
   //   with mu=0,1,2,3; u=0,1,2; c=0,1,2, r=0,1
   iy = 0;
-  for(x4=0; x4<l4; x4++) {  // t
+  for(x4=0; x4<T; x4++) {  // t
   for(x3=0; x3<l3; x3++) {  // z
   for(x2=0; x2<l2; x2++) {  // y
   for(x1=0; x1<l1; x1++) {  // x

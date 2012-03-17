@@ -211,7 +211,7 @@ int prepare_timeslice_source_one_end(double *s, double *gauge_field, int timesli
 #if !(defined PARALLELTX) && !(defined PARALLELTXY)
   int c;
   unsigned int ix, iix, x1, x2, x3;
-  int i;
+  int i, id, coords[4]; ;
   double ran[6];
   unsigned int VOL3 = LX*LY*LZ;
 
@@ -236,6 +236,16 @@ int prepare_timeslice_source_one_end(double *s, double *gauge_field, int timesli
   for(ix=0; ix<VOLUME; ix++) {
     _fv_eq_zero(s+_GSI(ix));
   }
+
+  // which process fills the timeslice ?
+#ifdef MPI
+    coords[0] = timeslice / T;
+    coords[1] = 0;
+    coords[2] = 0;
+    coords[3] = 0;
+    MPI_Cart_rank(g_cart_grid, coords, &id);
+    timeslice = g_cart_id==id ? timeslice % T : -1;
+#endif
 
   if(timeslice >= 0) {
     for(ix=0; ix<VOL3; ix++) {
@@ -285,7 +295,7 @@ int prepare_timeslice_source_one_end(double *s, double *gauge_field, int timesli
     }
   }  // of if timeslice >= 0
 
-  sync_rng_state(g_source_proc_id, rng_reset);
+  sync_rng_state(id, rng_reset);
 
   return(0);
 #else
@@ -299,7 +309,7 @@ int prepare_timeslice_source_one_end_color(double *s, double *gauge_field, int t
 #if !(defined PARALLELTX) && !(defined PARALLELTXY)
   int c;
   unsigned int ix, iix, x1, x2, x3;
-  int i;
+  int i, id, coords[4];
   double ran[2];
   unsigned int VOL3 = LX*LY*LZ;
 
@@ -323,6 +333,16 @@ int prepare_timeslice_source_one_end_color(double *s, double *gauge_field, int t
   for(ix=0; ix<VOLUME; ix++) {
     _fv_eq_zero(s+_GSI(ix));
   }
+
+  // which process fills the timeslice ?
+#ifdef MPI
+    coords[0] = timeslice / T;
+    coords[1] = 0;
+    coords[2] = 0;
+    coords[3] = 0;
+    MPI_Cart_rank(g_cart_grid, coords, &id);
+    timeslice = g_cart_id==id ? timeslice % T : -1;
+#endif
 
   if(timeslice>=0) {
     for(ix=0; ix<VOL3; ix++) {
@@ -364,7 +384,7 @@ int prepare_timeslice_source_one_end_color(double *s, double *gauge_field, int t
     }
   }  // of if timeslice >= 0
 
-  sync_rng_state(g_source_proc_id, rng_reset);
+  sync_rng_state(id, rng_reset);
 
   return(0);
 #else

@@ -154,9 +154,12 @@ int main(int argc, char **argv) {
     fprintf(stderr, "ERROR from init_geometry\n");
     exit(101);
   }
-
   geometry();
-  init_geometry_5d();
+
+  if(init_geometry_5d() != 0) {
+    fprintf(stderr, "ERROR from init_geometry_5d\n");
+    exit(102);
+  }
   geometry_5d();
 
   VOL3 = LX*LY*LZ;

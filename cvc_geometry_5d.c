@@ -117,6 +117,8 @@ void geometry_5d() {
   int isboundary;
   int i_even, i_odd;
   int itzyx;
+  unsigned int V5  = T * LX * LY * LZ * L5;
+  unsigned int V5h = V5 / 2;
 
 #ifdef MPI
   int start_valuet = 1;
@@ -179,29 +181,26 @@ void geometry_5d() {
     g_idn_5d[ix][3] = get_index_5d(is, x0, x1, x2, x3-1);
 
     // is even / odd
-    if(isboundary == 0) {
-      g_iseven_5d[ix] = ( is + x0 + T *g_proc_coords[0] + x1 + LX*g_proc_coords[1] \
-                     + x2 + LY*g_proc_coords[2] + x3 + LZ*g_proc_coords[3] ) % 2 == 0;
+    g_iseven_5d[ix] = ( is + x0 + T *g_proc_coords[0] + x1 + LX*g_proc_coords[1] \
+                   + x2 + LY*g_proc_coords[2] + x3 + LZ*g_proc_coords[3] ) % 2 == 0;
 
-      // replace this by indext function
-      itzyx = ( ( x0*LZ + x3 ) * LY + x2 ) * LX + x1 + is*T*LX*LY*LZ;
-      g_isevent_5d[itzyx] = g_iseven_5d[ix];
-    }
+    // replace this by indext function
+    itzyx = ( ( x0*LZ + x3 ) * LY + x2 ) * LX + x1 + is*T*LX*LY*LZ;
+    g_isevent_5d[itzyx] = g_iseven_5d[ix];
 
   }}}} // of x3, x2, x1, x0
   }    // of is
 
 
   i_even = 0; i_odd = 0;
-  for(ix=0; ix<VOLUME*L5; ix++) {
-    // this will have to be changed if to be used with MPI
+  for(ix=0; ix<(VOLUME+RAND)*L5; ix++) {
     if(g_iseven_5d[ix]) {
-      g_lexic2eo_5d[ix] = i_even;
+      g_lexic2eo_5d[ix    ] = i_even;
       g_eo2lexic_5d[i_even] = ix;
       i_even++;
     } else {
-      g_lexic2eo_5d[ix] = i_odd + VOLUME/2;
-      g_eo2lexic_5d[i_odd+VOLUME/2] = ix;
+      g_lexic2eo_5d[ix         ] = i_odd + V5h;
+      g_eo2lexic_5d[i_odd + V5h] = ix;
       i_odd++;
     }
   }
@@ -215,13 +214,14 @@ void geometry_5d() {
   for(x2=0;x2<LY;x2++) {
   for(x1=0;x1<LX;x1++) {
     ix = g_ipt_5d[is][x0][x1][x2][x3];
+    if(ix == -1) continue;
     if(g_isevent_5d[itzyx]) {
-      g_lexic2eot_5d[ix] = i_even;
+      g_lexic2eot_5d[ix    ] = i_even;
       g_eot2lexic_5d[i_even] = ix;
       i_even++;
     } else {
-      g_lexic2eot_5d[ix] = i_odd + VOLUME*L5/2;
-      g_eot2lexic_5d[i_odd+VOLUME*L5/2] = ix;
+      g_lexic2eot_5d[ix         ] = i_odd + V5h;
+      g_eot2lexic_5d[i_odd + V5h] = ix;
       i_odd++;
     }
     itzyx++;
@@ -314,19 +314,19 @@ int init_geometry_5d(void) {
   V = VOLUMEPLUSRAND;
   V5 = L5 * VOLUMEPLUSRAND;
 
-  g_idn_5d = (int**)calloc(V5, sizeof(int*));
+  g_idn_5d  = (int**)calloc(V5, sizeof(int*));
   if((void*)g_idn_5d == NULL) return(1);
 
-  idn_5d = (int*)calloc(4*V5, sizeof(int));
+  idn_5d    = (int*)calloc(4*V5, sizeof(int));
   if((void*)idn_5d == NULL) return(2);
 
-  g_iup_5d = (int**)calloc(V5, sizeof(int*));
+  g_iup_5d  = (int**)calloc(V5, sizeof(int*));
   if((void*)g_iup_5d==NULL) return(3);
 
-  iup_5d = (int*)calloc(4*V5, sizeof(int));
+  iup_5d    = (int*)calloc(4*V5, sizeof(int));
   if((void*)iup_5d==NULL) return(4);
 
-  g_ipt_5d = (int*****)calloc(L5, sizeof(int*));
+  g_ipt_5d  = (int*****)calloc(L5, sizeof(int*));
   if((void*)g_ipt_5d == NULL) return(5);
 
   ipt_5d___ = (int****)calloc(L5*(T+2), sizeof(int*));
@@ -362,23 +362,23 @@ int init_geometry_5d(void) {
   for(ix=1; ix<L5;                    ix++) g_ipt_5d[ix] = g_ipt_5d[ix-1] + (T+2);
 
 
-  g_lexic2eo_5d = (int*)calloc(V5, sizeof(int));
-  if(g_lexic2eo_5d == NULL) return(9);
+  g_lexic2eo_5d  = (int*)calloc(V5, sizeof(int));
+  if(g_lexic2eo_5d  == NULL) return(9);
 
   g_lexic2eot_5d = (int*)calloc(V5, sizeof(int));
   if(g_lexic2eot_5d == NULL) return(10);
 
-  g_eo2lexic_5d = (int*)calloc(V5, sizeof(int));
-  if(g_eo2lexic_5d == NULL) return(11);
+  g_eo2lexic_5d  = (int*)calloc(V5, sizeof(int));
+  if(g_eo2lexic_5d  == NULL) return(11);
 
   g_eot2lexic_5d = (int*)calloc(V5, sizeof(int));
   if(g_eot2lexic_5d == NULL) return(11);
 
-  g_iseven_5d = (int*)calloc(V5, sizeof(int));
-  if(g_iseven_5d == NULL) return(12);
+  g_iseven_5d    = (int*)calloc(V5, sizeof(int));
+  if(g_iseven_5d    == NULL) return(12);
 
-  g_isevent_5d = (int*)calloc(V5, sizeof(int));
-  if(g_isevent_5d == NULL) return(12);
+  g_isevent_5d   = (int*)calloc(V5, sizeof(int));
+  if(g_isevent_5d   == NULL) return(13);
 
   return(0);
 }

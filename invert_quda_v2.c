@@ -1,8 +1,8 @@
 /****************************************************
  *
- * invert_quda.c
+ * invert_quda_v2.c
  *
- * Mi 2. Nov 07:45:11 EET 2011
+ * Sat Mar 10 11:21:54 EET 2012
  *
  * PURPOSE:
  * - invert using the QUDA library provided by
@@ -10,9 +10,12 @@
  *   Lattice QCD systems of equations using mixed precision solvers on GPUs,"
  *   Comput. Phys. Commun. 181, 1517 (2010) [arXiv:0911.3191 [hep-lat]].
  *
+ * - like invert_quda, but try NOT to reorder the spatial directions; try to pass 
+ *   the gauge and spinor fields to quda
+ *   with same geometry as in cvc; rotate gamma basis instead:
+ *   gt, gx, gy, gz -> Gt = -gt, Gx = -gz, Gy = gy, Gz = -gx
+ * - rotation matrix should be g0(g1 + g3) / sqrt(2)
  * TODO:
- * -finish and test MPI implementation with code from Alexei
- * - adapt to changes made for invert_dw_quda
  * DONE:
  * CHANGES:
  ****************************************************/
@@ -104,11 +107,11 @@ int main(int argc, char **argv) {
   char filename[200], source_filename[200];
   double ratime, retime;
   double plaq_r=0., plaq_m=0., norm, norm2;
-  // double spinor1[24], spinor2[24];
+  double spinor1[24], spinor2[24];
   double *gauge_qdp[4], *gauge_field_timeslice=NULL, *gauge_field_smeared=NULL;
   double _1_2_kappa, _2_kappa, phase;
   FILE *ofs;
-  int mu_trans[4] = {3, 0, 1, 2};
+  int mu_trans[4];
   int threadid, nthreads;
   int timeslice;
   char rng_file_in[100], rng_file_out[100];
@@ -262,10 +265,10 @@ int main(int argc, char **argv) {
   cudaGetDeviceCount(&num_gpu_on_node);
 #ifdef MPI
   rank            = comm_rank();
-  g_gpu_device_number = rank % num_gpu_on_node;
 #else
   rank = 0;
 #endif
+  //g_gpu_device_number = rank % num_gpu_on_node;
   fprintf(stdout, "# [] process %d/%d uses device %d\n", rank, g_cart_id, g_gpu_device_number);
   initQuda(g_gpu_device_number);
 #endif
@@ -323,41 +326,45 @@ int main(int argc, char **argv) {
 #ifndef HAVE_QUDA
   if(N_Jacobi>0) {
 #endif
-    // allocate the smeared / qdp ordered gauge field
+    // allocate the smeared
     alloc_gauge_field(&gauge_field_smeared, VOLUMEPLUSRAND);
-    for(i=0;i<4;i++) {
-      gauge_qdp[i] = gauge_field_smeared + i*18*VOLUME;
-    }
 #ifndef HAVE_QUDA
   }
 #endif
 
+  // set the QCD gauge field
+  for(i=0;i<4;i++) {
+    gauge_qdp[i] = gauge_field_smeared + i*18*VOLUME;
+  }
+
 #ifdef HAVE_QUDA
   // transcribe the gauge field
+  // - cvc t,x,y,z -> qdp z,y,x,t
+  mu_trans[0] = 3;
+  mu_trans[1] = 2;
+  mu_trans[2] = 1;
+  mu_trans[3] = 0;
 #ifdef OPENMP
   omp_set_num_threads(g_num_threads);
 #pragma omp parallel for private(ix,iy,mu)
 #endif
   for(ix=0;ix<VOLUME;ix++) {
-    iy = g_lexic2eot[ix];
-    for(mu=0;mu<4;mu++) {
-      _cm_eq_cm(gauge_qdp[mu_trans[mu]]+18*iy, g_gauge_field+_GGI(ix,mu));
-    }
+    iy = g_lexic2eo[ix];
+    for(mu=0;mu<4;mu++) { _cm_eq_cm(gauge_qdp[mu_trans[mu]]+18*iy, g_gauge_field+_GGI(ix,mu)); }
   }
   // multiply timeslice T-1 with factor of -1 (antiperiodic boundary condition)
   if(g_proc_coords[0]==g_nproc_t-1) {
-    fprintf(stdout, "# [] process %d multiplies gauge-field timeslice T_global-1 with -1\n");
+    fprintf(stdout, "# [invert_quda_v2] process %d multiplies gauge-field timeslice T_global-1 with -1\n");
 #ifdef OPENMP
   omp_set_num_threads(g_num_threads);
 #pragma omp parallel for private(ix,iy)
 #endif
     for(ix=0;ix<VOL3;ix++) {
       iix = (T-1)*VOL3 + ix;
-      iy = g_lexic2eot[iix];
+      iy = g_lexic2eo[iix];
       _cm_ti_eq_re(gauge_qdp[mu_trans[0]]+18*iy, -1.);
     }
   }
-
 
   // QUDA gauge parameters
   gauge_param.X[0] = LX;
@@ -415,6 +422,13 @@ int main(int argc, char **argv) {
      }
 #endif
     xchange_gauge_field(gauge_field_smeared);
+#ifdef HAVE_QUDA
+  } else {  // can free the smeared field if smearing is not used
+    if(N_Jacobi<=0) {
+      free(gauge_field_smeared);
+      gauge_field_smeared = NULL;
+    }
+#endif
   }
 
   // allocate memory for the spinor fields
@@ -494,21 +508,11 @@ int main(int argc, char **argv) {
   if(g_source_type==2 && g_coherent_source==2) {
     sprintf(rng_file_out, "%s.0", g_rng_filename);
     if( init_rng_stat_file (g_seed, rng_file_out) != 0 ) {
-      if(g_cart_id==0) fprintf(stderr, "[invert_quda] Error, could not write rng status\n");
-#ifdef MPI
-      MPI_Abort(MPI_COMM_WORLD, 210);
-      MPI_Finalize();
-#endif
-      exit(210);
+      EXIT_WITH_MSG(210, "[invert_quda] Error, could not write rng status\n");
     }
-  } else if( (g_source_type==2 && g_coherent_source==1) || g_source_type==3 || g_source_type==4) {
+  } else if( (g_source_type==2 /*&& g_coherent_source==1*/) || g_source_type==3 || g_source_type==4) {
     if( init_rng_state(g_seed, &g_rng_state) != 0 ) {
-      if(g_cart_id==0) fprintf(stderr, "[invert_quda] Error, could initialize rng state\n");
-#ifdef MPI
-      MPI_Abort(MPI_COMM_WORLD, 211);
-      MPI_Finalize();
-#endif
-      exit(211);
+      EXIT_WITH_MSG(211, "[invert_quda] Error, could initialize rng state\n");
     }
   }
 
@@ -701,14 +705,14 @@ int main(int argc, char **argv) {
       //printf_spinor_field(g_spinor_field[0], ofs);
       //fclose(ofs);
   
-      //if(g_write_source) {
-      //  check_error(write_propagator(g_spinor_field[0], source_filename, 0, g_propagator_precision), "write_propagator", NULL, 27);
-      //}
+      if(g_write_source) {
+        check_error(write_propagator(g_spinor_field[0], source_filename, 0, g_propagator_precision), "write_propagator", NULL, 27);
+      }
   
       // smearing
       if(!g_read_source || (g_read_source && smear_source ) ) {
+        if(g_cart_id==0) fprintf(stdout, "#  [invert_quda] smearing source with N_Jacobi=%d, kappa_Jacobi=%e\n", N_Jacobi, kappa_Jacobi);
         if(N_Jacobi > 0) {
-          if(g_cart_id==0) fprintf(stdout, "#  [invert_quda] smearing source with N_Jacobi=%d, kappa_Jacobi=%e\n", N_Jacobi, kappa_Jacobi);
 #ifdef OPENMP
           Jacobi_Smearing_Step_one_threads(gauge_field_smeared, g_spinor_field[0], g_spinor_field[1], N_Jacobi, kappa_Jacobi);
 #else
@@ -718,25 +722,24 @@ int main(int argc, char **argv) {
 #endif
         }
       }
+
       xchange_field(g_spinor_field[0]);
 
-      if(g_write_source) {
-        check_error(write_propagator(g_spinor_field[0], source_filename, 0, g_propagator_precision), "write_propagator", NULL, 27);
-      }
-      continue;
-
 #ifdef HAVE_QUDA  
-      // multiply with g2
+      // transcription to EO ordering; rotation, multiplication with g2
       for(ix=0;ix<VOLUME;ix++) {
-        _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, g_spinor_field[0]+_GSI(ix));
+        
+        iy = g_lexic2eo[ix];
+        _fv_eq_gamma_ti_fv(spinor1, 0, g_spinor_field[0]+_GSI(ix));
+        _fv_eq_gamma_ti_fv(spinor2, 1, spinor1);
+        _fv_eq_gamma_ti_fv(g_spinor_field[2]+_GSI(iy), 3, spinor1);
+        _fv_pl_eq_fv(g_spinor_field[2]+_GSI(iy), spinor2);
+        _fv_ti_eq_re(g_spinor_field[2]+_GSI(iy), _ONE_OVER_SQRT2);
+
+        //iy = g_lexic2eot[ix];
+        //_fv_eq_gamma_ti_fv(g_spinor_field[2]+_GSI(iy), 2, g_spinor_field[0]+_GSI(ix));
       }
-      xchange_field(g_spinor_field[1]);
-  
-      // transcribe the spinor field to even-odd ordering with coordinates (x,y,z,t)
-      for(ix=0;ix<VOLUME;ix++) {
-        iy = g_lexic2eot[ix];
-        _fv_eq_fv(g_spinor_field[2]+_GSI(iy), g_spinor_field[1]+_GSI(ix));
-      }
+      xchange_field(g_spinor_field[2]);
 #endif
   
       /***********************************************
@@ -768,14 +771,18 @@ int main(int argc, char **argv) {
         }
       }
   
-      // transcribe the spinor field to lexicographical order with (t,x,y,z)
+      // transcribe from qdp+eo to cvc+lexicographical, rotate back, multiply with g0
+      memcpy(g_spinor_field[2], g_spinor_field[1], 24*VOLUME*sizeof(double));
       for(ix=0;ix<VOLUME;ix++) {
-        iy = g_lexic2eot[ix];
-        _fv_eq_fv(g_spinor_field[2]+_GSI(ix), g_spinor_field[1]+_GSI(iy));
-      }
-      // multiply with g2
-      for(ix=0;ix<VOLUME;ix++) {
-        _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, g_spinor_field[2]+_GSI(ix));
+        iy = g_lexic2eo[ix];
+        _fv_eq_gamma_ti_fv(spinor1, 0, g_spinor_field[2]+_GSI(iy));
+        _fv_eq_gamma_ti_fv(spinor2, 1, spinor1);
+        _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 3, spinor1);
+        _fv_pl_eq_fv(g_spinor_field[1]+_GSI(ix), spinor2);
+        _fv_ti_eq_re(g_spinor_field[1]+_GSI(ix), -_ONE_OVER_SQRT2);
+
+        //iy = g_lexic2eot[ix];
+        //_fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, g_spinor_field[2]+_GSI(iy));
       }
       xchange_field(g_spinor_field[1]);
 #else
@@ -831,7 +838,7 @@ int main(int argc, char **argv) {
       if(g_cart_id==0) fprintf(stdout, "# [invert_quda] writing propagator to file %s\n", filename);
       check_error(write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision), "write_propagator", NULL, 22);
       
-      //sprintf(filename, "prop.ascii.%.2d.%.2d", g_nproc, g_cart_id);
+      //sprintf(filename, "%s.ascii.%.2d", source_filename, g_cart_id);
       //ofs = fopen(filename, "w");
       //printf_spinor_field(g_spinor_field[1], ofs);
       //fclose(ofs);

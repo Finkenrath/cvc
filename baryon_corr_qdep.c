@@ -84,23 +84,23 @@ int main(int argc, char **argv) {
  /*
   * list of gamma projections to used:
   */
-//  const int gamma_proj_no = 1;
-//  int gamma_proj1[] = {4};
-//  int gamma_proj2[] = {0};
-//  int gamma_proj_isimag1[] = {0};
-//  int gamma_proj_isimag2[] = {0};
-//  double gamma_proj_sign1[] = {0.25};
-//  double gamma_proj_sign2[] = {0.25};
-//  int gamma_proj_fw_bw[] = {3};
+  const int gamma_proj_no = 1;
+  int gamma_proj1[] = {4};
+  int gamma_proj2[] = {0};
+  int gamma_proj_isimag1[] = {0};
+  int gamma_proj_isimag2[] = {0};
+  double gamma_proj_sign1[] = {0.25};
+  double gamma_proj_sign2[] = {0.25};
+  int gamma_proj_fw_bw[] = {3};
 
-  const int gamma_proj_no = 16;
-  int gamma_proj1[] = { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15};
-  int gamma_proj2[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-  int gamma_proj_isimag1[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int gamma_proj_isimag2[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
-  double gamma_proj_sign1[] = {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.};   
-  double gamma_proj_sign2[] = {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.};    
-  int gamma_proj_fw_bw[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+//  const int gamma_proj_no = 16;
+//  int gamma_proj1[] = { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15};
+//  int gamma_proj2[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+//  int gamma_proj_isimag1[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//  int gamma_proj_isimag2[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
+//  double gamma_proj_sign1[] = {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.};   
+//  double gamma_proj_sign2[] = {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.};    
+//  int gamma_proj_fw_bw[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 
   char gamma_proj_string[10];
@@ -403,6 +403,14 @@ int main(int argc, char **argv) {
     if( (ofs = fopen(filename, "r")) == NULL) {
       return(102);
     }
+
+    // check for # at beginning of first line
+    c = fgetc(ofs);
+    rewind(ofs);
+    if(c == '#') {
+      fprintf(stdout, "# [baryon_corr_qdep] header line: %s", fgets(filename, 199, ofs) );
+    }
+
     for(isnk=0;isnk<snk_momentum_no;isnk++) {
       for(icomp=0; icomp<num_component; icomp++) {
         for(it=0;it<T;it++) {

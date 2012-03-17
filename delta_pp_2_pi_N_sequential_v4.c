@@ -716,8 +716,9 @@ if(mode == 2) {
 #ifdef OPENMP
   omp_set_num_threads(g_num_threads);
 #pragma omp parallel private (ix,icomp,threadid) \
-      firstprivate (fermion_type,gamma_component,num_component,connq,\
+      firstprivate (fermion_type,gamma_component,connq,\
           gamma_component_sign,VOL3,g_spinor_field,fp1,fp2,fp3,fpaux,fp4,uprop,dprop,sp1,sp2,timeslice)
+//      shared (num_component)
 {
       threadid = omp_get_thread_num();
 #else
