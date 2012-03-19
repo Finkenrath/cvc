@@ -1746,6 +1746,7 @@ int printf_spinor_field_5d(double *s, FILE *ofs) {
   int x0, x1, x2, x3, ix, is;
   int gx0, gx1, gx2, gx3;
   int y0, y1, y2, y3;
+  int boundary;
 
   if( (ofs == (FILE*)NULL) || (s==(double*)NULL) ) return(108);
 #ifdef MPI

@@ -429,6 +429,8 @@ SDIGIT {SIGN}?[[:digit:]]
     g_source_type = 3;
   } else if (strcmp(yytext, "TimesliceOneEndColor")==0 ) {
     g_source_type = 4;
+  } else if (strcmp(yytext, "SequentialPoint")==0 ) {
+    g_source_type = 5;
   } 
   if(myverbose!=0) printf("source type set to %s\n",yytext);
 }

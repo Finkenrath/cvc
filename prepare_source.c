@@ -392,3 +392,123 @@ int prepare_timeslice_source_one_end_color(double *s, double *gauge_field, int t
   return(1);
 #endif
 }
+
+/*************************************************************************
+ * prepare a sequential source
+ *************************************************************************/
+int prepare_sequential_point_source (double*source, int isc, int timeslice, int*momentum, int smear, double*work, double*gauge_field_smeared) {
+  int i, ix;
+  int gx0, gx1, gx2, gx3;
+  int lx0, lx1, lx2, lx3;
+  int x1, x2, x3;
+  int scoords[4], id=0;
+  int have_source=0, lts=-1;
+  char filename[200];
+  double spinor1[24], phase;
+  complex w;
+
+  if(source==NULL) {
+    EXIT_WITH_MSG(1, "[prepare_sequential_source] Error, source is NULL\n");
+  }
+
+  if(work==NULL && smear) {
+    EXIT_WITH_MSG(2, "[prepare_sequential_source] Error, work is NULL, but need to smear\n");
+  }
+
+  // determine source location
+  gx0 = g_source_location / (LX_global*LY_global*LZ_global);
+  gx3 = g_source_location - gx0* LX_global*LY_global*LZ_global;
+  gx1 = gx3 / (LY_global*LZ_global);
+  gx3 -= gx1 * LY_global*LZ_global;
+  gx2 = gx3 / LZ_global;
+  gx3 -= gx2 * LZ_global;
+
+  if(g_cart_id==0) fprintf(stdout, "# [prepare_sequential_source] global source location = (%d,%d,%d,%d)\n",
+     gx0, gx1, gx2, gx3);
+  scoords[0] = gx0 / T;
+  scoords[1] = gx1 / LX;
+  scoords[2] = gx2 / LY;
+  scoords[3] = gx3 / LZ;
+#ifdef MPI
+  MPI_Cart_rank(g_cart_grid, scoords, &id);
+  lx0 = gx0 % T;
+  lx1 = gx1 % LX;
+  lx2 = gx2 % LY;
+  lx3 = gx3 % LZ;
+#endif
+  if(g_cart_id==id) fprintf(stdout, "# [prepare_sequential_source] process %d has the source location at "\
+      "(%d,%d,%d,%d)\n", id, lx0, lx1, lx2, lx3);
+
+  // (0) which processes have source?
+#if ( (defined PARALLELTX) || (defined PARALLELTXY) ) && (defined HAVE_QUDA)
+  if(g_proc_coords[3] == timeslice / T ) {
+#else
+  if(g_proc_coords[0] == timeslice / T ) {
+#endif
+    have_source = 1;
+    lts = timeslice % T;
+  } else {
+    have_source = 0;
+    lts = -1;
+  }
+  
+  // (1) propagator filename
+  sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.inverted", filename_prefix, Nconf, gx0, gx1, gx2, gx3,\
+      isc);
+  // (2) read the propagator
+  if(g_cart_id==0) fprintf(stdout, "# [prepare_sequential_source] reading propagator from file %s\n", filename);
+  check_error(read_lime_spinor(source, filename, 0), "read_lime_spinor", NULL, 3);
+
+  // (3) set source to zero outside source timeslice
+  for(i=0;i<T;i++) {
+    if(i!=lts) {
+      memset((void*)(source+_GSI(g_ipt[i][0][0][0])), 0, LX*LY*LZ*24*sizeof(double) );
+    }
+  }
+
+  // (4) smear the source
+  if(smear && N_Jacobi>0) {
+    if(g_cart_id==0) fprintf(stdout, "#  [prepare_sequential_source] smearing source with N_Jacobi=%d, kappa_Jacobi=%e\n",\
+        N_Jacobi, kappa_Jacobi);
+#ifdef OPENMP
+      Jacobi_Smearing_Step_one_threads(gauge_field_smeared, source, work, N_Jacobi, kappa_Jacobi);
+#else
+      for(c=0; c<N_Jacobi; c++) {
+        Jacobi_Smearing_Step_one(gauge_field_smeared, source, work, kappa_Jacobi);
+      }
+#endif
+  }
+
+  // (5) multiply with phase and Gamma structure
+  if(have_source) {
+    for(x1=0;x1<LX;x1++) {
+    for(x2=0;x2<LY;x2++) {
+    for(x3=0;x3<LZ;x3++) {
+      ix = g_ipt[lts][x1][x2][x3];
+      phase = 2. * M_PI * ( ( x1+g_proc_coords[1]*LX - gx1 ) * momentum[0] / (double)LX_global
+                          + ( x2*g_proc_coords[2]*LY - gx2 ) * momentum[1] / (double)LY_global
+                          + ( x3*g_proc_coords[3]*LZ - gx3 ) * momentum[2] / (double)LZ_global );
+      w.re =  cos(phase);
+      w.im = -sin(phase);
+      _fv_eq_gamma_ti_fv(spinor1, 5, source + _GSI(ix));
+      _fv_eq_fv_ti_co(source + _GSI(ix), spinor1, &w);
+    }}}
+  }  // of if have_source
+
+
+  // TEST
+  {
+    FILE*ofs;
+    sprintf(filename, "seq_source.ascii.%.2d.%.2d", g_nproc, g_cart_id);
+    ofs = fopen(filename, "w");
+    fprintf(ofs, "# [prepare_sequential_source] the sequential source:\n");
+    for(ix=0;ix<VOLUME;ix++) {
+      for(i=0;i<12;i++) {
+        fprintf(ofs, "%3d%6d%3d%25.16e%25.16e\n", ix, i, source[_GSI(ix)+2*i], source[_GSI(ix)+2*i+1]);
+      }
+    }
+    fclose(ofs);
+  }
+
+  return(0);
+}  // end of function
