@@ -58,7 +58,7 @@ void usage() {
   MPI_Abort(MPI_COMM_WORLD, 1);
   MPI_Finalize();
 #endif
-  exit(0);
+  EXIT(0);
 }
 
 
@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
   int dims[3];
   double *connt=NULL;
   spinor_propagator_type *connq=NULL, *connq_out=NULL;
+  void *buffer=NULL;
   int verbose = 0;
   int sx0, sx1, sx2, sx3;
   int write_ascii=0;
@@ -87,7 +88,7 @@ int main(int argc, char **argv) {
   int threadid;
   char filename[200], contype[200], gauge_field_filename[200], line[200];
   double ratime, retime;
-  //double plaq_m, plaq_r;
+  double plaq_m, plaq_r;
   int mode = -1;
   double *work=NULL;
   fermion_propagator_type *fp1=NULL, *fp2=NULL, *fp3=NULL, *fp4=NULL, *fpaux=NULL, *uprop=NULL, *dprop=NULL;
@@ -131,21 +132,17 @@ int main(int argc, char **argv) {
 /*
  *******************************************************************/
   fftw_complex *in=NULL;
-#ifdef MPI
-   fftwnd_mpi_plan plan_p;
-#else
+//#ifdef MPI
+//   fftwnd_mpi_plan plan_p;
+//#else
    fftwnd_plan plan_p;
-#endif 
-
-#ifdef MPI
-  MPI_Status status;
-#endif
+//#endif 
 
 #ifdef MPI
   MPI_Init(&argc, &argv);
 #endif
 
-  while ((c = getopt(argc, argv, "Sah?vgf:F:p:P:s:m:")) != -1) {
+  while ((c = getopt(argc, argv, "Sah?vgf:F:P:s:m:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -165,7 +162,7 @@ int main(int argc, char **argv) {
         fermion_type = _TM_FERMION;
       } else {
         fprintf(stderr, "[] Error, unrecognized fermion type\n");
-        exit(145);
+        EXIT(145);
       }
       fprintf(stdout, "# [] will use fermion type %s ---> no. %d\n", optarg, fermion_type);
       break;
@@ -176,11 +173,6 @@ int main(int argc, char **argv) {
     case 's':
       use_lattice_momenta = 1;
       fprintf(stdout, "# [] will use lattice momenta\n");
-      break;
-    case 'p':
-      rel_momentum_filename_set = 1;
-      strcpy(rel_momentum_filename, optarg);
-      fprintf(stdout, "# [] will use current momentum file %s\n", rel_momentum_filename);
       break;
     case 'P':
       snk_momentum_filename_set = 1;
@@ -207,8 +199,11 @@ int main(int argc, char **argv) {
     }
   }
 
-#ifdef OPENMP
-  omp_set_num_threads(g_num_threads);
+
+
+#if (defined PARALLELTX) || (defined PARALLELTXY)
+  fprintf(stderr, "[] Error, 2-,3-dim. parallel version not yet implemented; exit\n");
+  EXIT(1);
 #endif
 
   // set the default values
@@ -229,7 +224,7 @@ int main(int argc, char **argv) {
   status = fftw_threads_init();
   if(status != 0) {
     fprintf(stderr, "\n[] Error from fftw_init_threads; status was %d\n", status);
-    exit(120);
+    EXIT(120);
   }
 #endif
 
@@ -249,7 +244,7 @@ int main(int argc, char **argv) {
 
   if(init_geometry() != 0) {
     fprintf(stderr, "ERROR from init_geometry\n");
-    exit(1);
+    EXIT(1);
   }
 
   geometry();
@@ -261,31 +256,44 @@ int main(int argc, char **argv) {
     switch(g_gauge_file_format) {
       case 0:
         sprintf(gauge_field_filename, "%s.%.4d", gaugefilename_prefix, Nconf);
-        status = read_lime_gauge_field_doubleprec(filename);
+        status = read_lime_gauge_field_doubleprec(gauge_field_filename);
         break;
       case 1:
         sprintf(gauge_field_filename, "%s.%.5d", gaugefilename_prefix, Nconf);
-        status = read_nersc_gauge_field(g_gauge_field, filename, &plaq_r);
+        status = read_nersc_gauge_field(g_gauge_field, gauge_field_filename, &plaq_r);
         break;
+    }
+
+    xchange_gauge();
+    plaquette(&plaq_m);
+    if(g_cart_id==0) {
+      fprintf(stdout, "# [] read plaquette value = %25.16e\n", plaq_r);
+      fprintf(stdout, "# [] measured plaquette value = %25.16e\n", plaq_m);
+    }
+
+    if(N_Jacobi>0) {
+      if(g_cart_id==0) fprintf(stdout, "# [delta_pp_2_pi_N_sequential_v4_mpi] APE smearing gauge field with paramters N_APE=%d, alpha_APE=%e\n", N_ape, alpha_ape);
+#ifdef OPENMP
+      APE_Smearing_Step_threads(g_gauge_field, N_ape, alpha_ape);
+#else
+      for(i=0; i<N_ape; i++) {
+        APE_Smearing_Step(g_gauge_field, alpha_ape);
+      }
+#endif
+      xchange_gauge_field(g_gauge_field);
     }
   } else {
     g_gauge_field = NULL;
   }
 
-#ifndef MPI
-  /*********************************************************************
-   * gauge transformation
-   *********************************************************************/
-  if(do_gt) { init_gauge_trafo(&gauge_trafo, 1.); }
-#endif
-
   // determine the source location
-  sx0 = g_source_location/(LX_global*LY_global*LZ_global);
-  sx1 = (g_source_location%(LX_global*LY_global*LZ_global)) / (LY_global*LZ_global);
-  sx2 = (g_source_location%(LY_global*LZ_global)) / LZ_global;
-  sx3 = (g_source_location%LZ_global);
-//  g_source_time_slice = sx0;
-  if(g_cart_id==0) fprintf(stdout, "# [] global source location %d = (%d,%d,%d,%d)\n", g_source_location, sx0, sx1, sx2, sx3);
+  sx0 = g_source_location / ( LX_global*LY_global*LZ_global );
+  sx1 = (g_source_location % ( LX_global*LY_global*LZ_global ) ) / (LY_global*LZ_global);
+  sx2 = (g_source_location % ( LY_global*LZ_global ) ) / LZ_global;
+  sx3 = (g_source_location % LZ_global);
+
+  if(g_cart_id==0) fprintf(stdout, "# [] global source location %d = (%d,%d,%d,%d)\n",
+      g_source_location, sx0, sx1, sx2, sx3);
 
   if(g_source_momentum_set) {
     if(g_source_momentum[0]<0) g_source_momentum[0] += LX_global;
@@ -295,56 +303,63 @@ int main(int argc, char **argv) {
         g_source_momentum[0], g_source_momentum[1], g_source_momentum[2]);
   }
 
-if(mode == 2) {
+
   /***************************************************************************
-   * read the nucleon final momenta to be used
+   * set the relative momentum data by hand
    ***************************************************************************/
-  ofs = fopen(snk_momentum_filename, "r");
-  if(ofs == NULL) {
-    fprintf(stderr, "[] Error, could not open file %s for reading\n", snk_momentum_filename);
-    exit(6);
-  }
-  snk_momentum_no = 0;
-  while( fgets(line, 199, ofs) != NULL) {
-    if(line[0] != '#') {
-      snk_momentum_no++;
+  rel_momentum_no = 1;
+  rel_momentum_list = (int**)malloc(sizeof(int*));
+  *rel_momentum_list = (int*)malloc(3*sizeof(int));
+  (*rel_momentum_list)[0] = g_source_momentum[0];
+  (*rel_momentum_list)[1] = g_source_momentum[1];
+  (*rel_momentum_list)[2] = g_source_momentum[2];
+  
+
+  if(mode == 2) {
+    /***************************************************************************
+     * read the nucleon final momenta to be used
+     ***************************************************************************/
+    ofs = fopen(snk_momentum_filename, "r");
+    if(ofs == NULL) {
+      fprintf(stderr, "[] Error, could not open file %s for reading\n", snk_momentum_filename);
+      EXIT(6);
     }
-  }
-  if(snk_momentum_no == 0) {
-    if(g_cart_id==0) fprintf(stderr, "[] Error, number of momenta is zero\n");
-    EXIT(7);
-  } else {
-    if(g_cart_id==0) fprintf(stdout, "# [] number of nucleon final momenta = %d\n", snk_momentum_no);
-  }
-  rewind(ofs);
-  snk_momentum_list = (int**)malloc(snk_momentum_no * sizeof(int*));
-  snk_momentum_list[0] = (int*)malloc(3*snk_momentum_no * sizeof(int));
-  for(i=1;i<snk_momentum_no;i++) { snk_momentum_list[i] = snk_momentum_list[i-1] + 3; }
-  count=0;
-  while( fgets(line, 199, ofs) != NULL) {
-    if(line[0] != '#') {
-      sscanf(line, "%d%d%d", snk_momentum_list[count], snk_momentum_list[count]+1, snk_momentum_list[count]+2);
-      count++;
+    snk_momentum_no = 0;
+    while( fgets(line, 199, ofs) != NULL) {
+      if(line[0] != '#') {
+        snk_momentum_no++;
+      }
     }
-  }
-  fclose(ofs);
-  if(g_cart_id==0) fprintf(stdout, "# [] the nucleon final momentum list:\n");
-  for(i=0;i<snk_momentum_no;i++) {
-    if(snk_momentum_list[i][0]<0) snk_momentum_list[i][0] += LX_global;
-    if(snk_momentum_list[i][1]<0) snk_momentum_list[i][1] += LY_global;
-    if(snk_momentum_list[i][2]<0) snk_momentum_list[i][2] += LZ_global;
-    if(g_cart_id==0) fprintf(stdout, "\t%3d%3d%3d%3d\n", i, snk_momentum_list[i][0], snk_momentum_list[i][1], snk_momentum_list[i][2]);
-  }
-}  // of if mode == 2
+    if(snk_momentum_no == 0) {
+      if(g_cart_id==0) fprintf(stderr, "[] Error, number of momenta is zero\n");
+      EXIT(7);
+    } else {
+      if(g_cart_id==0) fprintf(stdout, "# [] number of nucleon final momenta = %d\n", snk_momentum_no);
+    }
+    rewind(ofs);
+    snk_momentum_list = (int**)malloc(snk_momentum_no * sizeof(int*));
+    snk_momentum_list[0] = (int*)malloc(3*snk_momentum_no * sizeof(int));
+    for(i=1;i<snk_momentum_no;i++) { snk_momentum_list[i] = snk_momentum_list[i-1] + 3; }
+    count=0;
+    while( fgets(line, 199, ofs) != NULL) {
+      if(line[0] != '#') {
+        sscanf(line, "%d%d%d", snk_momentum_list[count], snk_momentum_list[count]+1, snk_momentum_list[count]+2);
+        count++;
+      }
+    }
+    fclose(ofs);
+    if(g_cart_id==0) fprintf(stdout, "# [] the nucleon final momentum list:\n");
+    for(i=0;i<snk_momentum_no;i++) {
+      if(snk_momentum_list[i][0]<0) snk_momentum_list[i][0] += LX_global;
+      if(snk_momentum_list[i][1]<0) snk_momentum_list[i][1] += LY_global;
+      if(snk_momentum_list[i][2]<0) snk_momentum_list[i][2] += LZ_global;
+      if(g_cart_id==0) fprintf(stdout, "\t%3d%3d%3d%3d\n", i, snk_momentum_list[i][0], snk_momentum_list[i][1], snk_momentum_list[i][2]);
+    }
+  }  // of if mode == 2
 
   // allocate memory for the spinor fields
   g_spinor_field = NULL;
-  if(mode == 1) {
-    no_fields = 3;
-    g_spinor_field = (double**)calloc(no_fields, sizeof(double*));
-    for(i=0; i<no_fields; i++) alloc_spinor_field(&g_spinor_field[i], VOLUME+RAND);
-    if(N_Jacobi>0) work = g_spinor_field[1];
-  } else if(mode == 2) {
+  if(mode == 2) {
     no_fields = 2*n_s*n_c;
     if(N_Jacobi>0) no_fields++;
     g_spinor_field = (double**)calloc(no_fields, sizeof(double*));
@@ -352,652 +367,589 @@ if(mode == 2) {
     if(N_Jacobi>0) work = g_spinor_field[no_fields-1];
   }
   
-if(mode == 2) {
-
-  /*************************************************************************
-   * contractions
-   *************************************************************************/
-
-  // allocate memory for the contractions
-  items = 4 * rel_momentum_no * num_component * T;
-  bytes = sizeof(double);
-  connt = (double*)malloc(items*bytes);
-  if(connt == NULL) {
-    fprintf(stderr, "\n[] Error, could not alloc connt\n");
-    exit(2);
-  }
-  for(ix=0; ix<items; ix++) connt[ix] = 0.;
-
-  items = num_component * (size_t)VOL3;
-  connq = create_sp_field( items );
-  if(connq == NULL) {
-    fprintf(stderr, "\n[] Error, could not alloc connq\n");
-    exit(2);
-  }
-
-  items = (size_t)rel_momentum_no * (size_t)num_component * (size_t)T * (size_t)snk_momentum_no;
-  connq_out = create_sp_field( items );
-  if(connq_out == NULL) {
-    fprintf(stderr, "\n[] Error, could not alloc connq_out\n");
-    exit(22);
-  }
-
-  // initialize FFTW
-  items = 2 * num_component * g_sv_dim * g_sv_dim * VOL3;
-  bytes = sizeof(double);
-  in  = (fftw_complex*)malloc(num_component*g_sv_dim*g_sv_dim*VOL3*sizeof(fftw_complex));
-  if(in == NULL) {
-    fprintf(stderr, "[] Error, could not malloc in for FFTW\n");
-    exit(155);
-  }
-  dims[0]=LX; dims[1]=LY; dims[2]=LZ;
-  //plan_p = fftwnd_create_plan(3, dims, FFTW_FORWARD, FFTW_MEASURE | FFTW_IN_PLACE);
-  plan_p = fftwnd_create_plan_specific(3, dims, FFTW_FORWARD, FFTW_MEASURE, in, num_component*g_sv_dim*g_sv_dim, (fftw_complex*)( connq[0][0] ), num_component*g_sv_dim*g_sv_dim);
-
-  // create the fermion propagator points
-  uprop = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
-  if(uprop== NULL) {
-    fprintf(stdout, "[] Error, could not alloc uprop\n");
-    exit(172);
-  } else {
-    for(i=0;i<g_num_threads;i++) create_fp(uprop+i);
-  }
-  dprop = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
-  if(dprop== NULL) {
-    fprintf(stdout, "[] Error, could not alloc dprop\n");
-    exit(172);
-  } else {
-    for(i=0;i<g_num_threads;i++) create_fp(dprop+i);
-  }
-  fp1 = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
-  if(fp1== NULL) {
-    fprintf(stdout, "[] Error, could not alloc fp1\n");
-    exit(172);
-  } else {
-    for(i=0;i<g_num_threads;i++) create_fp(fp1+i);
-  }
-  fp2 = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
-  if(fp2== NULL) {
-    fprintf(stdout, "[] Error, could not alloc fp2\n");
-    exit(172);
-  } else {
-    for(i=0;i<g_num_threads;i++) create_fp(fp2+i);
-  }
-  fp3 = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
-  if(fp3== NULL) {
-    fprintf(stdout, "[] Error, could not alloc fp3\n");
-    exit(172);
-  } else {
-    for(i=0;i<g_num_threads;i++) create_fp(fp3+i);
-  }
-  fp4 = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
-  if(fp4== NULL) {
-    fprintf(stdout, "[] Error, could not alloc fp4\n");
-    exit(172);
-  } else {
-    for(i=0;i<g_num_threads;i++) create_fp(fp4+i);
-  }
-  fpaux = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
-  if(fpaux== NULL) {
-    fprintf(stdout, "[] Error, could not alloc fpaux\n");
-    exit(172);
-  } else {
-    for(i=0;i<g_num_threads;i++) create_fp(fpaux+i);
-  }
-  sp1 = (spinor_propagator_type*)malloc(g_num_threads*sizeof(spinor_propagator_type));
-  if(sp1== NULL) {
-    fprintf(stdout, "[] Error, could not alloc sp1\n");
-    exit(172);
-  } else {
-    for(i=0;i<g_num_threads;i++) create_sp(sp1+i);
-  }
-  sp2 = (spinor_propagator_type*)malloc(g_num_threads*sizeof(spinor_propagator_type));
-  if(sp2== NULL) {
-    fprintf(stdout, "[] Error, could not alloc sp2\n");
-    exit(172);
-  } else {
-    for(i=0;i<g_num_threads;i++) create_sp(sp2+i);
-  }
-
-
-  /******************************************************
-   * loop on timeslices
-   ******************************************************/
-  for(timeslice=0; timeslice<T; timeslice++)
-  // for(timeslice=1; timeslice<2; timeslice++)
-  {
-    append = (int)( timeslice != 0 );
-
-    // read timeslice of the gauge field
-    if( N_Jacobi>0) {
-      switch(g_gauge_file_format) {
-        case 0:
-          status = read_lime_gauge_field_doubleprec_timeslice(g_gauge_field, gauge_field_filename, timeslice, &ildg_gauge_field_checksum);
-          break;
-        case 1:
-          status = read_nersc_gauge_field_timeslice(g_gauge_field, gauge_field_filename, timeslice, &nersc_gauge_field_checksum);
-          break;
-      }
-      if(status != 0) {
-        fprintf(stderr, "[] Error, could not read gauge field\n");
-        exit(21);
-      }
-#ifdef OPENMP
-      status = APE_Smearing_Step_Timeslice_threads(g_gauge_field, N_ape, alpha_ape);
-#else
-      for(i=0; i<N_ape; i++) {
-        status = APE_Smearing_Step_Timeslice(g_gauge_field, alpha_ape);
-      }
-#endif
+  if(mode == 2) {
+  
+    /*************************************************************************
+     * contractions
+     *************************************************************************/
+  
+    // allocate memory for the contractions
+    items = 4 * rel_momentum_no * num_component * T;
+    bytes = sizeof(double);
+    connt = (double*)malloc(items*bytes);
+    if(connt == NULL) {
+      fprintf(stderr, "\n[] Error, could not alloc connt\n");
+      EXIT(2);
     }
-
+    for(ix=0; ix<items; ix++) connt[ix] = 0.;
+  
+    items = num_component * (size_t)VOL3;
+    connq = create_sp_field( items );
+    if(connq == NULL) {
+      fprintf(stderr, "\n[] Error, could not alloc connq\n");
+      EXIT(2);
+    }
+  
+    items = (size_t)rel_momentum_no * (size_t)num_component * (size_t)T * (size_t)snk_momentum_no;
+    connq_out = create_sp_field( items );
+    if(connq_out == NULL) {
+      fprintf(stderr, "\n[] Error, could not alloc connq_out\n");
+      EXIT(22);
+    }
+  
+    // initialize FFTW
+    items = 2 * num_component * g_sv_dim * g_sv_dim * VOL3;
+    bytes = sizeof(double);
+    in  = (fftw_complex*)malloc(num_component*g_sv_dim*g_sv_dim*VOL3*sizeof(fftw_complex));
+    if(in == NULL) {
+      fprintf(stderr, "[] Error, could not malloc in for FFTW\n");
+      EXIT(155);
+    }
+    dims[0]=LX; dims[1]=LY; dims[2]=LZ;
+    //plan_p = fftwnd_create_plan(3, dims, FFTW_FORWARD, FFTW_MEASURE | FFTW_IN_PLACE);
+    plan_p = fftwnd_create_plan_specific(3, dims, FFTW_FORWARD, FFTW_MEASURE, in, num_component*g_sv_dim*g_sv_dim, (fftw_complex*)( connq[0][0] ), num_component*g_sv_dim*g_sv_dim);
+  
+    // create the fermion propagator points
+    uprop = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
+    if(uprop== NULL) {
+      fprintf(stdout, "[] Error, could not alloc uprop\n");
+      EXIT(172);
+    } else {
+      for(i=0;i<g_num_threads;i++) create_fp(uprop+i);
+    }
+    dprop = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
+    if(dprop== NULL) {
+      fprintf(stdout, "[] Error, could not alloc dprop\n");
+      EXIT(172);
+    } else {
+      for(i=0;i<g_num_threads;i++) create_fp(dprop+i);
+    }
+    fp1 = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
+    if(fp1== NULL) {
+      fprintf(stdout, "[] Error, could not alloc fp1\n");
+      EXIT(172);
+    } else {
+      for(i=0;i<g_num_threads;i++) create_fp(fp1+i);
+    }
+    fp2 = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
+    if(fp2== NULL) {
+      fprintf(stdout, "[] Error, could not alloc fp2\n");
+      EXIT(172);
+    } else {
+      for(i=0;i<g_num_threads;i++) create_fp(fp2+i);
+    }
+    fp3 = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
+    if(fp3== NULL) {
+      fprintf(stdout, "[] Error, could not alloc fp3\n");
+      EXIT(172);
+    } else {
+      for(i=0;i<g_num_threads;i++) create_fp(fp3+i);
+    }
+    fp4 = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
+    if(fp4== NULL) {
+      fprintf(stdout, "[] Error, could not alloc fp4\n");
+      EXIT(172);
+    } else {
+      for(i=0;i<g_num_threads;i++) create_fp(fp4+i);
+    }
+    fpaux = (fermion_propagator_type*)malloc(g_num_threads*sizeof(fermion_propagator_type));
+    if(fpaux== NULL) {
+      fprintf(stdout, "[] Error, could not alloc fpaux\n");
+      EXIT(172);
+    } else {
+      for(i=0;i<g_num_threads;i++) create_fp(fpaux+i);
+    }
+    sp1 = (spinor_propagator_type*)malloc(g_num_threads*sizeof(spinor_propagator_type));
+    if(sp1== NULL) {
+      fprintf(stdout, "[] Error, could not alloc sp1\n");
+      EXIT(172);
+    } else {
+      for(i=0;i<g_num_threads;i++) create_sp(sp1+i);
+    }
+    sp2 = (spinor_propagator_type*)malloc(g_num_threads*sizeof(spinor_propagator_type));
+    if(sp2== NULL) {
+      fprintf(stdout, "[] Error, could not alloc sp2\n");
+      EXIT(172);
+    } else {
+      for(i=0;i<g_num_threads;i++) create_sp(sp2+i);
+    }
+  
+  
     // read timeslice of the 12 up-type propagators and smear them
     for(is=0;is<n_s*n_c;is++) {
-//      if(do_gt == 0) {
-        sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.inverted", filename_prefix, Nconf, sx0, sx1, sx2, sx3, is);
-        status = read_lime_spinor_timeslice(g_spinor_field[is], timeslice, filename, 0, spinor_field_checksum+is);
-        if(status != 0) {
-          fprintf(stderr, "[] Error, could not read propagator from file %s\n", filename);
-          exit(102);
-        }
-        if(N_Jacobi > 0) {
-          fprintf(stdout, "# [] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
-              is, N_Jacobi, kappa_Jacobi);
+      sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.inverted", filename_prefix, Nconf, sx0, sx1, sx2, sx3, is);
+      status = read_lime_spinor(g_spinor_field[is], filename, 0);
+      if(status != 0) {
+        fprintf(stderr, "[] Error, could not read propagator from file %s\n", filename);
+        EXIT(102);
+      }
+      if(N_Jacobi > 0) {
+        if(g_cart_id==0) fprintf(stdout, "# [] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
+            is, N_Jacobi, kappa_Jacobi);
 #ifdef OPENMP
-          Jacobi_Smearing_Step_one_Timeslice_threads(g_gauge_field, g_spinor_field[is], work, N_Jacobi, kappa_Jacobi);
+        Jacobi_Smearing_Step_one_threads(g_gauge_field, g_spinor_field[is], work, N_Jacobi, kappa_Jacobi);
 #else
-          for(c=0; c<N_Jacobi; c++) {
-            Jacobi_Smearing_Step_one_Timeslice(g_gauge_field, g_spinor_field[is], work, kappa_Jacobi);
-          }
-#endif
+        for(c=0; c<N_Jacobi; c++) {
+          Jacobi_Smearing_Step_one(g_gauge_field, g_spinor_field[is], work, kappa_Jacobi);
         }
-//      } else {  // of if do_gt == 0
-//        // apply gt
-//        apply_gt_prop(gauge_trafo, g_spinor_field[is], is/n_c, is%n_c, 4, filename_prefix, g_source_location);
-//      } // of if do_gt == 0
+#endif
+      }
     }
-
-
+  
     /******************************************************
      * loop on relative momenta
      ******************************************************/
     for(imom=0;imom<rel_momentum_no; imom++) {
-
+  
       // read 12 sequential propagators
       for(is=0;is<n_s*n_c;is++) {
-//        if(do_gt == 0) {
-          sprintf(filename, "seq_%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.qx%.2dqy%.2dqz%.2d.inverted", filename_prefix, Nconf, sx0, sx1, sx2, sx3, is,
+        sprintf(filename, "seq_%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.qx%.2dqy%.2dqz%.2d.inverted",
+            filename_prefix, Nconf, sx0, sx1, sx2, sx3, is,
             rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-          status = read_lime_spinor_timeslice(g_spinor_field[n_s*n_c+is], timeslice, filename, 0, seq_spinor_field_checksum+imom*n_s*n_c+is);
-          if(status != 0) {
-            fprintf(stderr, "[] Error, could not read propagator from file %s\n", filename);
-            exit(102);
-          }
-          if(N_Jacobi > 0) {
-            fprintf(stdout, "# [] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
-                 is, N_Jacobi, kappa_Jacobi);
+        status = read_lime_spinor(g_spinor_field[n_s*n_c+is], filename, 0);
+        if(status != 0) {
+          fprintf(stderr, "[] Error, could not read propagator from file %s\n", filename);
+          EXIT(102);
+        }
+        if(N_Jacobi > 0) {
+          if(g_cart_id==0) fprintf(stdout, "# [] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
+              is, N_Jacobi, kappa_Jacobi);
 #ifdef OPENMP
-            Jacobi_Smearing_Step_one_Timeslice_threads(g_gauge_field, g_spinor_field[n_s*n_c+is], work, N_Jacobi, kappa_Jacobi);
+          Jacobi_Smearing_Step_one_threads(g_gauge_field, g_spinor_field[n_s*n_c+is], work, N_Jacobi, kappa_Jacobi);
 #else
-            for(c=0; c<N_Jacobi; c++) {
-              Jacobi_Smearing_Step_one_Timeslice(g_gauge_field, g_spinor_field[n_s*n_c+is], work, kappa_Jacobi);
-            }
-#endif
+          for(c=0; c<N_Jacobi; c++) {
+            Jacobi_Smearing_Step_one(g_gauge_field, g_spinor_field[n_s*n_c+is], work, kappa_Jacobi);
           }
-//        } else {  // of if do_gt == 0
-//          // apply gt
-//          apply_gt_prop(gauge_trafo, g_spinor_field[n_s*n_c+is], is/n_c, is%n_c, 4, filename_prefix, g_source_location);
-//        } // of if do_gt == 0
+#endif
+        }
       }
-  
   
       /******************************************************
-       * contractions
-       *
-       * REMEMBER:
-       *
-       *   uprop = S_u
-       *   dprop = S_seq
-       *   fp1   = C Gamma_1 S_u
-       *   fp2   = C Gamma_1 S_u C Gamma_2
-       *   fp3   =           S_u C Gamma_2
-       *   fp4   = C Gamma_1 S_seq
-       *   Gamma_1 = gamma_mu (always multiplied from the left)
-       *   Gamma_2 = gamma-5  (always multiplied from the right)
+       * loop on timeslices
        ******************************************************/
-#ifdef OPENMP
-  omp_set_num_threads(g_num_threads);
-#pragma omp parallel private (ix,icomp,threadid) \
-      firstprivate (fermion_type,gamma_component,connq,\
-          gamma_component_sign,VOL3,g_spinor_field,fp1,fp2,fp3,fpaux,fp4,uprop,dprop,sp1,sp2,timeslice)
-//      shared (num_component)
-{
-      threadid = omp_get_thread_num();
-#else
-      threadid = 0;
-#endif
-      for(ix=threadid; ix<VOL3; ix+=g_num_threads)
+      for(timeslice=0; timeslice<T; timeslice++)
       {
-        // assign the propagators
-        _assign_fp_point_from_field(uprop[threadid], g_spinor_field, ix);
-        _assign_fp_point_from_field(dprop[threadid], g_spinor_field+n_s*n_c, ix);
-        // flavor rotation for twisted mass fermions
-        if(fermion_type == _TM_FERMION) {
-          _fp_eq_rot_ti_fp(fp1[threadid], uprop[threadid], +1, fermion_type, fp2[threadid]);
-          _fp_eq_fp_ti_rot(uprop[threadid], fp1[threadid], +1, fermion_type, fp2[threadid]);
-          _fp_eq_rot_ti_fp(fp1[threadid], dprop[threadid], +1, fermion_type, fp2[threadid]);
-          _fp_eq_fp_ti_rot(dprop[threadid], fp1[threadid], -1, fermion_type, fp2[threadid]);
-        }
-
-        if(do_gt) {
-          // up propagator
-          _fp_eq_cm_ti_fp(fp1[threadid], gauge_trafo+18*(timeslice*VOL3+ix), uprop[threadid]);
-          _fp_eq_fp_ti_cm_dagger(uprop[threadid], gauge_trafo+18*(timeslice*VOL3+ix), fp1[threadid]);
-          // sequential propagator
-          _fp_eq_cm_ti_fp(fp1[threadid], gauge_trafo+18*(timeslice*VOL3+ix), dprop[threadid]);
-          _fp_eq_fp_ti_cm_dagger(dprop[threadid], gauge_trafo+18*(timeslice*VOL3+ix), fp1[threadid]);
-        }
-  
-        // test: print fermion propagator point
-/*
-        fprintf(stdout, "# uprop[threadid]:\n");
-        printf_fp(uprop[threadid], "uprop[threadid]", stdout);
-        fprintf(stdout, "# dprop[threadid]:\n");
-        printf_fp(dprop[threadid], "dprop[threadid]", stdout);
-*/
-/*
-        double fp_in_base[32];
-        int mu;
-//        _project_fp_to_basis(fp_in_base, uprop[threadid], 0);
-        _project_fp_to_basis(fp_in_base, dprop[threadid], 0);
-        fprintf(stdout, "# [] t=%3d; ix=%6d\n", timeslice, ix);
-        for(mu=0;mu<16;mu++) {
-          fprintf(stdout, "\t%3d%16.7e%16.7e\n", mu, fp_in_base[2*mu], fp_in_base[2*mu+1]);
-        }
-*/
-  
-        for(icomp=0; icomp<num_component; icomp++) {
-  
-          _sp_eq_zero( connq[ix*num_component+icomp]);
-  
-          /******************************************************
-           * prepare fermion propagators
-           ******************************************************/
-          _fp_eq_zero(fp1[threadid]);
-          _fp_eq_zero(fp2[threadid]);
-          _fp_eq_zero(fp3[threadid]);
-          _fp_eq_zero(fp4[threadid]);
-          _fp_eq_zero(fpaux[threadid]);
-          // fp1[threadid] = C Gamma_1 x S_u = g0 g2 Gamma_1 S_u
-          _fp_eq_gamma_ti_fp(fp1[threadid], gamma_component[0][icomp], uprop[threadid]);
-          _fp_eq_gamma_ti_fp(fpaux[threadid], 2, fp1[threadid]);
-          _fp_eq_gamma_ti_fp(fp1[threadid],   0, fpaux[threadid]);
-  
-          // fp2[threadid] = C Gamma_1 x S_u x C Gamma_2 = fp1[threadid] x g0 g2 Gamma_2
-          _fp_eq_fp_ti_gamma(fp2[threadid], 0, fp1[threadid]);
-          _fp_eq_fp_ti_gamma(fpaux[threadid], 2, fp2[threadid]);
-          _fp_eq_fp_ti_gamma(fp2[threadid], gamma_component[1][icomp], fpaux[threadid]);
+        append = (int)( timeslice != 0 );
    
-          // fp3[threadid] = S_u x C Gamma_2 = uprop[threadid] x g0 g2 Gamma_2
-          _fp_eq_fp_ti_gamma(fp3[threadid],   0, uprop[threadid]);
-          _fp_eq_fp_ti_gamma(fpaux[threadid], 2, fp3[threadid]);
-          _fp_eq_fp_ti_gamma(fp3[threadid], gamma_component[1][icomp], fpaux[threadid]);
-   
-          // fp4[threadid] = C Gamma_1 x S_seq = g0 g2 Gamma_1 dprop[threadid] 
-          _fp_eq_gamma_ti_fp(fp4[threadid], gamma_component[0][icomp], dprop[threadid]);
-          _fp_eq_gamma_ti_fp(fpaux[threadid], 2, fp4[threadid]);
-          _fp_eq_gamma_ti_fp(fp4[threadid],   0, fpaux[threadid]);
+        if(g_cart_id==0) fprintf(stdout, "# [] processing timeslice no. %d\n", timeslice);
 
-/*
-        char name[20];
-        sprintf(name, "fp1[%d,%d,%d,%d]", timeslice, ix, icomp, threadid);
-        printf_fp(fp1[threadid], name, stdout);
-        sprintf(name, "fp2[%d,%d,%d,%d]", timeslice, ix, icomp, threadid);
-        printf_fp(fp2[threadid], name, stdout);
-        sprintf(name, "fp3[%d,%d,%d,%d]", timeslice, ix, icomp, threadid);
-        printf_fp(fp3[threadid], name, stdout);
-        sprintf(name, "fp4[%d,%d,%d,%d]", timeslice, ix, icomp, threadid);
-        printf_fp(fp4[threadid], name, stdout);
-*/
-/*
-        sprintf(name, "uprop[%d,%d,%d,%d]", timeslice, ix, icomp, threadid);
-        printf_fp(uprop[threadid], name, stdout);
-        sprintf(name, "dprop[%d,%d,%d,%d]", timeslice, ix, icomp, threadid);
-        printf_fp(dprop[threadid], name, stdout);
-*/
-/*
-        double fp_in_base[4][32];
-        int mu;
-        _project_fp_to_basis(fp_in_base[0], fp1[threadid], 0);
-        _project_fp_to_basis(fp_in_base[1], fp2[threadid], 0);
-        _project_fp_to_basis(fp_in_base[2], fp3[threadid], 0);
-        _project_fp_to_basis(fp_in_base[3], fp4[threadid], 0);
-        fprintf(stdout, "# [] t=%3d; ix=%6d\n", timeslice, ix);
-        for(mu=0;mu<16;mu++) {
-          fprintf(stdout, "\t%3d%16.7e%16.7e%16.7e%16.7e%16.7e%16.7e%16.7e%16.7e\n", mu,
-              fp_in_base[0][2*mu], fp_in_base[0][2*mu+1],
-              fp_in_base[1][2*mu], fp_in_base[1][2*mu+1],
-              fp_in_base[2][2*mu], fp_in_base[2][2*mu+1],
-              fp_in_base[3][2*mu], fp_in_base[3][2*mu+1]);
-        }
-*/
 
-          // (1)
-          // reduce
-          _fp_eq_zero(fpaux[threadid]);
-          _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp2[threadid], uprop[threadid]);
-          // reduce to spin propagator
-          _sp_eq_zero( sp1[threadid] );
-          _sp_eq_fp_del_contract23_fp(sp1[threadid], dprop[threadid], fpaux[threadid]);
-          // (2)
-          // reduce
-          _fp_eq_zero(fpaux[threadid]);
-          _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp1[threadid], fp3[threadid]);
-          // reduce to spin propagator
-          _sp_eq_zero( sp2[threadid] );
-          _sp_eq_fp_del_contract24_fp(sp2[threadid], dprop[threadid], fpaux[threadid]);
-          // add and assign
-          _sp_pl_eq_sp(sp1[threadid], sp2[threadid]);
-          _sp_eq_sp_ti_re(sp2[threadid], sp1[threadid], -gamma_component_sign[icomp]);
-          _sp_pl_eq_sp( connq[ix*num_component+icomp], sp2[threadid]);
-
-          // (3)
-          // reduce
-          _fp_eq_zero(fpaux[threadid]);
-          _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp4[threadid], uprop[threadid]);
-          // reduce to spin propagator
-          _sp_eq_zero( sp1[threadid] );
-          _sp_eq_fp_del_contract23_fp(sp1[threadid], fp3[threadid], fpaux[threadid]);
-          // (4)
-          // reduce
-          _fp_eq_zero(fpaux[threadid]);
-          _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp1[threadid], dprop[threadid]);
-          // reduce to spin propagator
-          _sp_eq_zero( sp2[threadid] );
-          _sp_eq_fp_del_contract24_fp(sp2[threadid], fp3[threadid], fpaux[threadid]);
-          // add and assign
-          _sp_pl_eq_sp(sp1[threadid], sp2[threadid]);
-          _sp_eq_sp_ti_re(sp2[threadid], sp1[threadid], -gamma_component_sign[icomp]);
-          _sp_pl_eq_sp( connq[ix*num_component+icomp], sp2[threadid]);
-
-          // (5)
-          // reduce
-          _fp_eq_zero(fpaux[threadid]);
-          _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp4[threadid], fp3[threadid]);
-          // reduce to spin propagator
-          _sp_eq_zero( sp1[threadid] );
-          _sp_eq_fp_del_contract34_fp(sp1[threadid], uprop[threadid], fpaux[threadid]);
-          //fprintf(stdout, "# sp1[threadid]:\n");
-          //printf_sp(sp1[threadid], "sp1[threadid]",stdout);
-          // (6)
-          // reduce
-          _fp_eq_zero(fpaux[threadid]);
-          _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp2[threadid], dprop[threadid]);
-          // reduce to spin propagator
-          _sp_eq_zero( sp2[threadid] );
-          _sp_eq_fp_del_contract34_fp(sp2[threadid], uprop[threadid], fpaux[threadid]);
-          //fprintf(stdout, "# sp2[threadid]:\n");
-          //printf_sp(sp2[threadid], "sp2[threadid]",stdout);
-          // add and assign
-          _sp_pl_eq_sp(sp1[threadid], sp2[threadid]);
-          _sp_eq_sp_ti_re(sp2[threadid], sp1[threadid], -gamma_component_sign[icomp]);
-          _sp_pl_eq_sp( connq[ix*num_component+icomp], sp2[threadid]);
-
-  
-        }  // of icomp
-  
-      }    // of ix
+        /******************************************************
+         * contractions
+         *
+         * REMEMBER:
+         *
+         *   uprop = S_u
+         *   dprop = S_seq
+         *   fp1   = C Gamma_1 S_u
+         *   fp2   = C Gamma_1 S_u C Gamma_2
+         *   fp3   =           S_u C Gamma_2
+         *   fp4   = C Gamma_1 S_seq
+         *   Gamma_1 = gamma_mu (always multiplied from the left)
+         *   Gamma_2 = gamma-5  (always multiplied from the right)
+         ******************************************************/
 #ifdef OPENMP
-}
+        omp_set_num_threads(g_num_threads);
+#pragma omp parallel private (ix,icomp,threadid) \
+        firstprivate (fermion_type,gamma_component,connq,\
+            gamma_component_sign,VOL3,g_spinor_field,fp1,fp2,fp3,fpaux,fp4,uprop,dprop,sp1,sp2,timeslice)
+  //      shared (num_component)
+  {
+        threadid = omp_get_thread_num();
+#else
+        threadid = 0;
 #endif
+        for(ix=threadid; ix<VOL3; ix+=g_num_threads)
+        {
+          iix = timeslice * VOL3 + ix;
+          // assign the propagators
+          _assign_fp_point_from_field(uprop[threadid], g_spinor_field, iix);
+          _assign_fp_point_from_field(dprop[threadid], g_spinor_field+n_s*n_c, iix);
+          // flavor rotation for twisted mass fermions
+          if(fermion_type == _TM_FERMION) {
+            _fp_eq_rot_ti_fp(fp1[threadid], uprop[threadid], +1, fermion_type, fp2[threadid]);
+            _fp_eq_fp_ti_rot(uprop[threadid], fp1[threadid], +1, fermion_type, fp2[threadid]);
+            _fp_eq_rot_ti_fp(fp1[threadid], dprop[threadid], +1, fermion_type, fp2[threadid]);
+            _fp_eq_fp_ti_rot(dprop[threadid], fp1[threadid], -1, fermion_type, fp2[threadid]);
+          }
+    
+          for(icomp=0; icomp<num_component; icomp++) {
+    
+            _sp_eq_zero( connq[ix*num_component+icomp]);
+    
+            /******************************************************
+             * prepare fermion propagators
+             ******************************************************/
+            _fp_eq_zero(fp1[threadid]);
+            _fp_eq_zero(fp2[threadid]);
+            _fp_eq_zero(fp3[threadid]);
+            _fp_eq_zero(fp4[threadid]);
+            _fp_eq_zero(fpaux[threadid]);
+            // fp1[threadid] = C Gamma_1 x S_u = g0 g2 Gamma_1 S_u
+            _fp_eq_gamma_ti_fp(fp1[threadid], gamma_component[0][icomp], uprop[threadid]);
+            _fp_eq_gamma_ti_fp(fpaux[threadid], 2, fp1[threadid]);
+            _fp_eq_gamma_ti_fp(fp1[threadid],   0, fpaux[threadid]);
+    
+            // fp2[threadid] = C Gamma_1 x S_u x C Gamma_2 = fp1[threadid] x g0 g2 Gamma_2
+            _fp_eq_fp_ti_gamma(fp2[threadid], 0, fp1[threadid]);
+            _fp_eq_fp_ti_gamma(fpaux[threadid], 2, fp2[threadid]);
+            _fp_eq_fp_ti_gamma(fp2[threadid], gamma_component[1][icomp], fpaux[threadid]);
+     
+            // fp3[threadid] = S_u x C Gamma_2 = uprop[threadid] x g0 g2 Gamma_2
+            _fp_eq_fp_ti_gamma(fp3[threadid],   0, uprop[threadid]);
+            _fp_eq_fp_ti_gamma(fpaux[threadid], 2, fp3[threadid]);
+            _fp_eq_fp_ti_gamma(fp3[threadid], gamma_component[1][icomp], fpaux[threadid]);
+     
+            // fp4[threadid] = C Gamma_1 x S_seq = g0 g2 Gamma_1 dprop[threadid] 
+            _fp_eq_gamma_ti_fp(fp4[threadid], gamma_component[0][icomp], dprop[threadid]);
+            _fp_eq_gamma_ti_fp(fpaux[threadid], 2, fp4[threadid]);
+            _fp_eq_gamma_ti_fp(fp4[threadid],   0, fpaux[threadid]);
   
-      /***********************************************
-       * finish calculation of connq
-       ***********************************************/
-      if(g_propagator_bc_type == 0) {
-        // multiply with phase factor
-        fprintf(stdout, "# [] multiplying timeslice %d with boundary phase factor\n", timeslice);
-        ir = (timeslice - sx0 + T_global) % T_global;
-        w1.re = cos( 3. * M_PI*(double)ir / (double)T_global );
-        w1.im = sin( 3. * M_PI*(double)ir / (double)T_global );
-        for(ix=0;ix<num_component*VOL3;ix++) {
-          _sp_eq_sp(sp1[0], connq[ix] );
-          _sp_eq_sp_ti_co( connq[ix], sp1[0], w1);
-        }
-      } else if (g_propagator_bc_type == 1) {
-        // multiply with step function
-        if(timeslice < sx0) {
-          fprintf(stdout, "# [] multiplying timeslice %d with boundary step function\n", timeslice);
+            // (1)
+            // reduce
+            _fp_eq_zero(fpaux[threadid]);
+            _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp2[threadid], uprop[threadid]);
+            // reduce to spin propagator
+            _sp_eq_zero( sp1[threadid] );
+            _sp_eq_fp_del_contract23_fp(sp1[threadid], dprop[threadid], fpaux[threadid]);
+            // (2)
+            // reduce
+            _fp_eq_zero(fpaux[threadid]);
+            _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp1[threadid], fp3[threadid]);
+            // reduce to spin propagator
+            _sp_eq_zero( sp2[threadid] );
+            _sp_eq_fp_del_contract24_fp(sp2[threadid], dprop[threadid], fpaux[threadid]);
+            // add and assign
+            _sp_pl_eq_sp(sp1[threadid], sp2[threadid]);
+            _sp_eq_sp_ti_re(sp2[threadid], sp1[threadid], -gamma_component_sign[icomp]);
+            _sp_pl_eq_sp( connq[ix*num_component+icomp], sp2[threadid]);
+  
+            // (3)
+            // reduce
+            _fp_eq_zero(fpaux[threadid]);
+            _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp4[threadid], uprop[threadid]);
+            // reduce to spin propagator
+            _sp_eq_zero( sp1[threadid] );
+            _sp_eq_fp_del_contract23_fp(sp1[threadid], fp3[threadid], fpaux[threadid]);
+            // (4)
+            // reduce
+            _fp_eq_zero(fpaux[threadid]);
+            _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp1[threadid], dprop[threadid]);
+            // reduce to spin propagator
+            _sp_eq_zero( sp2[threadid] );
+            _sp_eq_fp_del_contract24_fp(sp2[threadid], fp3[threadid], fpaux[threadid]);
+            // add and assign
+            _sp_pl_eq_sp(sp1[threadid], sp2[threadid]);
+            _sp_eq_sp_ti_re(sp2[threadid], sp1[threadid], -gamma_component_sign[icomp]);
+            _sp_pl_eq_sp( connq[ix*num_component+icomp], sp2[threadid]);
+  
+            // (5)
+            // reduce
+            _fp_eq_zero(fpaux[threadid]);
+            _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp4[threadid], fp3[threadid]);
+            // reduce to spin propagator
+            _sp_eq_zero( sp1[threadid] );
+            _sp_eq_fp_del_contract34_fp(sp1[threadid], uprop[threadid], fpaux[threadid]);
+            //fprintf(stdout, "# sp1[threadid]:\n");
+            //printf_sp(sp1[threadid], "sp1[threadid]",stdout);
+            // (6)
+            // reduce
+            _fp_eq_zero(fpaux[threadid]);
+            _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp2[threadid], dprop[threadid]);
+            // reduce to spin propagator
+            _sp_eq_zero( sp2[threadid] );
+            _sp_eq_fp_del_contract34_fp(sp2[threadid], uprop[threadid], fpaux[threadid]);
+            //fprintf(stdout, "# sp2[threadid]:\n");
+            //printf_sp(sp2[threadid], "sp2[threadid]",stdout);
+            // add and assign
+            _sp_pl_eq_sp(sp1[threadid], sp2[threadid]);
+            _sp_eq_sp_ti_re(sp2[threadid], sp1[threadid], -gamma_component_sign[icomp]);
+            _sp_pl_eq_sp( connq[ix*num_component+icomp], sp2[threadid]);
+  
+    
+          }  // of icomp
+    
+        }    // of ix
+#ifdef OPENMP
+  }
+#endif
+    
+        /***********************************************
+         * finish calculation of connq
+         ***********************************************/
+        if(g_propagator_bc_type == 0) {
+          // multiply with phase factor
+          if(g_cart_id==0) fprintf(stdout, "# [] multiplying timeslice %d with boundary phase factor\n", timeslice);
+          ir = (timeslice + g_proc_coords[0]*T - sx0 + T_global) % T_global;
+          w1.re = cos( 3. * M_PI*(double)ir / (double)T_global );
+          w1.im = sin( 3. * M_PI*(double)ir / (double)T_global );
           for(ix=0;ix<num_component*VOL3;ix++) {
             _sp_eq_sp(sp1[0], connq[ix] );
-            _sp_eq_sp_ti_re( connq[ix], sp1[0], -1.);
+            _sp_eq_sp_ti_co( connq[ix], sp1[0], w1);
+          }
+        } else if (g_propagator_bc_type == 1) {
+          // multiply with step function
+          if(timeslice+g_proc_coords[0]*T < sx0) {
+            if(g_cart_id==0) fprintf(stdout, "# [] multiplying timeslice %d with boundary step function\n", timeslice);
+            for(ix=0;ix<num_component*VOL3;ix++) {
+              _sp_eq_sp(sp1[0], connq[ix] );
+              _sp_eq_sp_ti_re( connq[ix], sp1[0], -1.);
+            }
+          }
+        }
+#ifndef MPI
+        if(write_ascii) {
+          sprintf(filename, "%s_x.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d.ascii",
+              outfile_prefix, Nconf, sx0, sx1, sx2, sx3,
+              rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
+          write_contraction2( connq[0][0], filename, num_component*g_sv_dim*g_sv_dim, VOL3, 1, append);
+        }
+#endif
+  
+        /******************************************************************
+         * Fourier transform
+         ******************************************************************/
+        items =  2 * num_component * g_sv_dim * g_sv_dim * VOL3;
+        bytes = sizeof(double);
+    
+        memcpy(in, connq[0][0], items * bytes);
+        ir = num_component * g_sv_dim * g_sv_dim;
+#ifdef OPENMP
+        fftwnd_threads(g_num_threads, plan_p, ir, in, ir, 1, (fftw_complex*)(connq[0][0]), ir, 1);
+#else
+        fftwnd(plan_p, ir, in, ir, 1, (fftw_complex*)(connq[0][0]), ir, 1);
+#endif
+    
+        // add phase factor from the source location
+        iix = 0;
+        for(x1=0;x1<LX;x1++) {
+          q[0] = (double)(x1+g_proc_coords[1]*LX) / (double)LX_global;
+        for(x2=0;x2<LY;x2++) {
+          q[1] = (double)(x2+g_proc_coords[2]*LY) / (double)LY_global;
+        for(x3=0;x3<LZ;x3++) {
+          q[2] = (double)(x3+g_proc_coords[3]*LZ) / (double)LZ_global;
+          phase = 2. * M_PI * ( q[0]*sx1 + q[1]*sx2 + q[2]*sx3 );
+          w1.re = cos(phase);
+          w1.im = sin(phase);
+    
+          for(icomp=0; icomp<num_component; icomp++) {
+            _sp_eq_sp(sp1[0], connq[iix] );
+            _sp_eq_sp_ti_co( connq[iix], sp1[0], w1) ;
+            iix++; 
+          }
+        }}}  // of x3, x2, x1
+    
+        // write to file
+        if(write_ascii) {
+          sprintf(filename, "%s_q.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d.ascii", outfile_prefix, Nconf, sx0, sx1, sx2, sx3,
+              rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
+          write_contraction2(connq[0][0],filename, num_component*g_sv_dim*g_sv_dim, VOL3, 1, append);
+        }
+    
+        /***********************************************
+         * save output data in connq_out
+         ***********************************************/
+        for(isnk=0;isnk<snk_momentum_no;isnk++) {
+          ix = g_ipt[0][snk_momentum_list[isnk][0]][snk_momentum_list[isnk][1]][snk_momentum_list[isnk][2]];
+          if(g_cart_id==0 && timeslice==0) fprintf(stdout, "# [] sink momentum (%d, %d, %d) -> index %d\n", snk_momentum_list[isnk][0], snk_momentum_list[isnk][1], snk_momentum_list[isnk][2], ix);
+          for(icomp=0;icomp<num_component; icomp++) {
+            x1 = timeslice*rel_momentum_no*snk_momentum_no*num_component + (imom * snk_momentum_no + isnk ) * num_component + icomp;
+            _sp_eq_sp(connq_out[ x1 ], connq[ix*num_component+icomp]);
+          }
+        }
+  
+        /***********************************************
+         * calculate connt
+         ***********************************************/
+        for(icomp=0;icomp<num_component; icomp++) {
+          // fwd
+          _sp_eq_sp(sp1[0], connq[icomp]);
+          _sp_eq_gamma_ti_sp(sp2[0], 0, sp1[0]);
+          _sp_pl_eq_sp(sp1[0], sp2[0]);
+          _co_eq_tr_sp(&w, sp1[0]);
+          x1 = timeslice*rel_momentum_no*num_component + imom*num_component + icomp;
+          connt[2*x1  ] = w.re * 0.25;
+          connt[2*x1+1] = w.im * 0.25;
+          // bwd
+          _sp_eq_sp(sp1[0], connq[icomp]);
+          _sp_eq_gamma_ti_sp(sp2[0], 0, sp1[0]);
+          _sp_mi_eq_sp(sp1[0], sp2[0]);
+          _co_eq_tr_sp(&w, sp1[0]);
+          x1 = (timeslice+T)*rel_momentum_no*num_component + imom*num_component + icomp;
+          connt[2*x1  ] = w.re * 0.25;
+          connt[2*x1+1] = w.im * 0.25;
+        }
+  
+      }  // of loop on timeslice
+  
+    }    // of loop on relative momenta
+
+    // free the fermion propagator points
+    for(i=0;i<g_num_threads;i++) {
+      free_fp( uprop+i );
+      free_fp( dprop+i );
+      free_fp( fp1+i );
+      free_fp( fp2+i );
+      free_fp( fp3+i );
+      free_fp( fp4+i );
+      free_fp( fpaux+i );
+      free_sp( sp1+i );
+      free_sp( sp2+i );
+    }
+    free(uprop);
+    free(dprop);
+    free(fp1);
+    free(fp2);
+    free(fp3);
+    free(fp4);
+    free(fpaux);
+    free(sp1);
+    free(sp2);
+
+    // write connq_out
+    items = (size_t)rel_momentum_no * (size_t)num_component * (size_t)T_global * (size_t)snk_momentum_no;
+    if( (buffer = (void*)create_sp_field( items ) ) == NULL ) {
+      fprintf(stderr, "[] Error, could not allocate buffer; exit\n");
+      EXIT(152);
+    }
+    sp1 = buffer;
+    count = rel_momentum_no * num_component * T * snk_momentum_no * 2*g_sv_dim*g_sv_dim;
+#ifdef MPI
+    status = MPI_Gather(connq_out[0][0], count, MPI_DOUBLE, sp1[0][0], count, MPI_DOUBLE, 0, g_cart_grid);
+    if( status != MPI_SUCCESS) {
+      fprintf(stderr, "[] Error from MPI_Gather; exit\n");
+      EXIT(153);
+    }
+#else
+    memcpy(sp1[0][0], connq_out[0][0], count*sizeof(double));
+#endif
+
+    if (g_cart_id == 0) {
+      count=0;
+      for(imom=0;imom<rel_momentum_no;imom++) {
+        sprintf(filename, "%s_snk.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d", outfile_prefix, Nconf,
+            sx0, sx1, sx2, sx3,
+            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
+        ofs = fopen(filename, "w");
+        fprintf(ofs, "#%12.8f%3d%3d%3d%3d%8.4f%6d%3d%3d%3d\n", g_kappa, T_global, LX_global, LY_global,
+            LZ_global, g_mu, Nconf,
+            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
+        if(ofs == NULL) {
+          fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
+          EXIT(32);
+        }
+        for(isnk=0;isnk<snk_momentum_no;isnk++) {
+          for(icomp=0;icomp<num_component;icomp++) {
+            for(timeslice=0;timeslice<T_global;timeslice++) {
+              x1 = ((timeslice*rel_momentum_no + imom)*snk_momentum_no+isnk)*num_component+icomp;
+              for(ir=0;ir<g_sv_dim*g_sv_dim;ir++) {
+                fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%3d%3d%3d\n",
+                    gamma_component[0][icomp], gamma_component[1][icomp],timeslice,
+                    sp1[x1][0][2*ir], sp1[x1][0][2*ir+1],
+                    snk_momentum_list[isnk][0],snk_momentum_list[isnk][1],snk_momentum_list[isnk][2]);
+              }  // of ir
+              count++;
+            }    // of timeslice
+          }      // of icomp
+        }        // of isnk
+        fclose(ofs); ofs = NULL;
+      }
+    }
+    free_sp_field( &sp1 ); buffer = NULL;
+
+    // write connt
+    items = 2 * rel_momentum_no * num_component * T_global;
+    if( (buffer = malloc(items*sizeof(double))) == NULL ) {
+      fprintf(stderr, "[] Error, could not allocate buffer; exit\n");
+      EXIT(153);
+    }
+  
+    // forward
+    count = 2 * rel_momentum_no * num_component * T;
+#ifdef MPI
+    status = MPI_Gather(connt, count, MPI_DOUBLE, buffer, count, MPI_DOUBLE, 0, g_cart_grid);
+    if( status != MPI_SUCCESS ) {
+      fprintf(stderr, "[] Error from MPI_Gather; exit\n");
+      EXIT(154);
+    }
+#else
+    memcpy(buffer, connt, count*sizeof(double));
+#endif
+    if (g_cart_id == 0) {  
+      sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.fw", outfile_prefix, Nconf, sx0, sx1, sx2, sx3);
+      ofs = fopen(filename, "w");
+      if(ofs == NULL) {
+        fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
+        EXIT(3);
+      }
+     
+      for(imom=0;imom<rel_momentum_no;imom++) {
+        fprintf(ofs, "#%12.8f%3d%3d%3d%3d%8.4f%6d%3d%3d%3d\n", g_kappa, T_global, LX_global, LY_global, LZ_global, g_mu, Nconf,
+            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
+    
+        for(icomp=0; icomp<num_component; icomp++) {
+          for(it=0;it<T_global;it++) {
+            ir  = ( it + sx0 ) % T_global;
+            x1 = (ir*rel_momentum_no + imom)*num_component + icomp;
+            fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n",
+                gamma_component[0][icomp], gamma_component[1][icomp], it,
+                ((double*)buffer)[2*x1  ], ((double*)buffer)[2*x1+1], Nconf,
+                rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
           }
         }
       }
+      fclose(ofs);
+    }  // of if g_cart_id == 0 
+  
+    // backward
+    count = 2 * rel_momentum_no * num_component * T;
+#ifdef MPI
+    if( MPI_Gather(connt+count, count, MPI_DOUBLE, buffer, count, MPI_DOUBLE, 0, g_cart_grid) != MPI_SUCCESS) {
+      fprintf(stderr, "[] Error from MPI_Gather; exit\n");
+      EXIT(155);
+    }
+#else
+    memcpy(buffer, connt+count, count*sizeof(double));
+#endif
+
+    if(g_cart_id == 0) {
+  
+      sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.bw", outfile_prefix, Nconf, sx0, sx1, sx2, sx3);
+      ofs = fopen(filename, "w");
+      if(ofs == NULL) {
+        fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
+        EXIT(3);
+      }
+  
+      for(imom=0;imom<rel_momentum_no;imom++) {
+        fprintf(ofs, "#%12.8f%3d%3d%3d%3d%8.4f%6d%3d%3d%3d\n", g_kappa, T_global, LX_global, LY_global, LZ_global,
+            g_mu, Nconf,
+            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
     
-      if(write_ascii) {
-        sprintf(filename, "%s_x.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d.ascii", outfile_prefix, Nconf, sx0, sx1, sx2, sx3,
-            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-        write_contraction2( connq[0][0], filename, num_component*g_sv_dim*g_sv_dim, VOL3, 1, append);
-      }
-  
-      /******************************************************************
-       * Fourier transform
-       ******************************************************************/
-      items =  2 * num_component * g_sv_dim * g_sv_dim * VOL3;
-      bytes = sizeof(double);
-  
-      memcpy(in, connq[0][0], items * bytes);
-      ir = num_component * g_sv_dim * g_sv_dim;
-  #ifdef OPENMP
-      fftwnd_threads(g_num_threads, plan_p, ir, in, ir, 1, (fftw_complex*)(connq[0][0]), ir, 1);
-  #else
-      fftwnd(plan_p, ir, in, ir, 1, (fftw_complex*)(connq[0][0]), ir, 1);
-  #endif
-  
-      // add phase factor from the source location
-      iix = 0;
-      for(x1=0;x1<LX;x1++) {
-        q[0] = (double)x1 / (double)LX;
-      for(x2=0;x2<LY;x2++) {
-        q[1] = (double)x2 / (double)LY;
-      for(x3=0;x3<LZ;x3++) {
-        q[2] = (double)x3 / (double)LZ;
-        phase = 2. * M_PI * ( q[0]*sx1 + q[1]*sx2 + q[2]*sx3 );
-        w1.re = cos(phase);
-        w1.im = sin(phase);
-  
         for(icomp=0; icomp<num_component; icomp++) {
-          _sp_eq_sp(sp1[0], connq[iix] );
-          _sp_eq_sp_ti_co( connq[iix], sp1[0], w1) ;
-          iix++; 
-        }
-      }}}  // of x3, x2, x1
-  
-      // write to file
-/*
-      sprintf(filename, "%s_q.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d", outfile_prefix, Nconf, sx0, sx1, sx2, sx3,
-          rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-      sprintf(contype, "2-pt. function, (t,Q_1,Q_2,Q_3)-dependent, source_timeslice = %d, rel. momentum = (%d, %d. %d)", sx0,
-          rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-      write_lime_contraction_timeslice(connq[0][0], filename, 64, num_component*g_sv_dim*g_sv_dim, contype, Nconf, 0, &connq_checksum, timeslice);
-*/ 
-      if(write_ascii) {
-        sprintf(filename, "%s_q.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d.ascii", outfile_prefix, Nconf, sx0, sx1, sx2, sx3,
-            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-        write_contraction2(connq[0][0],filename, num_component*g_sv_dim*g_sv_dim, VOL3, 1, append);
-      }
-  
-      /***********************************************
-       * save output data in connq_out
-       ***********************************************/
-      for(isnk=0;isnk<snk_momentum_no;isnk++) {
-        ix = g_ipt[0][snk_momentum_list[isnk][0]][snk_momentum_list[isnk][1]][snk_momentum_list[isnk][2]];
-        fprintf(stdout, "# [] sink momentum (%d, %d, %d) -> index %d\n", snk_momentum_list[isnk][0], snk_momentum_list[isnk][1], snk_momentum_list[isnk][2], ix);
-        for(icomp=0;icomp<num_component; icomp++) {
-          x1 = ( (imom * snk_momentum_no + isnk ) * num_component + icomp) * T + timeslice;
-          _sp_eq_sp(connq_out[ x1 ], connq[ix*num_component+icomp]);
+          for(it=0;it<T_global;it++) {
+            ir  = ( it + sx0 ) % T_global;
+            x1 = (ir*rel_momentum_no + imom)*num_component + icomp;
+            fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n",
+                gamma_component[0][icomp], gamma_component[1][icomp], it,
+                ((double*)buffer)[2*x1  ], ((double*)buffer)[2*x1+1], Nconf,
+                rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
+          }
         }
       }
-
-      /***********************************************
-       * calculate connt
-       ***********************************************/
-      for(icomp=0;icomp<num_component; icomp++) {
-        // fwd
-        _sp_eq_sp(sp1[0], connq[icomp]);
-        _sp_eq_gamma_ti_sp(sp2[0], 0, sp1[0]);
-        _sp_pl_eq_sp(sp1[0], sp2[0]);
-        _co_eq_tr_sp(&w, sp1[0]);
-        connt[2*( (imom*2*num_component + icomp) * T + timeslice)  ] = w.re * 0.25;
-        connt[2*( (imom*2*num_component + icomp) * T + timeslice)+1] = w.im * 0.25;
-        // bwd
-        _sp_eq_sp(sp1[0], connq[icomp]);
-        _sp_eq_gamma_ti_sp(sp2[0], 0, sp1[0]);
-        _sp_mi_eq_sp(sp1[0], sp2[0]);
-        _co_eq_tr_sp(&w, sp1[0]);
-        connt[2*( (imom*2*num_component + icomp + num_component ) * T + timeslice)  ] = w.re * 0.25;
-        connt[2*( (imom*2*num_component + icomp + num_component ) * T + timeslice)+1] = w.im * 0.25;
-      }
-
-    }  // of loop on relative momenta
-
-  }  // of loop on timeslice
-
-  // write conq_out
-  count=0;
-  for(imom=0;imom<rel_momentum_no;imom++) {
-    sprintf(filename, "%s_snk.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d", outfile_prefix, Nconf, sx0, sx1, sx2, sx3,
-        rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-    ofs = fopen(filename, "w");
-    fprintf(ofs, "#%12.8f%3d%3d%3d%3d%8.4f%6d%3d%3d%3d\n", g_kappa, T_global, LX, LY, LZ, g_mu, Nconf,
-        rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-    if(ofs == NULL) {
-      fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
-      exit(32);
+      fclose(ofs);
     }
-    for(isnk=0;isnk<snk_momentum_no;isnk++) {
-      for(icomp=0;icomp<num_component;icomp++) {
-        for(timeslice=0;timeslice<T;timeslice++) {
-          for(ir=0;ir<g_sv_dim*g_sv_dim;ir++) {
-            fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp],timeslice,
-                connq_out[count][0][2*ir], connq_out[count][0][2*ir+1],
-                snk_momentum_list[isnk][0],snk_momentum_list[isnk][1],snk_momentum_list[isnk][2]);
-          }  // of ir
-          count++;
-        }    // of timeslice
-      }      // of icomp
-    }        // of isnk
-    fclose(ofs); ofs = NULL;
-  }
+    free(buffer); buffer = NULL;
+
+    if(in!=NULL) free(in);
+    fftwnd_destroy_plan(plan_p);
   
-
-  // write connt
-  sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.fw", outfile_prefix, Nconf, sx0, sx1, sx2, sx3);
-  ofs = fopen(filename, "w");
-  if(ofs == NULL) {
-    fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
-    exit(3);
-  }
- 
-  for(imom=0;imom<rel_momentum_no;imom++) {
-    fprintf(ofs, "#%12.8f%3d%3d%3d%3d%8.4f%6d%3d%3d%3d\n", g_kappa, T_global, LX, LY, LZ, g_mu, Nconf,
-        rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-
-    for(icomp=0; icomp<num_component; icomp++) {
-//      ir = sx0;
-//      fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], 0, connt[2*((imom*2*num_component+icomp)*T+ir)], 0., Nconf,
-//          rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-//      for(it=1;it<T/2;it++) {
-//        ir  = ( it + sx0 ) % T_global;
-//       ir2 = ( (T_global - it) + sx0 ) % T_global;
-//        fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], it,
-//            connt[2*((imom*2*num_component+icomp)*T+ir)], connt[2*((imom*2*num_component+icomp)*T+ir2)], Nconf,
-//            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-//      }
-//      ir = ( it + sx0 ) % T_global;
-//      fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], it, connt[2*((imom*2*num_component+icomp)*T+ir)], 0., Nconf,
-//          rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-      for(it=0;it<T;it++) {
-        ir  = ( it + sx0 ) % T_global;
-        fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], it,
-            connt[2*((imom*2*num_component+icomp)*T+ir)], connt[2*((imom*2*num_component+icomp)*T+ir)+1], Nconf,
-            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-      }
-    }
-  }
-  fclose(ofs);
-  
-  sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.bw", outfile_prefix, Nconf, sx0, sx1, sx2, sx3);
-  ofs = fopen(filename, "w");
-  if(ofs == NULL) {
-    fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
-    exit(3);
-  }
-
-  for(imom=0;imom<rel_momentum_no;imom++) {
-    fprintf(ofs, "#%12.8f%3d%3d%3d%3d%8.4f%6d%3d%3d%3d\n", g_kappa, T_global, LX, LY, LZ, g_mu, Nconf,
-        rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-  
-    for(icomp=0; icomp<num_component; icomp++) {
-/*
-      ir = sx0;
-      fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], 0,
-          connt[2*((imom*2*num_component+num_component+icomp)*T+ir)], 0., Nconf,
-          rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-      for(it=1;it<T/2;it++) {
-        ir  = ( it + sx0 ) % T_global;
-        ir2 = ( (T_global - it) + sx0 ) % T_global;
-        fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], it,
-            connt[2*((imom*2*num_component+num_component+icomp)*T+ir)], connt[2*((imom*2*num_component+num_component+icomp)*T+ir2)], Nconf,
-            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-      }
-      ir = ( it + sx0 ) % T_global;
-      fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], it,
-          connt[2*((imom*2*num_component+num_component+icomp)*T+ir)], 0., Nconf,
-          rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-*/
-      for(it=0;it<T;it++) {
-        ir  = ( it + sx0 ) % T_global;
-        fprintf(ofs, "%3d%3d%3d%16.7e%16.7e%6d%3d%3d%3d\n", gamma_component[0][icomp], gamma_component[1][icomp], it,
-            connt[2*((imom*2*num_component+num_component+icomp)*T+ir)  ],
-            connt[2*((imom*2*num_component+num_component+icomp)*T+ir)+1], Nconf,
-            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-      }
-    }
-  }
-  fclose(ofs);
-
-  if(in!=NULL) free(in);
-  fftwnd_destroy_plan(plan_p);
-
-  // create the fermion propagator points
-  for(i=0;i<g_num_threads;i++) {
-    free_fp( uprop+i );
-    free_fp( dprop+i );
-    free_fp( fp1+i );
-    free_fp( fp2+i );
-    free_fp( fp3+i );
-    free_fp( fp4+i );
-    free_fp( fpaux+i );
-    free_sp( sp1+i );
-    free_sp( sp2+i );
-  }
-  free(uprop);
-  free(dprop);
-  free(fp1);
-  free(fp2);
-  free(fp3);
-  free(fp4);
-  free(fpaux);
-  free(sp1);
-  free(sp2);
-}  // of if mode == 2
-
+  }  // of if mode == 2
 
   /***********************************************
    * free the allocated memory, finalize
    ***********************************************/
+
   free_geometry();
   if(connt!= NULL) free(connt);
   if(connq!= NULL) free(connq);
@@ -1020,11 +972,15 @@ if(mode == 2) {
     free(snk_momentum_list);
   }
 
-  g_the_time = time(NULL);
-  fprintf(stdout, "# [] %s# [] end fo run\n", ctime(&g_the_time));
-  fflush(stdout);
-  fprintf(stderr, "# [] %s# [] end fo run\n", ctime(&g_the_time));
-  fflush(stderr);
+  if(connq_out != NULL) free_sp_field(&connq_out);
+
+  if(g_cart_id==0) {
+    g_the_time = time(NULL);
+    fprintf(stdout, "# [] %s# [] end fo run\n", ctime(&g_the_time));
+    fflush(stdout);
+    fprintf(stderr, "# [] %s# [] end fo run\n", ctime(&g_the_time));
+    fflush(stderr);
+  }
 
 #ifdef MPI
   MPI_Finalize();

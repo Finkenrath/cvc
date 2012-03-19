@@ -1975,6 +1975,11 @@ void set_default_input_values(void) {
   g_sink_momentum[2] = _default_sink_momentum_z;
   g_sink_momentum_set = _default_sink_momentum_set;
 
+  g_seq_source_momentum[0] = _default_seq_source_momentum_x;
+  g_seq_source_momentum[1] = _default_seq_source_momentum_y;
+  g_seq_source_momentum[2] = _default_seq_source_momentum_z;
+  g_seq_source_momentum_set = _default_seq_source_momentum_set;
+
   g_rng_state = _default_rng_state;
 
   g_verbose = _default_verbose;
@@ -3933,7 +3938,7 @@ void check_error(int status, char*myname, int*success, int exitstatus) {
     } else {
       sprintf(msg, "[check_error] Error; status was %d", status);
     }
-    if(g_cart_id==0) fprintf(stderr, msg);
+    if(g_cart_id==0) fprintf(stderr, "%s", msg);
 #ifdef MPI
     MPI_Abort(MPI_COMM_WORLD, exitstatus);
     MPI_Finalize();
@@ -3952,6 +3957,7 @@ unsigned int lexic2eot_5d (unsigned int is, unsigned int ix) {
   return( shift + ( g_iseven[ix] ? g_lexic2eot[ix] : (g_lexic2eot[ix] - VOLUME/2) ) );
 }
 
+#if 0
 /****************************************************************************
  * exchange x- and z-decomposition
  ****************************************************************************/
@@ -4070,3 +4076,4 @@ if(dir==0) {
 
 #endif
 }
+#endif  // of if 0

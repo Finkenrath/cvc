@@ -119,6 +119,10 @@
 #define _default_sink_momentum_y 0
 #define _default_sink_momentum_z 0
 #define _default_sink_momentum_set 0
+#define _default_seq_source_momentum_x 0
+#define _default_seq_source_momentum_y 0
+#define _default_seq_source_momentum_z 0
+#define _default_seq_source_momentum_set 0
 #define _default_rng_state NULL
 #define _default_verbose  0
 #define _default_m0 0.

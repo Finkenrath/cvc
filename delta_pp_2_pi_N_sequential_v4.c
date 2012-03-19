@@ -488,14 +488,19 @@ if(mode == 1) {
            rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
         status = write_lime_spinor(g_spinor_field[2], filename, 0, g_propagator_precision);
 /*
-        fprintf(stdout, "# [] the sequential source:\n");
-        for(ix=0;ix<VOLUME;ix++) {
-          for(i=0;i<12;i++) {
-            fprintf(stdout, "\t%6d%3d%25.16e%25.16e\n", ix, i, g_spinor_field[2][_GSI(ix)+2*i], g_spinor_field[2][_GSI(ix)+2*i+1]);
+        // TEST
+        {
+          sprintf(filename,"seq_source.ascii.%.2d.%.2d.%.2d", is,g_nproc, g_cart_id);
+          ofs = fopen(filename,"w");
+          fprintf(ofs, "# [] the sequential source:\n");
+          for(ix=0;ix<VOLUME;ix++) {
+            for(i=0;i<12;i++) {
+              fprintf(ofs, "\t%6d%3d%25.16e%25.16e\n", ix, i, g_spinor_field[2][_GSI(ix)+2*i], g_spinor_field[2][_GSI(ix)+2*i+1]);
+            }
           }
+          fclose(ofs);
         }
 */
-
       }  // of imom
     }    // of is
 }  // of if mode == 1

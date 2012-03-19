@@ -15,6 +15,7 @@
  * -finish and test MPI implementation with code from Alexei
  *
  * - DO NOT USE WITH PARALLELTX OR PARALLELTXY !!
+ *   use invert_dw_quda_v2 instead
  *
  * DONE:
  * CHANGES:
@@ -35,14 +36,6 @@
 #endif
 
 #define MAIN_PROGRAM
-
-#ifndef EXIT
-#  ifdef MPI
-#  define EXIT(_i) { MPI_Abort(MPI_COMM_WORLD, (_i)); MPI_Finalize(); exit((_i)); }
-#  else
-#  define EXIT(_i) { exit(_i); }
-#  endif
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -481,6 +474,7 @@ int main(int argc, char **argv) {
 
   switch(g_source_type) {
     case 0:
+    case 5:
       // the source locaton
       sl0 =   g_source_location                              / (LX_global*LY_global*LZ);
       sl1 = ( g_source_location % (LX_global*LY_global*LZ) ) / (          LY_global*LZ);
@@ -644,6 +638,20 @@ int main(int argc, char **argv) {
     }
   }
 
+  if(g_source_type == 5) {
+    if(g_seq_source_momentum_set) {
+      if(g_seq_source_momentum[0]<0) g_seq_source_momentum[0] += LX_global;
+      if(g_seq_source_momentum[1]<0) g_seq_source_momentum[1] += LY_global;
+      if(g_seq_source_momentum[2]<0) g_seq_source_momentum[2] += LZ_global;
+    } else if(g_source_momentum_set) {
+      g_seq_source_momentum[0] = g_source_momentum[0];
+      g_seq_source_momentum[1] = g_source_momentum[1];
+      g_seq_source_momentum[2] = g_source_momentum[2];
+    }
+    fprintf(stdout, "# [invert_dw_quda] using final sequential source momentum ( %d, %d, %d )\n",
+        g_seq_source_momentum[0], g_seq_source_momentum[1], g_seq_source_momentum[2]);
+  }
+
 
   /***********************************************
    * loop on spin-color-index
@@ -778,16 +786,16 @@ int main(int argc, char **argv) {
               sprintf(source_filename, "%s.%.4d.%.2d.%.2d", filename_prefix, Nconf, g_source_timeslice, c);
             }
             break;
-          default:
-            fprintf(stderr, "\nError, unrecognized source type\n");
-            exit(32);
-            break;
           case 5:
             if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] preparing sequential point source\n");
-            check_error( prepare_sequential_point_source (g_spinor_field[0], isc, sl0, g_source_momentum, 
+            check_error( prepare_sequential_point_source (g_spinor_field[0], isc, sl0, g_seq_source_momentum, 
                   smear_source, g_spinor_field[1], gauge_field_smeared), "prepare_sequential_point_source", NULL, 33);
             sprintf(source_filename, "%s.%.4d.t%.2dx%.2d.y%.2d.z%.2d.%.2d.qx%.2dqy%.2dqz%.2d", filename_prefix2, Nconf,
                 sl0, sl1, sl2, sl3, isc, g_source_momentum[0], g_source_momentum[1], g_source_momentum[2]);
+            break;
+          default:
+            fprintf(stderr, "\nError, unrecognized source type\n");
+            exit(32);
             break;
         }
       } else { // read source
@@ -818,11 +826,16 @@ int main(int argc, char **argv) {
         }
       }  // of if g_read_source
   
-      //sprintf(filename, "%s.ascii.%.2d", source_filename, g_cart_id);
+      //sprintf(filename, "source.ascii.%.2d.%.2d", g_nproc, g_cart_id);
       //ofs = fopen(filename, "w");
       //printf_spinor_field(g_spinor_field[0], ofs);
       //fclose(ofs);
-  
+
+#ifdef MPI
+      MPI_Barrier(g_cart_grid);
+#endif
+      continue;
+
       if(g_write_source) {
         check_error(write_propagator(g_spinor_field[0], source_filename, 0, g_propagator_precision), "write_propagator", NULL, 27);
       }

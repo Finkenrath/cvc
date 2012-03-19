@@ -153,6 +153,9 @@ SDIGIT {SIGN}?[[:digit:]]
 %x SNKMOMX
 %x SNKMOMY
 %x SNKMOMZ
+%x SEQSRCMOMX
+%x SEQSRCMOMY
+%x SEQSRCMOMZ
 %x CPUPREC
 %x GPUPREC
 %x GPUPRECSLOPPY
@@ -265,6 +268,9 @@ SDIGIT {SIGN}?[[:digit:]]
 ^sink_momentum_x{SPC}*={SPC}*              BEGIN(SNKMOMX);
 ^sink_momentum_y{SPC}*={SPC}*              BEGIN(SNKMOMY);
 ^sink_momentum_z{SPC}*={SPC}*              BEGIN(SNKMOMZ);
+^seq_source_momentum_x{SPC}*={SPC}*        BEGIN(SEQSRCMOMX);
+^seq_source_momentum_y{SPC}*={SPC}*        BEGIN(SEQSRCMOMY);
+^seq_source_momentum_z{SPC}*={SPC}*        BEGIN(SEQSRCMOMZ);
 ^cpu_precision{SPC}*={SPC}*                BEGIN(CPUPREC);
 ^gpu_precision{SPC}*={SPC}*                BEGIN(GPUPREC);
 ^gpu_precision_sloppy{SPC}*={SPC}*         BEGIN(GPUPRECSLOPPY);
@@ -745,6 +751,21 @@ SDIGIT {SIGN}?[[:digit:]]
   g_sink_momentum[2] = atoi(yytext);
   g_sink_momentum_set = 1;
   if(myverbose!=0) printf("z-comp. of sink momentum set to %d\n", g_sink_momentum[2]);
+}
+<SEQSRCMOMX>{SDIGIT}+ {
+  g_seq_source_momentum[0] = atoi(yytext);
+  g_seq_source_momentum_set = 1;
+  if(myverbose!=0) printf("x-comp. of sequential source momentum set to %d\n", g_seq_source_momentum[0]);
+}
+<SEQSRCMOMY>{SDIGIT}+ {
+  g_seq_source_momentum[1] = atoi(yytext);
+  g_seq_source_momentum_set = 1;
+  if(myverbose!=0) printf("y-comp. of sequential source momentum set to %d\n", g_seq_source_momentum[1]);
+}
+<SEQSRCMOMZ>{SDIGIT}+ {
+  g_seq_source_momentum[2] = atoi(yytext);
+  g_seq_source_momentum_set = 1;
+  if(myverbose!=0) printf("z-comp. of sequential source momentum set to %d\n", g_seq_source_momentum[2]);
 }
 <CPUPREC>{NAME} {
   if(strcmp(yytext, "half")==0 ) {

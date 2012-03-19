@@ -431,11 +431,12 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
   scoords[3] = gx3 / LZ;
 #ifdef MPI
   MPI_Cart_rank(g_cart_grid, scoords, &id);
+#endif
   lx0 = gx0 % T;
   lx1 = gx1 % LX;
   lx2 = gx2 % LY;
   lx3 = gx3 % LZ;
-#endif
+
   if(g_cart_id==id) fprintf(stdout, "# [prepare_sequential_source] process %d has the source location at "\
       "(%d,%d,%d,%d)\n", id, lx0, lx1, lx2, lx3);
 
@@ -451,7 +452,8 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
     have_source = 0;
     lts = -1;
   }
-  
+  if(have_source) fprintf(stdout, "# [] process %d has source\n", g_cart_id);
+
   // (1) propagator filename
   sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.inverted", filename_prefix, Nconf, gx0, gx1, gx2, gx3,\
       isc);
@@ -473,7 +475,7 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
 #ifdef OPENMP
       Jacobi_Smearing_Step_one_threads(gauge_field_smeared, source, work, N_Jacobi, kappa_Jacobi);
 #else
-      for(c=0; c<N_Jacobi; c++) {
+      for(i=0; i<N_Jacobi; i++) {
         Jacobi_Smearing_Step_one(gauge_field_smeared, source, work, kappa_Jacobi);
       }
 #endif
@@ -485,9 +487,9 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
     for(x2=0;x2<LY;x2++) {
     for(x3=0;x3<LZ;x3++) {
       ix = g_ipt[lts][x1][x2][x3];
-      phase = 2. * M_PI * ( ( x1+g_proc_coords[1]*LX - gx1 ) * momentum[0] / (double)LX_global
-                          + ( x2*g_proc_coords[2]*LY - gx2 ) * momentum[1] / (double)LY_global
-                          + ( x3*g_proc_coords[3]*LZ - gx3 ) * momentum[2] / (double)LZ_global );
+      phase = 2. * M_PI * ( ( x1 + g_proc_coords[1]*LX - gx1 ) * momentum[0] / (double)LX_global
+                          + ( x2 + g_proc_coords[2]*LY - gx2 ) * momentum[1] / (double)LY_global
+                          + ( x3 + g_proc_coords[3]*LZ - gx3 ) * momentum[2] / (double)LZ_global );
       w.re =  cos(phase);
       w.im = -sin(phase);
       _fv_eq_gamma_ti_fv(spinor1, 5, source + _GSI(ix));
@@ -499,12 +501,12 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
   // TEST
   {
     FILE*ofs;
-    sprintf(filename, "seq_source.ascii.%.2d.%.2d", g_nproc, g_cart_id);
+    sprintf(filename, "seq_source.ascii.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
     ofs = fopen(filename, "w");
     fprintf(ofs, "# [prepare_sequential_source] the sequential source:\n");
     for(ix=0;ix<VOLUME;ix++) {
       for(i=0;i<12;i++) {
-        fprintf(ofs, "%3d%6d%3d%25.16e%25.16e\n", ix, i, source[_GSI(ix)+2*i], source[_GSI(ix)+2*i+1]);
+        fprintf(ofs, "%6d%3d%25.16e%25.16e\n", ix, i, source[_GSI(ix)+2*i], source[_GSI(ix)+2*i+1]);
       }
     }
     fclose(ofs);

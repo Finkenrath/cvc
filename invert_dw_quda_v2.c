@@ -252,20 +252,21 @@ int main(int argc, char **argv) {
   mpi_init(argc, argv);
 
 #ifdef MPI
-  rank = comm_rank();
 #ifdef HAVE_QUDA
+  rank = comm_rank();
   quda_proc_coords[0] = rank / (grid_size[1]*grid_size[2]*grid_size[3]);
   quda_proc_coords[1] =( rank % (grid_size[1]*grid_size[2]*grid_size[3]) ) / (grid_size[2]*grid_size[3]);
   quda_proc_coords[2] =( rank % (grid_size[2]*grid_size[3]) ) / grid_size[3];
   quda_proc_coords[3] =( rank % grid_size[3]);
 #else
+  rank = g_cart_id;
   quda_proc_coords[0] = g_proc_coords[0];
   quda_proc_coords[1] = g_proc_coords[1];
   quda_proc_coords[2] = g_proc_coords[2];
   quda_proc_coords[3] = g_proc_coords[3];
 #endif
 #else
-  rank = comm_rank();
+  rank = 0;
   quda_proc_coords[0] = 0;
   quda_proc_coords[1] = 0;
   quda_proc_coords[2] = 0;
@@ -528,6 +529,7 @@ int main(int argc, char **argv) {
 
   switch(g_source_type) {
     case 0:
+    case 5:
       // the source locaton
       sl0 =   g_source_location / (LX_global*LY_global*LZ_global);
       sl1 = ( g_source_location % (LX_global*LY_global*LZ_global) ) / (          LY_global*LZ_global);
@@ -709,6 +711,20 @@ int main(int argc, char **argv) {
     }
   }
 
+  if(g_source_type == 5) { 
+    if(g_seq_source_momentum_set) {
+      if(g_seq_source_momentum[0]<0) g_seq_source_momentum[0] += LX_global;
+      if(g_seq_source_momentum[1]<0) g_seq_source_momentum[1] += LY_global;
+      if(g_seq_source_momentum[2]<0) g_seq_source_momentum[2] += LZ_global;
+    } else if(g_source_momentum_set) {
+      g_seq_source_momentum[0] = g_source_momentum[0];
+      g_seq_source_momentum[1] = g_source_momentum[1];
+      g_seq_source_momentum[2] = g_source_momentum[2];
+    }
+    fprintf(stdout, "# [invert_dw_quda] using final sequential source momentum ( %d, %d, %d )\n",
+        g_seq_source_momentum[0], g_seq_source_momentum[1], g_seq_source_momentum[2]);
+  }
+
 
   /***********************************************
    * loop on spin-color-index
@@ -847,6 +863,15 @@ int main(int argc, char **argv) {
               sprintf(source_filename, "%s.%.4d.%.2d.%.2d", filename_prefix, Nconf, g_source_timeslice, c);
             }
             break;
+          case 5:
+            if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] preparing sequential point source\n");
+            check_error( prepare_sequential_point_source (g_spinor_field[0], isc, sl0, g_seq_source_momentum, 
+                smear_source, g_spinor_field[1], gauge_field_smeared),
+                "prepare_sequential_point_source", NULL, 33);
+            sprintf(source_filename, "%s.%.4d.t%.2dx%.2d.y%.2d.z%.2d.%.2d.qx%.2dqy%.2dqz%.2d",
+                filename_prefix2, Nconf, sl0, sl1, sl2, sl3, isc,
+                g_source_momentum[0], g_source_momentum[1], g_source_momentum[2]);
+            break;
           default:
             fprintf(stderr, "\nError, unrecognized source type\n");
             exit(32);
@@ -885,6 +910,7 @@ int main(int argc, char **argv) {
       //printf_spinor_field(g_spinor_field[0], ofs);
       //fclose(ofs);
   
+
       if(g_write_source) {
         check_error(write_propagator(g_spinor_field[0], source_filename, 0, g_propagator_precision), "write_propagator", NULL, 27);
       }

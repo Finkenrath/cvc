@@ -164,6 +164,7 @@ EXTERN double g_as_over_a;
 EXTERN int g_num_threads;
 EXTERN int g_source_momentum[3], g_source_momentum_set;
 EXTERN int g_sink_momentum[3], g_sink_momentum_set;
+EXTERN int g_seq_source_momentum[3], g_seq_source_momentum_set;
 EXTERN int *g_rng_state;
 EXTERN int g_verbose;
 EXTERN int g_source_proc_id;

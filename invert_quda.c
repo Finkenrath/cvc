@@ -723,7 +723,6 @@ int main(int argc, char **argv) {
       if(g_write_source) {
         check_error(write_propagator(g_spinor_field[0], source_filename, 0, g_propagator_precision), "write_propagator", NULL, 27);
       }
-      continue;
 
 #ifdef HAVE_QUDA  
       // multiply with g2
