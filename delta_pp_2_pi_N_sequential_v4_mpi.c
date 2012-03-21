@@ -217,6 +217,13 @@ int main(int argc, char **argv) {
     usage();
   }
 
+#ifdef OPENMP
+  omp_set_num_threads(g_num_threads);
+#else
+  fprintf(stdout, "[delta_pp_2_pi_N_sequential_v4_mpi] Warning, resetting global thread number to 1\n");
+  g_num_threads = 1;
+#endif
+
   // initialize MPI parameters
   mpi_init(argc, argv);
 

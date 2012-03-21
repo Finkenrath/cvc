@@ -159,10 +159,6 @@ int main(int argc, char **argv) {
     }
   }
 
-#ifdef OPENMP
-  omp_set_num_threads(g_num_threads);
-#endif
-
   /* set the default values */
   if(filename_set==0) strcpy(filename, "cvc.input");
   fprintf(stdout, "# reading input from file %s\n", filename);
@@ -177,6 +173,13 @@ int main(int argc, char **argv) {
     if(g_proc_id==0) fprintf(stdout, "kappa should be > 0.n");
     usage();
   }
+
+#ifdef OPENMP
+  omp_set_num_threads(g_num_threads);
+#else
+  fprintf(stdout, "[delta_pp_2pt_v4] Warning, resetting global thread number to 1\n");
+  g_num_threads = 1;
+#endif
 
   /* initialize MPI parameters */
   mpi_init(argc, argv);

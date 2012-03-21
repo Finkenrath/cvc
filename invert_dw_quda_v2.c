@@ -211,13 +211,6 @@ int main(int argc, char **argv) {
   // get the time stamp
   g_the_time = time(NULL);
 
-  /*********************************
-   * set number of openmp threads
-   *********************************/
-#ifdef OPENMP
-  omp_set_num_threads(g_num_threads);
-#endif
-
   /**************************************
    * set the default values, read input
    **************************************/
@@ -247,6 +240,14 @@ int main(int argc, char **argv) {
     if(g_proc_id==0) fprintf(stderr, "[invert_dw_quda] Error, T and L's must be set\n");
     usage();
   }
+
+  // set number of openmp threads
+#ifdef OPENMP
+  omp_set_num_threads(g_num_threads);
+#else
+  fprintf(stdout, "[invert_dw_quda_v2] Warning, resetting global number of threads to 1\n");
+  g_num_threads = 1;
+#endif
 
   // initialize MPI parameters
   mpi_init(argc, argv);

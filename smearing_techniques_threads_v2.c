@@ -523,8 +523,11 @@ int Jacobi_Smearing_Step_one_threads(double *smeared_gauge_field, double *psi, d
 
   // Copy the timeslice of interest to psi_old.
 //  memcpy((void*)psi_old, (void*)psi, 24*(VOLUME+RAND)*sizeof(double));
-
+#ifdef OPENMP
   nthreads = g_num_threads;
+#else
+  nthreads = 1;
+#endif
   //fprintf(stdout, "# [Jacobi_Smearing_Step_one_threads] number of threads = %d\n", nthreads);
   spinor_buffer = (double*)malloc(3*nthreads*24*sizeof(double));
   U_buffer = (double*)malloc(2*nthreads*54*sizeof(double));
