@@ -1,11 +1,15 @@
 /****************************************************
  * disc_tqdep.c
  *
- * Thu Nov 10 10:33:03 EET 2011
+ * Fri May  4 08:49:25 EEST 2012
  *
  * PURPOSE
  * - calculate loops psibar Gamma psi from timeslice ( / volume ?)
  *   sources; save the (t,q1,q2,q3)- dependend fields
+ *
+ * - REMEMBER: FFTW_FORWARD  ---> exp( - i phase)
+ * - REMEMBER: FFTW_BACKWARD ---> exp( + i phase)
+ *
  * TODO:
  * - think of solution for tm-case and V^C_0 (t,t+0^) of up and down
  * DONE:
@@ -87,6 +91,7 @@ int main(int argc, char **argv) {
   double hopexp_coeff[8], addreal, addimag, fnorm;
   int num_threads=1, no_fields, num_timeslices=1;
   size_t bytes, items;
+  int read_source = 0;
 
 /***********************************************************************************************/            
 /*                    g5  gi           g0g5 g0gi         id  gig5        g0  g[igj]            */
@@ -105,7 +110,7 @@ int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
 #endif
 
-  while ((c = getopt(argc, argv, "ah?vgf:t:F:")) != -1) {
+  while ((c = getopt(argc, argv, "ah?vgf:t:F:r:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -132,6 +137,10 @@ int main(int argc, char **argv) {
         exit(145);
       }
       fprintf(stdout, "# [] use fermion type %s - id %d\n", optarg, fermion_type);
+      break;
+    case 'r':
+      read_source = atoi(optarg);
+      fprintf(stdout, "# [] using read source = %d\n", read_source);
       break;
     case 'h':
     case '?':
@@ -160,10 +169,6 @@ int main(int argc, char **argv) {
   /* some checks on the input data */
   if((T_global == 0) || (LX==0) || (LY==0) || (LZ==0)) {
     if(g_proc_id==0) fprintf(stdout, "T and L's must be set\n");
-    usage();
-  }
-  if(g_kappa == 0.) {
-    if(g_proc_id==0) fprintf(stdout, "kappa should be > 0.n");
     usage();
   }
 
@@ -285,7 +290,8 @@ int main(int argc, char **argv) {
 #endif
     exit(5);
   }
-  plan_p = fftwnd_create_plan_specific(3, dims, FFTW_FORWARD, FFTW_MEASURE, in, K, (fftw_complex*)( disc ), K);
+  // plan_p = fftwnd_create_plan_specific(3, dims, FFTW_FORWARD, FFTW_MEASURE, in, K, (fftw_complex*)( disc ), K);
+  plan_p = fftwnd_create_plan_specific(3, dims, FFTW_BACKWARD, FFTW_MEASURE, in, K, (fftw_complex*)( disc ), K);
 
   // set the global source timeslice if it is a coherent source
   if(g_coherent_source == 1) {
@@ -298,49 +304,87 @@ int main(int argc, char **argv) {
    ************************************/
   for(isample=0;isample<g_nsample;isample++) {
 
-    /* read the new propagator */
-    switch(g_source_type) {
-      case 2:
-        // timeslice source
-        sprintf(filename, "%s.%.4d.%.2d.%.5d.inverted", filename_prefix, Nconf, g_source_timeslice, isample);
-        break;
-      case 1:
-        // volume source
-        sprintf(filename, "%s.%.4d.%.5d.inverted", filename_prefix, Nconf, isample);
-        break;
-      default:
-        fprintf(stderr, "[] source format not yet implemented\n");
-        exit(7);
-       break;
-    }
-    if(read_lime_spinor(g_spinor_field[1], filename, 0) != 0) {
-      fprintf(stderr, "[%2d] Error, could not read from file %s\n", g_cart_id, filename);
-#ifdef MPI
-      MPI_Abort(MPI_COMM_WORLD, 1);
-      MPI_Finalize();
-#endif
-      exit(4);
-    }
-    xchange_field(g_spinor_field[1]);
+    if(read_source == 0) {
+      /* read the new propagator and calculate source */
+      if(g_cart_id==0) fprintf(stdout, "# reading propagator from file, generating source from propagator\n");
+      switch(g_source_type) {
+        case 2:
+          // timeslice source
+          sprintf(filename, "%s.%.4d.%.2d.%.5d.inverted", filename_prefix, Nconf, g_source_timeslice, isample);
+          break;
+        case 1:
+          // volume source
+          sprintf(filename, "%s.%.4d.%.5d.inverted", filename_prefix, Nconf, isample);
+          break;
+        default:
+          fprintf(stderr, "[] source format not yet implemented\n");
+          exit(7);
+         break;
+      }
+      if(read_lime_spinor(g_spinor_field[1], filename, 0) != 0) {
+        fprintf(stderr, "[%2d] Error, could not read from file %s\n", g_cart_id, filename);
+  #ifdef MPI
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        MPI_Finalize();
+  #endif
+        exit(4);
+      }
+      xchange_field(g_spinor_field[1]);
+  
+      /* calculate the source: apply Q_phi_tbc */
+  #ifdef MPI
+      ratime = MPI_Wtime();
+  #else
+      ratime = (double)clock() / CLOCKS_PER_SEC;
+  #endif
+      if(fermion_type && g_propagator_bc_type == 1) {
+        Q_Wilson_phi(g_spinor_field[0], g_spinor_field[1]);
+      } else {
+        Q_phi_tbc(g_spinor_field[0], g_spinor_field[1]);
+      }
+      xchange_field(g_spinor_field[0]); 
+  #ifdef MPI
+      retime = MPI_Wtime();
+  #else
+      retime = (double)clock() / CLOCKS_PER_SEC;
+  #endif
+      if(g_cart_id==0) fprintf(stdout, "# time to apply Dirac operator: %e seconds\n", retime-ratime);
 
-    /* calculate the source: apply Q_phi_tbc */
-#ifdef MPI
-    ratime = MPI_Wtime();
-#else
-    ratime = (double)clock() / CLOCKS_PER_SEC;
-#endif
-    if(fermion_type && g_propagator_bc_type == 1) {
-      Q_Wilson_phi(g_spinor_field[0], g_spinor_field[1]);
-    } else {
-      Q_phi_tbc(g_spinor_field[0], g_spinor_field[1]);
+    } else if(read_source == 1) {
+      /* read source and propagator from same file */
+      if(g_cart_id==0) fprintf(stdout, "# reading source and propagator from same file\n");
+      switch(g_source_type) {
+        case 1:
+          // volume source
+        case 2:
+          // timeslice source
+          sprintf(filename, "%s.%.4d.%.5d", filename_prefix, Nconf, isample);
+          break;
+        default:
+          fprintf(stderr, "[] source format not yet implemented\n");
+          exit(7);
+         break;
+      }
+      if(read_lime_spinor(g_spinor_field[0], filename, 0) != 0) {
+        fprintf(stderr, "[%2d] Error, could not read source from file %s\n", g_cart_id, filename);
+  #ifdef MPI
+        MPI_Abort(MPI_COMM_WORLD, 4);
+        MPI_Finalize();
+  #endif
+        exit(4);
+      }
+      xchange_field(g_spinor_field[0]);
+
+      if(read_lime_spinor(g_spinor_field[1], filename, 1) != 0) {
+        fprintf(stderr, "[%2d] Error, could not read source from file %s\n", g_cart_id, filename);
+  #ifdef MPI
+        MPI_Abort(MPI_COMM_WORLD, 4);
+        MPI_Finalize();
+  #endif
+        exit(4);
+      }
+      xchange_field(g_spinor_field[1]);
     }
-    xchange_field(g_spinor_field[0]); 
-#ifdef MPI
-    retime = MPI_Wtime();
-#else
-    retime = (double)clock() / CLOCKS_PER_SEC;
-#endif
-    if(g_cart_id==0) fprintf(stdout, "# time to apply Dirac operator: %e seconds\n", retime-ratime);
 
     // sink smearing
     if(N_Jacobi > 0) {
@@ -353,7 +397,17 @@ int main(int argc, char **argv) {
 #endif
     }
   
-    // printf_spinor_field(g_spinor_field[0], stdout);
+    // TEST:
+    sprintf(filename, "source.%.4d.%.5d.ascii", Nconf, isample);
+    ofs = fopen(filename, "w");
+    printf_spinor_field(g_spinor_field[0], ofs);
+    fclose(ofs);
+
+    // TEST:
+    sprintf(filename, "prop.%.4d.%.5d.ascii", Nconf, isample);
+    ofs = fopen(filename, "w");
+    printf_spinor_field(g_spinor_field[1], ofs);
+    fclose(ofs);
 
     // add new contractions to disc
 #ifdef MPI
@@ -368,6 +422,7 @@ int main(int argc, char **argv) {
       for(it=0; it<num_timeslices; it++) {       // loop on timeslices
         if(g_coherent_source==1) { x0 = (g_coherent_source_base + it*g_coherent_source_delta ) % T_global; }
         else                     { x0 = ( g_source_timeslice + it ) % T_global; }
+        if(g_cart_id==0) fprintf(stdout, "# [disc_tqdep] processing mu-timeslice pair%3d%3d\n", mu, x0);
         // fprintf(stdout, "# [] using x0 = %d\n", x0);
         for(x1=0; x1<VOL3; x1++) {  // loop on sites in timeslice
           ix = x0*VOL3 + x1;
@@ -380,6 +435,7 @@ int main(int argc, char **argv) {
       }  // of x0
     }    // of mu 
 
+#if 0
     // conserved vector current, component 0
     if(fermion_type == _WILSON_FERMION) {
       mu = 0;
@@ -446,6 +502,7 @@ int main(int argc, char **argv) {
         }
       }
     } // of if fermion_type == 
+#endif
 #ifdef MPI
     retime = MPI_Wtime();
 #else
@@ -459,7 +516,7 @@ int main(int argc, char **argv) {
    * normalization
    **************************************************************/
   fnorm = 1. / ( (double)g_nsample * g_prop_normsqr );
-  fprintf(stdout, "# [] using normalization with fnorm = %e\n", fnorm);
+  if(g_cart_id==0) fprintf(stdout, "# [] using normalization with fnorm = %e\n", fnorm);
   items = num_timeslices * 2*K*VOL3;
   for(ix=0;ix<items;ix++) disc[ix] *= fnorm;
 

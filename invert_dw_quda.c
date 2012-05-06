@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
   char filename[200], source_filename[200];
   double ratime, retime;
   double plaq_r=0., plaq_m=0., norm, norm2;
-  // double spinor1[24], spinor2[24];
+  double spinor1[24];
   double *gauge_qdp[4], *gauge_field_timeslice=NULL, *gauge_field_smeared=NULL;
   double _1_2_kappa, _2_kappa, phase;
   FILE *ofs;
@@ -120,6 +120,12 @@ int main(int argc, char **argv) {
   int imom;
   int num_gpu_on_node=0, rank;
   int source_location_5d_iseven;
+  int convert_sign=0;
+#ifdef HAVE_QUDA
+  int rotate_gamma_basis = 1;
+#else
+  int rotate_gamma_basis = 0;
+#endif
 
   /****************************************************************************/
 #if (defined HAVE_QUDA) && (defined MULTI_GPU)
@@ -154,7 +160,7 @@ int main(int argc, char **argv) {
   QudaInvertParam inv_param = newQudaInvertParam();
 #endif
 
-  while ((c = getopt(argc, argv, "soch?vgf:p:b:")) != -1) {
+  while ((c = getopt(argc, argv, "soch?vgf:p:b:S:R:")) != -1) {
     switch (c) {
     case 'v':
       g_verbose = 1;
@@ -185,6 +191,14 @@ int main(int argc, char **argv) {
       boundary_condition_factor = atof(optarg);
       boundary_condition_factor_set = 1;
       fprintf(stdout, "# [invert_dw_quda] const. boundary condition factor set to %e\n", boundary_condition_factor);
+      break;
+    case 'S':
+      convert_sign = atoi(optarg);
+      fprintf(stdout, "# [invert_dw_quda] using convert sign %d\n", convert_sign);
+      break;
+    case 'R':
+      rotate_gamma_basis = atoi(optarg);
+      fprintf(stdout, "# [invert_dw_quda] rotate gamma basis %d\n", rotate_gamma_basis);
       break;
     case 'h':
     case '?':
@@ -824,6 +838,11 @@ int main(int argc, char **argv) {
           default:
             check_error(1, "source type", NULL, 104);
             break;
+          case -1:  // timeslice source
+            sprintf(source_filename, "%s", filename_prefix2);
+            fprintf(stdout, "# [invert_dw_quda] reading source from file %s\n", source_filename);
+            check_error(read_lime_spinor(g_spinor_field[0], source_filename, 0), "read_lime_spinor", NULL, 115);
+            break;
         }
       }  // of if g_read_source
   
@@ -831,11 +850,6 @@ int main(int argc, char **argv) {
       //ofs = fopen(filename, "w");
       //printf_spinor_field(g_spinor_field[0], ofs);
       //fclose(ofs);
-
-#ifdef MPI
-      MPI_Barrier(g_cart_grid);
-#endif
-      continue;
 
       if(g_write_source) {
         check_error(write_propagator(g_spinor_field[0], source_filename, 0, g_propagator_precision), "write_propagator", NULL, 27);
@@ -857,13 +871,17 @@ int main(int argc, char **argv) {
       /***********************************************
        * create the 5-dim. source field
        ***********************************************/
-      spinor_4d_to_5d(g_spinor_field[0], g_spinor_field[0]);
+      if(convert_sign == 0) {
+        spinor_4d_to_5d(g_spinor_field[0], g_spinor_field[0]);
+      }  else if(convert_sign == 1 || convert_sign == -1) {
+        spinor_4d_to_5d_sign(g_spinor_field[0], g_spinor_field[0], convert_sign);
+      }
       xchange_field_5d(g_spinor_field[0]);
 
-      //sprintf(filename, "%s.ascii.5d.%.2d", source_filename, g_cart_id);
-      //ofs = fopen(filename, "w");
-      //printf_spinor_field_5d(g_spinor_field[0], ofs);
-      //fclose(ofs);
+      sprintf(filename, "source.ascii.5d.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
+      ofs = fopen(filename, "w");
+      printf_spinor_field_5d(g_spinor_field[0], ofs);
+      fclose(ofs);
 
       
 #ifdef HAVE_QUDA  
@@ -871,13 +889,32 @@ int main(int argc, char **argv) {
       for(ix=0;ix<L5*VOLUME;ix++) {
         _fv_eq_zero(g_spinor_field[2]+_GSI(ix));
       }
-      for(ix=0;ix<VOLUME;ix++) {
-        iy = lexic2eot_5d(0, ix);
-        _fv_eq_gamma_ti_fv(g_spinor_field[2]+_GSI(iy), 2, g_spinor_field[0]+_GSI(ix));
+      if(rotate_gamma_basis) {
+        for(ix=0;ix<VOLUME;ix++) {
+          iy = lexic2eot_5d(0, ix);
+          _fv_eq_gamma_ti_fv(g_spinor_field[2]+_GSI(iy), 2, g_spinor_field[0]+_GSI(ix));
+        }
+        for(ix=0;ix<VOLUME;ix++) {
+          iy = lexic2eot_5d(L5-1, ix);
+          _fv_eq_gamma_ti_fv(g_spinor_field[2]+_GSI(iy), 2, g_spinor_field[0]+_GSI(ix+(L5-1)*VOLUME));
+        }
+      } else {
+        for(ix=0;ix<VOLUME;ix++) {
+          iy = lexic2eot_5d(0, ix);
+          _fv_eq_fv(g_spinor_field[2]+_GSI(iy), g_spinor_field[0]+_GSI(ix));
+        }
+        for(ix=0;ix<VOLUME;ix++) {
+          iy = lexic2eot_5d(L5-1, ix);
+          _fv_eq_fv(g_spinor_field[2]+_GSI(iy), g_spinor_field[0]+_GSI(ix+(L5-1)*VOLUME));
+        }
       }
-      for(ix=0;ix<VOLUME;ix++) {
-        iy = lexic2eot_5d(L5-1, ix);
-        _fv_eq_gamma_ti_fv(g_spinor_field[2]+_GSI(iy), 2, g_spinor_field[0]+_GSI(ix+(L5-1)*VOLUME));
+#else
+      if(rotate_gamma_basis) {
+        if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] Attention: rotating source field gamma_2 in non-QUDA case\n");
+        for(ix=0;ix<VOLUME*L5;ix++) {
+          _fv_eq_gamma_ti_fv(spinor1, 2, g_spinor_field[0]+_GSI(ix));
+          _fv_eq_fv(g_spinor_field[0]+_GSI(ix), spinor1);
+        }
       }
 #endif
 
@@ -940,13 +977,19 @@ int main(int argc, char **argv) {
         iix = is*VOLUME + ix;
         _fv_eq_fv(g_spinor_field[2]+_GSI(iix), g_spinor_field[1]+_GSI(iy));
       }}
-      for(ix=0;ix<VOLUME*L5;ix++) {
-        _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, g_spinor_field[2]+_GSI(ix));
+      if(rotate_gamma_basis) {
+        for(ix=0;ix<VOLUME*L5;ix++) {
+          _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, g_spinor_field[2]+_GSI(ix));
+        }
+      } else {
+        for(ix=0;ix<VOLUME*L5;ix++) {
+          _fv_eq_fv(g_spinor_field[1]+_GSI(ix), g_spinor_field[2]+_GSI(ix));
+        }
       }
 #ifdef MPI
       xchange_field_5d(g_spinor_field[1]);
 #endif
-#else
+#else  // of ifdef HAVE_QUDA
       for(ix=0;ix<VOLUME*L5;ix++) { _fv_eq_zero(g_spinor_field[1]+_GSI(ix) ); }
       //g_spinor_field[1][_GSI(g_ipt[lsl0][lsl1][lsl2][lsl3])] = 1.;
       xchange_field_5d(g_spinor_field[1]);
@@ -963,6 +1006,12 @@ int main(int argc, char **argv) {
       if(status < 0) {
         if(g_cart_id==0) fprintf(stderr, "[invert_dw_quda] Error from inversion, status was %d\n", status);
         EXIT(5);
+      }
+      if(rotate_gamma_basis) {
+        for(ix=0;ix<VOLUME*L5;ix++) {
+          _fv_eq_gamma_ti_fv(spinor1, 2, g_spinor_field[1]+_GSI(ix));
+          _fv_eq_fv(g_spinor_field[1]+_GSI(ix), spinor1);
+        }
       }
 #endif
       if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] inversion done in %e seconds\n", retime-ratime);
@@ -986,6 +1035,16 @@ int main(int argc, char **argv) {
         //printf_spinor_field_5d(g_spinor_field[1], ofs);
         //fclose(ofs);
 
+#ifndef HAVE_QUDA
+        if(rotate_gamma_basis) {
+          if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] Attention: rotating solution with gamma_2 in non-QUDA case\n");
+          for(ix=0;ix<L5*VOLUME;ix++) { 
+            _fv_eq_gamma_ti_fv(spinor1, 2, g_spinor_field[1]+_GSI(ix));
+            _fv_eq_fv(g_spinor_field[1]+_GSI(ix), spinor1);
+          }
+        }
+#endif
+
         Q_DW_Wilson_phi(g_spinor_field[2], g_spinor_field[1]);
   
         for(ix=0;ix<VOLUME*L5;ix++) {
@@ -995,12 +1054,26 @@ int main(int argc, char **argv) {
         spinor_scalar_product_re(&norm, g_spinor_field[2], g_spinor_field[2], VOLUME*L5);
         spinor_scalar_product_re(&norm2, g_spinor_field[0], g_spinor_field[0], VOLUME*L5);
         if(g_cart_id==0) fprintf(stdout, "\n# [invert_dw_quda] absolut residuum squared: %e; relative residuum %e\n", norm, sqrt(norm/norm2) );
+
+#ifndef HAVE_QUDA
+        if(rotate_gamma_basis) {
+          if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] Attention: rotating solution back to original version in non-QUDA case\n");
+          for(ix=0;ix<L5*VOLUME;ix++) { 
+            _fv_eq_gamma_ti_fv(spinor1, 2, g_spinor_field[1]+_GSI(ix));
+            _fv_eq_fv(g_spinor_field[1]+_GSI(ix), spinor1);
+          }
+        }
+#endif
       }
   
       /***********************************************
        * create 4-dim. propagator
        ***********************************************/
-      spinor_5d_to_4d(g_spinor_field[1], g_spinor_field[1]);
+      if(convert_sign == 0) {
+        spinor_5d_to_4d(g_spinor_field[1], g_spinor_field[1]);
+      } else if(convert_sign == -1 || convert_sign == +1) {
+        spinor_5d_to_4d_sign(g_spinor_field[1], g_spinor_field[1], convert_sign);
+      }
 
       /***********************************************
        * write the solution 
@@ -1009,6 +1082,10 @@ int main(int argc, char **argv) {
       if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] writing propagator to file %s\n", filename);
       check_error(write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision), "write_propagator", NULL, 22);
       
+      sprintf(filename, "prop.ascii.4d.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
+      ofs = fopen(filename, "w");
+      printf_spinor_field(g_spinor_field[1], ofs);
+      fclose(ofs);
  
     }  // of loop on momenta
 
