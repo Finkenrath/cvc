@@ -41,4 +41,6 @@ void Q_DW_Wilson_phi(double *xi, double *phi);
 void Q_DW_Wilson_dag_phi(double *xi, double *phi);
 void spinor_4d_to_5d(double *s, double*t);
 void spinor_5d_to_4d(double *s, double*t);
+void spinor_4d_to_5d_sign(double *s, double*t, int isign);
+void spinor_5d_to_4d_sign(double *s, double*t, int isign);
 #endif

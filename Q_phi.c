@@ -2619,3 +2619,95 @@ void spinor_4d_to_5d(double *s, double*t) {
 
  return;
 }
+
+
+/*********************************************
+ * like spinor_5d_to_4d but with additional
+ *   choice of sign
+ * - sign = +1 gives result of spinor_5d_to_4d
+ *********************************************/
+void spinor_5d_to_4d_sign(double*s, double*t, int isign) {
+  unsigned int ix, iy;
+
+  if(isign == +1) {
+    for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
+    }
+    for(ix=0, iy=(L5-1)*VOLUME;ix<VOLUME;ix++, iy++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_pl_eq_PRe_fv(s+_GSI(ix), t+_GSI(iy));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_pl_eq_PLi_fv(s+_GSI(ix), t+_GSI(iy));
+#endif
+    }
+  } else if (isign == -1) {
+    for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
+    }
+    for(ix=0, iy=(L5-1)*VOLUME;ix<VOLUME;ix++, iy++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_pl_eq_PLi_fv(s+_GSI(ix), t+_GSI(iy));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_pl_eq_PRe_fv(s+_GSI(ix), t+_GSI(iy));
+#endif
+    }
+  }
+ return;
+}
+
+/*********************************************
+ * like spinor_4d_to_5d but with additional
+ *   choice of sign
+ * - sign = +1 gives result of spinor_4d_to_5d
+ *********************************************/
+void spinor_4d_to_5d_sign(double *s, double*t, int isign) {
+  unsigned int ix, iy;
+
+  if(isign == +1) {
+    for(ix=0, iy=(L5-1)*VOLUME;ix<VOLUME;ix++, iy++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PLi_fv(s+_GSI(iy), t+_GSI(ix) );
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PRe_fv(s+_GSI(iy), t+_GSI(ix) );
+#endif
+    }
+
+    for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
+    }
+  } else if (isign == -1) {
+    for(ix=0, iy=(L5-1)*VOLUME;ix<VOLUME;ix++, iy++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PRe_fv(s+_GSI(iy), t+_GSI(ix) );
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PLi_fv(s+_GSI(iy), t+_GSI(ix) );
+#endif
+    }
+
+    for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
+    }
+  }
+
+  for(ix=VOLUME;ix<(L5-1)*VOLUME;ix++) {
+    _fv_eq_zero(s+_GSI(ix));
+  }
+
+ return;
+}

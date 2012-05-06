@@ -437,6 +437,8 @@ SDIGIT {SIGN}?[[:digit:]]
     g_source_type = 4;
   } else if (strcmp(yytext, "SequentialPoint")==0 ) {
     g_source_type = 5;
+  } else if (strcmp(yytext, "Other")==0 ) {
+    g_source_type = -1;
   } 
   if(myverbose!=0) printf("source type set to %s\n",yytext);
 }
