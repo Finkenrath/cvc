@@ -2711,3 +2711,32 @@ void spinor_4d_to_5d_sign(double *s, double*t, int isign) {
 
  return;
 }
+
+/**********************************************
+ * undo 4d -> 5d
+ **********************************************/
+void spinor_4d_to_5d_inv(double*s, double*t) {
+  unsigned int ix, iy;
+#if 0
+  for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
+    _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
+  }
+
+  for(ix=0, iy=(L5-1)*VOLUME;ix<VOLUME;ix++, iy++) {
+#if (defined RIGHTHANDED_FWD)
+    _fv_pl_eq_PLi_fv(s+_GSI(ix), t+_GSI(iy));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_pl_eq_PRe_fv(s+_GSI(ix), t+_GSI(iy));
+#endif
+  }
+#endif
+  for(ix=0, iy=(L5-1)*VOLUME;ix<VOLUME;ix++, iy++) {
+    _fv_eq_fv_pl_fv(s+_GSI(ix), t+_GSI(ix), t+_GSI(iy));
+  }
+ return;
+}
+
