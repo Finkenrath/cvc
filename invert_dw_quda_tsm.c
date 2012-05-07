@@ -439,7 +439,7 @@ int main(int argc, char **argv) {
       boundary_condition_factor);
 #ifdef OPENMP
   omp_set_num_threads(g_num_threads);
-#pragma omp parallel for private(ix,iy)
+#pragma omp parallel for private(ix,iy,iix)
 #endif
     for(ix=0;ix<VOL3;ix++) {
       iix = (T-1)*VOL3 + ix;
@@ -1094,6 +1094,7 @@ int main(int argc, char **argv) {
             _fv_eq_gamma_ti_fv(spinor1, 2, g_spinor_field[1]+_GSI(ix));
             _fv_eq_fv(g_spinor_field[1]+_GSI(ix), spinor1);
           }
+          xchange_field_5d(g_spinor_field[1]);
         }
 #endif
 
@@ -1114,6 +1115,7 @@ int main(int argc, char **argv) {
             _fv_eq_gamma_ti_fv(spinor1, 2, g_spinor_field[1]+_GSI(ix));
             _fv_eq_fv(g_spinor_field[1]+_GSI(ix), spinor1);
           }
+          xchange_field_5d(g_spinor_field[1]);
         }
 #endif
       }

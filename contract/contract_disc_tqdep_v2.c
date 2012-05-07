@@ -50,7 +50,7 @@ int contract_disc_tqdep_v2(double *src, double *prop, momentum_info_type *moment
 
   const char *outfile_prefix = "disc";
   const int K = 20; 
-  int c, i, mu, count,imom;
+  int c, i, mu, count,imom, threadid;
   int filename_set = 0;
   int status;
   int l_LX_at, l_LXstart_at;
@@ -62,7 +62,7 @@ int contract_disc_tqdep_v2(double *src, double *prop, momentum_info_type *moment
   int fermion_type = 1;
   char filename[100], contype[500];
   double ratime, retime;
-  double spinor1[24], spinor2[24];
+  double **spinor1=NULL, **spinor2=NULL;
   double _2kappamu;
   double *gauge_field_smeared=NULL;
   complex w, w1, w2;
@@ -102,14 +102,6 @@ int contract_disc_tqdep_v2(double *src, double *prop, momentum_info_type *moment
 
   fftwnd_plan plan_p;
   fftw_complex *in = NULL;
-
-  /*********************************
-   * set number of openmp threads
-   *********************************/
-#ifdef OPENMP
-  omp_set_num_threads(g_num_threads);
-#endif
-    
 
   VOL3    = LX*LY*LZ;
   FFTW_LOC_VOLUME = LX*LY*LZ;
@@ -175,6 +167,17 @@ int contract_disc_tqdep_v2(double *src, double *prop, momentum_info_type *moment
     if(g_cart_id==0) fprintf(stdout, "# [contract_disc_tqdep_v2] Warning: reset source timeslice to %d\n", g_source_timeslice);
   }
 
+  /********************************************
+   * create spinor1, spinor2
+   ********************************************/
+  spinor1 = (double**)malloc(g_num_threads*sizeof(double*));
+  spinor1[0] = (double*)malloc(g_num_threads*24*sizeof(double));
+  for(mu=1;mu<g_num_threads;mu++) spinor1[mu] = spinor1[mu-1] + 24;
+
+  spinor2 = (double**)malloc(g_num_threads*sizeof(double*));
+  spinor2[0] = (double*)malloc(g_num_threads*24*sizeof(double));
+  for(mu=1;mu<g_num_threads;mu++) spinor2[mu] = spinor2[mu-1] + 24;
+
   /**************************************************************
    * normalization
    **************************************************************/
@@ -188,22 +191,30 @@ int contract_disc_tqdep_v2(double *src, double *prop, momentum_info_type *moment
   ratime = (double)clock() / CLOCKS_PER_SEC;
 #endif
   for(mu=0; mu<16; mu++) {  // loop on index of gamma matrix
-#ifdef OPENMP
-#pragma omp parallel for private(it, x0, x1, ix, spinor1, spinor2, U_, w) shared(mu)
-#endif
     for(it=0; it<num_timeslices; it++) {       // loop on timeslices
       x0 = timeslice_list[it];
       if(have_timeslice_list[it]) fprintf(stdout, "# [contract_disc_tqdep_v2] proc%.2d processing mu-timeslice pair%3d%3d/%3d\n", g_cart_id, mu, x0,
           x0+g_proc_coords[0]*T);
       if(!have_timeslice_list[it]) continue;
-      for(x1=0; x1<VOL3; x1++) {  // loop on sites in timeslice
+#ifdef OPENMP
+  omp_set_num_threads(g_num_threads);
+#pragma omp parallel private(threadid, x1, ix, iy, w) firstprivate(fnorm) shared(mu, it, x0, spinor1, spinor2)
+{
+  threadid = omp_get_thread_num();
+#else
+  threadid=0;
+#endif
+      for(x1=threadid; x1<VOL3; x1+=g_num_threads) {  // loop on sites in timeslice
         ix = x0*VOL3 + x1;
         iy = it*VOL3 + x1;
-        _fv_eq_gamma_ti_fv(spinor1, mu, &g_spinor_field[1][_GSI(ix)]);
-        _co_eq_fv_dag_ti_fv(&w, &g_spinor_field[0][_GSI(ix)], spinor1);
-        disc[2 * ( (it*K + mu)*VOL3 + x1 )  ] = w.re;
-        disc[2 * ( (it*K + mu)*VOL3 + x1 )+1] = w.im;
+        _fv_eq_gamma_ti_fv(spinor1[threadid], mu, &g_spinor_field[1][_GSI(ix)]);
+        _co_eq_fv_dag_ti_fv(&w, &g_spinor_field[0][_GSI(ix)], spinor1[threadid]);
+        disc[2 * ( (it*K + mu)*VOL3 + x1 )  ] = w.re * fnorm;
+        disc[2 * ( (it*K + mu)*VOL3 + x1 )+1] = w.im * fnorm;
       }  // of x1 = 0, ..., VOL3
+#ifdef OPENMP
+}
+#endif
     }  // of x0
   }    // of mu 
 #ifdef MPI
@@ -213,12 +224,6 @@ int contract_disc_tqdep_v2(double *src, double *prop, momentum_info_type *moment
 #endif
   if(g_cart_id==0) fprintf(stdout, "# [contract_disc_tqdep_v2] contractions in %e seconds\n", retime-ratime);
 
-
-    /**************************************************************
-     * normalization
-     **************************************************************/
-    items = num_timeslices * 2*K*VOL3;
-    for(ix=0;ix<items;ix++) disc[ix] *= fnorm;
   
     /***********************************************
      * Fourier transform
@@ -228,6 +233,8 @@ int contract_disc_tqdep_v2(double *src, double *prop, momentum_info_type *moment
     for(it=0;it<num_timeslices;it++) {
       memcpy(in, disc + it*items, items*bytes);
 #ifdef OPENMP
+  omp_set_num_threads(g_num_threads);
+
       fftwnd_threads(g_num_threads, plan_p, K, in, 1, VOL3, (fftw_complex*)(disc + it*items), 1, VOL3);
 #else
       fftwnd(plan_p, K, in, 1, VOL3, (fftw_complex*)(disc + it*items), 1, VOL3);
@@ -354,6 +361,14 @@ int contract_disc_tqdep_v2(double *src, double *prop, momentum_info_type *moment
   if(timeslice_list!=NULL) free(timeslice_list);
   if(have_timeslice_list!=NULL) free(have_timeslice_list);
   if(send_buffer != NULL) free(send_buffer);
+  if(spinor1!=NULL) {
+    if(spinor1[0]!=NULL) free(spinor1[0]);
+    free(spinor1);
+  }
+  if(spinor2!=NULL) {
+    if(spinor2[0]!=NULL) free(spinor2[0]);
+    free(spinor2);
+  }
 
   if(g_cart_id==0) {
     g_the_time = time(NULL);
