@@ -8,5 +8,6 @@
 int read_lime_gauge_field_doubleprec(const char * filename);
 int read_lime_gauge_field_singleprec(const char * filename);
 int read_lime_gauge_field_doubleprec_timeslice(double *gfield, const char * filename, const int timeslice, DML_Checksum *checksum);
+int read_lime_gauge_field_singleprec_timeslice(double *gfield, const char * filename, const int timeslice, DML_Checksum *checksum);
 int read_ildg_nersc_gauge_field(const double * gauge, const char * filename);
 #endif
