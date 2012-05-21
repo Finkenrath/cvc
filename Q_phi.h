@@ -47,4 +47,7 @@ void spinor_4d_to_5d_inv(double*s, double*t);
 
 void spinor_4d_to_5d_threaded(double *s, double*t, int threadid, int nthreads);
 void spinor_4d_to_5d_sign_threaded(double *s, double*t, int isign, int threadid, int nthreads);
+
+void spinor_5d_to_4d_L5h(double*s, double*t);
+void spinor_5d_to_4d_L5h_sign(double*s, double*t, int isign);
 #endif

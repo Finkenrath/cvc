@@ -2822,3 +2822,79 @@ void spinor_4d_to_5d_sign_threaded(double *s, double*t, int isign, int threadid,
 
  return;
 }
+
+
+/*********************************************
+ * like spinor_5d_to_4d, but
+ *   project out L5/2 and L5/2-1
+ * - s and t can be the same field
+ *********************************************/
+void spinor_5d_to_4d_L5h(double*s, double*t) {
+  unsigned int ix;
+  unsigned int shift  = (L5/2)  *VOLUME;
+  unsigned int shift2 = (L5/2-1)*VOLUME;
+
+
+  for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
+    _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(shift + ix));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(shift + ix));
+#endif
+  }
+
+  for(ix=0; ix<VOLUME; ix++) {
+#if (defined RIGHTHANDED_FWD)
+    _fv_pl_eq_PRe_fv(s+_GSI(ix), t+_GSI(shift2 + ix));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_pl_eq_PLi_fv(s+_GSI(ix), t+_GSI(shift2 + ix));
+#endif
+  }
+ return;
+}
+
+
+/*********************************************
+ * like spinor_5d_to_4d but with additional
+ *   choice of sign and projection planes L5, L5/2-1
+ * - sign = +1 gives result of spinor_5d_to_4d
+ *********************************************/
+void spinor_5d_to_4d_L5h_sign(double*s, double*t, int isign) {
+  unsigned int ix;
+  unsigned int shift  = (L5/2  )*VOLUME;
+  unsigned int shift2 = (L5/2+1)*VOLUME;
+
+  if(isign == +1) {
+    for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(shift+ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(shift+ix));
+#endif
+    }
+    for(ix=0; ix<VOLUME; ix++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_pl_eq_PRe_fv(s+_GSI(ix), t+_GSI(shift2 + ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_pl_eq_PLi_fv(s+_GSI(ix), t+_GSI(shift2 + ix));
+#endif
+    }
+  } else if (isign == -1) {
+    for(ix=0;ix<VOLUME;ix++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(shift + ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(shift + ix));
+#endif
+    }
+    for(ix=0; ix<VOLUME; ix++) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_pl_eq_PLi_fv(s+_GSI(ix), t+_GSI(shift2 + ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_pl_eq_PRe_fv(s+_GSI(ix), t+_GSI(shift2 + ix));
+#endif
+    }
+  }
+ return;
+}
+

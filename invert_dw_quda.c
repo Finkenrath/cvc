@@ -126,6 +126,7 @@ int main(int argc, char **argv) {
 #else
   int rotate_gamma_basis = 0;
 #endif
+  int write_Lh5 = 0;
 
   /****************************************************************************/
 #if (defined HAVE_QUDA) && (defined MULTI_GPU)
@@ -160,7 +161,7 @@ int main(int argc, char **argv) {
   QudaInvertParam inv_param = newQudaInvertParam();
 #endif
 
-  while ((c = getopt(argc, argv, "soch?vgf:p:b:S:R:")) != -1) {
+  while ((c = getopt(argc, argv, "soch?vgf:p:b:S:R:W:")) != -1) {
     switch (c) {
     case 'v':
       g_verbose = 1;
@@ -199,6 +200,10 @@ int main(int argc, char **argv) {
     case 'R':
       rotate_gamma_basis = atoi(optarg);
       fprintf(stdout, "# [invert_dw_quda] rotate gamma basis %d\n", rotate_gamma_basis);
+      break;
+    case 'W':
+      write_L5h = 1;
+      fprintf(stdout, "# [invert_dw_quda] using write_L5h = %d\n", write_L5h);
       break;
     case 'h':
     case '?':
@@ -1070,9 +1075,9 @@ int main(int argc, char **argv) {
        * create 4-dim. propagator
        ***********************************************/
       if(convert_sign == 0) {
-        spinor_5d_to_4d(g_spinor_field[1], g_spinor_field[1]);
+        spinor_5d_to_4d(g_spinor_field[2], g_spinor_field[1]);
       } else if(convert_sign == -1 || convert_sign == +1) {
-        spinor_5d_to_4d_sign(g_spinor_field[1], g_spinor_field[1], convert_sign);
+        spinor_5d_to_4d_sign(g_spinor_field[2], g_spinor_field[1], convert_sign);
       }
 
       /***********************************************
@@ -1080,13 +1085,29 @@ int main(int argc, char **argv) {
        ***********************************************/
       sprintf(filename, "%s.inverted", source_filename);
       if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] writing propagator to file %s\n", filename);
-      check_error(write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision), "write_propagator", NULL, 22);
+      check_error(write_propagator(g_spinor_field[2], filename, 0, g_propagator_precision), "write_propagator", NULL, 22);
       
-      sprintf(filename, "prop.ascii.4d.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
-      ofs = fopen(filename, "w");
-      printf_spinor_field(g_spinor_field[1], ofs);
-      fclose(ofs);
+      //sprintf(filename, "prop.ascii.4d.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
+      //ofs = fopen(filename, "w");
+      //printf_spinor_field(g_spinor_field[2], ofs);
+      //fclose(ofs);
  
+      if(write_L5h) {
+        /***********************************************
+         * write the propagator projected from L5/2
+         ***********************************************/
+        if(convert_sign == 0) {
+          spinor_5d_to_4d_L5h(g_spinor_field[2], g_spinor_field[1]);
+        } else if(convert_sign == -1 || convert_sign == +1) {
+          spinor_5d_to_4d_L5h_sign(g_spinor_field[2], g_spinor_field[1], convert_sign);
+        }
+
+        sprintf(filename, "%s_l5h.inverted", source_filename);
+        if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] writing propagator to file %s\n", filename);
+        check_error(write_propagator(g_spinor_field[2], filename, 0, g_propagator_precision), "write_propagator", NULL, 22);
+      }
+
+
     }  // of loop on momenta
 
   }  // of isc
