@@ -29,5 +29,6 @@ int APE_Smearing_Step_Timeslice_threads(double *smeared_gauge_field, int nstep, 
 // int Jacobi_Smearing_Step_one_threads(double *smeared_gauge_field, double *psi, double *psi_old, double kappa);
 int Jacobi_Smearing_Step_one_threads(double *smeared_gauge_field, double *psi, double *psi_old, int nstep, double kappa);
 int Jacobi_Smearing_Step_one_Timeslice_threads(double *smeared_gauge_field, double *psi, double *psi_old, int nstep, double kappa);
+int Jacobi_Smearing_threaded(double *smeared_gauge_field, double *psi, double *psi_old, double kappa, int threadid, int nthreads);
 #endif
 #endif
