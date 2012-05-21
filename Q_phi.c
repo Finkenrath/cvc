@@ -2740,3 +2740,85 @@ void spinor_4d_to_5d_inv(double*s, double*t) {
  return;
 }
 
+/*********************************************
+ * psi(0, x)    = P^+/R q(x)
+ * psi(L5-1, x) = P^-/L q(x)a
+ * - s and t can be the same field
+ *********************************************/
+void spinor_4d_to_5d_threaded(double *s, double*t, int threadid, int nthreads) {
+  unsigned int ix, iy;
+
+  for(ix=threadid; ix<VOLUME; ix+=nthreads) {
+    iy= (L5-1)*VOLUME + ix;
+
+#if (defined RIGHTHANDED_FWD)
+    _fv_eq_PLi_fv(s+_GSI(iy), t+_GSI(ix) );
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_eq_PRe_fv(s+_GSI(iy), t+_GSI(ix) );
+#endif
+  }
+
+  for(ix=threadid; ix<VOLUME; ix+=nthreads) {
+#if (defined RIGHTHANDED_FWD)
+    _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+    _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
+  }
+
+  for(ix=VOLUME+threadid;ix<(L5-1)*VOLUME;ix+=nthreads) {
+    _fv_eq_zero(s+_GSI(ix));
+  }
+
+ return;
+}
+
+/*********************************************
+ * like spinor_4d_to_5d but with additional
+ *   choice of sign and threaded
+ *********************************************/
+void spinor_4d_to_5d_sign_threaded(double *s, double*t, int isign, int threadid, int nthreads) {
+  unsigned int ix, iy;
+
+  if(isign == +1) {
+    for(ix=threadid; ix<VOLUME; ix+=nthreads) {
+      iy=(L5-1)*VOLUME + ix;
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PLi_fv(s+_GSI(iy), t+_GSI(ix) );
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PRe_fv(s+_GSI(iy), t+_GSI(ix) );
+#endif
+    }
+
+    for(ix=threadid; ix<VOLUME; ix+=nthreads) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
+    }
+  } else if (isign == -1) {
+    for(ix=threadid; ix<VOLUME; ix+=nthreads) {
+      iy = (L5-1)*VOLUME + ix;
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PRe_fv(s+_GSI(iy), t+_GSI(ix) );
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PLi_fv(s+_GSI(iy), t+_GSI(ix) );
+#endif
+    }
+
+    for(ix=threadid; ix<VOLUME; ix+=nthreads) {
+#if (defined RIGHTHANDED_FWD)
+      _fv_eq_PLi_fv(s+_GSI(ix), t+_GSI(ix));
+#elif (defined RIGHTHANDED_BWD)  
+      _fv_eq_PRe_fv(s+_GSI(ix), t+_GSI(ix));
+#endif
+    }
+  }
+
+  for(ix=VOLUME+threadid; ix<(L5-1)*VOLUME;ix+=nthreads) {
+    _fv_eq_zero(s+_GSI(ix));
+  }
+
+ return;
+}

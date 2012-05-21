@@ -68,6 +68,7 @@ int APE_Smearing_Step_threads(double *smeared_gauge_field, int nstep, double APE
   firstprivate (smeared_gauge_field_old,M1_buffer,M2_buffer,smeared_gauge_field,APE_smearing_alpha)
 {
   threadid = omp_get_thread_num();
+  fprintf(stdout, "# [APE_Smearing_Step_threads] proc%.2d thread%2d says hello\n", g_cart_id, threadid);
   M1 = M1_buffer + 18*threadid; M2 = M2_buffer + 18*threadid;  
 #else
   threadid = 0;
@@ -546,7 +547,7 @@ int Jacobi_Smearing_Step_one_threads(double *smeared_gauge_field, double *psi, d
   s_old  = spinor_buffer + 24*(2*nthreads + threadid );
   Up     = U_buffer + 54*threadid;
   Um     = U_buffer + 54*(threadid+nthreads);
-  //fprintf(stdout, "# [Jacobi_Smearing_Step_one_threads] thread%2d range %d %d\n", threadid, idx_min, idx_max);
+  fprintf(stdout, "# [Jacobi_Smearing_Step_one_threads] proc%.2d thread%2d says hello\n", g_cart_id, threadid);
 //  ratime = omp_get_wtime();
 #else
   threadid=0;
@@ -763,3 +764,88 @@ int Jacobi_Smearing_Step_one_Timeslice_threads(double *smeared_gauge_field, doub
   return(0);
 }
 
+
+
+/********************************************************************
+ *
+ * Performs Jacobi smearing steps on a set of timeslices.
+ *
+ * psi       = quark spinor
+ * kappa     = Jacobi smearing parameter
+ * timeslice = the timeslice, on which the smearing is performed
+ *
+ ********************************************************************/
+int Jacobi_Smearing_threaded(double *smeared_gauge_field, double *psi, double *psi_old, double kappa, int nstep, int threadid, int nthreads) {
+  int ix, iy, iz, idx, idy;
+  int timeslice;
+  int VOL3 = LX*LY*LZ;
+  size_t bytes = 24*VOL3*sizeof(double);
+  int index_s, index_s_mx, index_s_px, index_s_my, index_s_py, index_s_mz, index_s_pz, index_g_mx;
+  int index_g_px, index_g_my, index_g_py, index_g_mz, index_g_pz; 
+  double *s=NULL, spinor[24];
+  double norm = 1.0 / (1.0 + 6.0*kappa);
+
+  for(timeslice=threadid; timeslice<T; timeslice+=nthreads) {
+
+    for(istep=0;istep<nstep;istep++) {
+
+      // Copy the timeslice of interest to psi_old. 
+      memcpy((void*)(psi_old+_GSI(timeslice*VOL3)), (void*)(psi+_GSI(timeslice*VOL3)), bytes);
+
+      for(idx = 0; idx < VOL3; idx++) {
+        // Get indices. 
+        index_s = _GSI(idx);
+    
+        index_s_mx = _GSI(g_idn[idx][1]);
+        index_s_px = _GSI(g_iup[idx][1]);
+        index_s_my = _GSI(g_idn[idx][2]);
+        index_s_py = _GSI(g_iup[idx][2]);
+        index_s_mz = _GSI(g_idn[idx][3]);
+        index_s_pz = _GSI(g_iup[idx][3]);
+    
+        idy = g_ipt[timeslice][0][0][0] + idx;
+        index_g_mx = _GGI(g_idn[idy][1], 1);
+        index_g_px = _GGI(idy, 1);
+        index_g_my = _GGI(g_idn[idy][2], 2);
+        index_g_py = _GGI(idy, 2);
+        index_g_mz = _GGI(g_idn[idy][3], 3);
+        index_g_pz = _GGI(idy, 3);
+    
+        s = psi + _GSI(idy);
+        _fv_eq_zero(s);
+    
+        // negative x-direction 
+        _fv_eq_cm_dag_ti_fv(spinor, smeared_gauge_field + index_g_mx, psi_old + index_s_mx);
+        _fv_pl_eq_fv(s, spinor);
+    
+        // positive x-direction 
+        _fv_eq_cm_ti_fv(spinor, smeared_gauge_field + index_g_px, psi_old + index_s_px);
+        _fv_pl_eq_fv(s, spinor);
+    
+        // negative y-direction 
+        _fv_eq_cm_dag_ti_fv(spinor, smeared_gauge_field + index_g_my, psi_old + index_s_my);
+        _fv_pl_eq_fv(s, spinor);
+    
+        // positive y-direction 
+        _fv_eq_cm_ti_fv(spinor, smeared_gauge_field + index_g_py, psi_old + index_s_py);
+        _fv_pl_eq_fv(s, spinor);
+    
+        // negative z-direction 
+        _fv_eq_cm_dag_ti_fv(spinor, smeared_gauge_field + index_g_mz, psi_old + index_s_mz);
+        _fv_pl_eq_fv(s, spinor);
+    
+        // positive z-direction 
+        _fv_eq_cm_ti_fv(spinor, smeared_gauge_field + index_g_pz, psi_old + index_s_pz);
+        _fv_pl_eq_fv(s, spinor);
+    
+    
+        // Put everything together; normalization. 
+        _fv_ti_eq_re(s, kappa);
+        _fv_pl_eq_fv(s, psi_old + index_s);
+        _fv_ti_eq_re(s, norm);
+
+      }  // of idx
+    }    // of istep
+  }      // of timeslice
+  return(0);
+}
