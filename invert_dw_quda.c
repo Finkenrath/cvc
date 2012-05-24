@@ -810,7 +810,7 @@ int main(int argc, char **argv) {
             if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] preparing sequential point source\n");
             check_error( prepare_sequential_point_source (g_spinor_field[0], isc, sl0, g_seq_source_momentum, 
                   smear_source, g_spinor_field[1], gauge_field_smeared), "prepare_sequential_point_source", NULL, 33);
-            sprintf(source_filename, "%s.%.4d.t%.2dx%.2d.y%.2dz%.2d.%.2d.qx%.2dqy%.2dqz%.2d", filename_prefix2, Nconf,
+            sprintf(source_filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.qx%.2dqy%.2dqz%.2d", filename_prefix2, Nconf,
                 sl0, sl1, sl2, sl3, isc, g_source_momentum[0], g_source_momentum[1], g_source_momentum[2]);
             break;
           default:
