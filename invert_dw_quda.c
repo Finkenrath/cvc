@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
 #else
   int rotate_gamma_basis = 0;
 #endif
-  int write_Lh5 = 0;
+  int write_L5h = 0;
 
   /****************************************************************************/
 #if (defined HAVE_QUDA) && (defined MULTI_GPU)
@@ -612,7 +612,7 @@ int main(int argc, char **argv) {
   inv_param.preserve_dirac = QUDA_PRESERVE_DIRAC_YES;
   inv_param.prec_precondition = cuda_prec_sloppy;
   inv_param.gamma_basis = QUDA_DEGRAND_ROSSI_GAMMA_BASIS;
-  inv_param.dirac_tune = QUDA_TUNE_YES;
+  inv_param.dirac_tune = QUDA_TUNE_NO;
 #endif
  
   //set the T dimension partitioning flag
@@ -810,7 +810,7 @@ int main(int argc, char **argv) {
             if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] preparing sequential point source\n");
             check_error( prepare_sequential_point_source (g_spinor_field[0], isc, sl0, g_seq_source_momentum, 
                   smear_source, g_spinor_field[1], gauge_field_smeared), "prepare_sequential_point_source", NULL, 33);
-            sprintf(source_filename, "%s.%.4d.t%.2dx%.2d.y%.2d.z%.2d.%.2d.qx%.2dqy%.2dqz%.2d", filename_prefix2, Nconf,
+            sprintf(source_filename, "%s.%.4d.t%.2dx%.2d.y%.2dz%.2d.%.2d.qx%.2dqy%.2dqz%.2d", filename_prefix2, Nconf,
                 sl0, sl1, sl2, sl3, isc, g_source_momentum[0], g_source_momentum[1], g_source_momentum[2]);
             break;
           default:
@@ -883,10 +883,10 @@ int main(int argc, char **argv) {
       }
       xchange_field_5d(g_spinor_field[0]);
 
-      sprintf(filename, "source.ascii.5d.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
-      ofs = fopen(filename, "w");
-      printf_spinor_field_5d(g_spinor_field[0], ofs);
-      fclose(ofs);
+      //sprintf(filename, "source.ascii.5d.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
+      //ofs = fopen(filename, "w");
+      //printf_spinor_field_5d(g_spinor_field[0], ofs);
+      //fclose(ofs);
 
       
 #ifdef HAVE_QUDA  
