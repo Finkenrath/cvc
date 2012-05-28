@@ -3,6 +3,9 @@
 
 #ifdef MPI
 #  include <fftw_mpi.h>
+#  ifdef OPENMP
+#    include <fftw_threads.h>
+#  endif
 #else
 #  ifdef OPENMP
 #    include <fftw_threads.h>
