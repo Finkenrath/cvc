@@ -312,6 +312,9 @@ int APE_Smearing_Step_Timeslice_threads(double *smeared_gauge_field, int nstep, 
   offset = threadid * (VOL3/nthreads);
   bytes = VOL3/nthreads;
   if(offset+bytes>VOL3) bytes = VOL3-offset;
+  if(threadid == nthreads-1) {
+    if(offset+bytes<VOL3) bytes = VOL3 - offset;
+  }
   offset *= 72;
   bytes *= 72*sizeof(double);
 #else
@@ -684,6 +687,9 @@ int Jacobi_Smearing_Step_one_Timeslice_threads(double *smeared_gauge_field, doub
   offset = threadid * (VOL3/nthreads);
   bytes = (VOL3/nthreads);
   if(offset+bytes>VOL3) bytes = VOL3-offset;
+  if(threadid == nthreads-1) {
+    if(offset+bytes < VOL3) bytes = VOL3-offset;
+  }
   offset *= 24;
   bytes *= 24*sizeof(double);
 #else
@@ -776,7 +782,7 @@ int Jacobi_Smearing_Step_one_Timeslice_threads(double *smeared_gauge_field, doub
  *
  ********************************************************************/
 int Jacobi_Smearing_threaded(double *smeared_gauge_field, double *psi, double *psi_old, double kappa, int nstep, int threadid, int nthreads) {
-  int ix, iy, iz, idx, idy;
+  int ix, iy, iz, idx, idy, istep;
   int timeslice;
   int VOL3 = LX*LY*LZ;
   size_t bytes = 24*VOL3*sizeof(double);

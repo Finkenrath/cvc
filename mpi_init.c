@@ -587,7 +587,7 @@ void mpi_init(int argc,char *argv[]) {
 
 #endif
 #endif  /* of ifdef PARALLELTX || PARALLELTXY */
-
+  fprintf(stdout, "[mpi_init] proc%.2d one host %s\n", g_cart_id, processor_name);
 #else  /* MPI not defined */
   g_nproc = 1;
   g_nproc_t = 1;

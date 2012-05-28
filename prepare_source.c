@@ -499,6 +499,7 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
 
 
   // TEST
+/*
   {
     FILE*ofs;
     sprintf(filename, "seq_source.ascii.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
@@ -511,6 +512,6 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
     }
     fclose(ofs);
   }
-
+*/
   return(0);
 }  // end of function
