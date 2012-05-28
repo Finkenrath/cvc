@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
   int dims[4]      = {0,0,0,0};
   int grid_size[4];
   int l_LX_at, l_LXstart_at;
-  int x0, x1, x2, x3, ix, iix, iy, is;
+  int x0, x1, x2, x3, ix, iix, iy, is, it, i3;
   int sl0, sl1, sl2, sl3, have_source_flag=0;
   int source_proc_coords[4], lsl0, lsl1, lsl2, lsl3;
   int check_residuum = 0;
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   int do_gt   = 0;
   int full_orbit = 0;
   int smear_source = 0;
-  char filename[200], source_filename[200];
+  char filename[200], source_filename[200], source_filename_write[200];
   double ratime, retime;
   double plaq_r=0., plaq_m=0., norm, norm2;
   double spinor1[24];
@@ -116,8 +116,8 @@ int main(int argc, char **argv) {
 #else
   int rotate_gamma_basis = 0;
 #endif
-  int nthreads=0;
   omp_lock_t *lck = NULL, gen_lck[1];
+  int key = 0;
 
 
   /****************************************************************************/
@@ -597,7 +597,7 @@ int main(int argc, char **argv) {
   inv_param.preserve_dirac = QUDA_PRESERVE_DIRAC_YES;
   inv_param.prec_precondition = cuda_prec_sloppy;
   inv_param.gamma_basis = QUDA_DEGRAND_ROSSI_GAMMA_BASIS;
-  inv_param.dirac_tune = QUDA_TUNE_YES;
+  inv_param.dirac_tune = QUDA_TUNE_NO;
 #endif
 #endif
 
@@ -622,7 +622,7 @@ int main(int argc, char **argv) {
    * prepare locks for openmp
    *******************************************/
   nthreads = g_num_threads - 1;
-  lck = (int*)malloc(nthreads * sizeof(int));
+  lck = (omp_lock_t*)malloc(nthreads * sizeof(omp_lock_t));
   if(lck == NULL) {
       EXIT_WITH_MSG(97, "[invert_dw_quda] Error, could not allocate lck\n");
   }
@@ -630,6 +630,7 @@ int main(int argc, char **argv) {
   for(i=0;i<nthreads;i++) {
     omp_init_lock(lck+i);
   }
+  omp_init_lock(gen_lck);
 
   // check the source momenta
   if(g_source_momentum_set) {
@@ -855,32 +856,28 @@ int main(int argc, char **argv) {
 /***********************************************************************************************
  * here threads split: 
  ***********************************************************************************************/
-      if(dummy_flag==1) {
-        // copy only if smearing has been done; otherwise do not copy, invert a dummy source
-        memcpy((void*)(g_spinor_field[2]), (void*)(smearing_spinor_field[1]), 24*VOLUME*sizeof(double));
+      if(dummy_flag==0) strcpy(source_filename_write, source_filename);
+      memcpy((void*)(smearing_spinor_field[0]), (void*)(g_spinor_field[0]), 24*VOLUME*sizeof(double));
+      if(dummy_flag>0) {
+        // copy only if smearing has been done; otherwise do not copy, do not invert
+        if(g_cart_id==0) fprintf(stdout, "# [] copy smearing field -> g field\n");
+        memcpy((void*)(g_spinor_field[0]), (void*)(smearing_spinor_field[1]), 24*VOLUME*sizeof(double));
       }
-      key = 0;
 
-omp_set_num_threads(g_num_threads);
-#pragma omp parallel private(threadid, _2_kappa, is, ix, iy, iix, ratime, retime) shared(key,g_read_source, smear_source, N_Jacobi, kappa_Jacobi, smearing_spinor_field, g_spinor_field, nthreads, convert_sign, VOLUME, L5, isc, rotate_gamma_basis, g_cart_id) firstprivate(inv_param, gauge_param, ofs)
+      omp_set_num_threads(g_num_threads);
+#pragma omp parallel private(threadid, _2_kappa, is, ix, iy, iix, ratime, retime) shared(key,g_read_source, smear_source, N_Jacobi, kappa_Jacobi, smearing_spinor_field, g_spinor_field, nthreads, convert_sign, VOLUME, VOL3, T, L5, isc, rotate_gamma_basis, g_cart_id) firstprivate(inv_param, gauge_param, ofs)
 {
-  threadid = get_thread_num();
+      threadid = omp_get_thread_num();
 
-  if(threadid < nthreads) { 
-      fprintf(stdout, "# [] proc%.2d thread%.2d starting source preparation");
+  if(threadid < nthreads) {
+      fprintf(stdout, "# [] proc%.2d thread%.2d starting source preparation\n", g_cart_id, threadid);
 
       // smearing
       if( ( !g_read_source || (g_read_source && smear_source ) ) && N_Jacobi > 0 ) {
         if(g_cart_id==0) fprintf(stdout, "#  [invert_dw_quda] smearing source with N_Jacobi=%d, kappa_Jacobi=%e\n", N_Jacobi, kappa_Jacobi);
-        Jacobi_Smearing_threaded(gauge_field_smeared, smearing_spinor_field[0], smearing_spinor_field[1], kappa, N_Jacobi, threadid, nthreads);
+        Jacobi_Smearing_threaded(gauge_field_smeared, smearing_spinor_field[0], smearing_spinor_field[1], kappa_Jacobi, N_Jacobi, threadid, nthreads);
       }
 
-      // synchronize
-      omp_set_lock(gen_lck);
-      key++;
-      omp_unset_lock(gen_lck);
-      while(key<nthreads) {};
-      fprintf(stdout, "# [] proc%.2d thread%.2d key(1) = %d\n", g_cart_id, threadid, key);
 
       /***********************************************
        * create the 5-dim. source field
@@ -891,46 +888,53 @@ omp_set_num_threads(g_num_threads);
         spinor_4d_to_5d_sign_threaded(smearing_spinor_field[0], smearing_spinor_field[0], convert_sign, threadid, nthreads);
       }
 
-      // synchronize
-      omp_set_lock(gen_lck);
-      key--;
-      omp_unset_lock(gen_lck);
-      while(key>0) {};
-      fprintf(stdout, "# [] proc%.2d thread%.2d key(2) = %d\n", g_cart_id, threadid, key);
+
+      for(is=0; is<L5; is++) {
+        for(it=threadid; it<T; it+=nthreads) {
+          memcpy((void*)(g_spinor_field[0]+_GSI(g_ipt_5d[is][it][0][0][0])), (void*)(smearing_spinor_field[0]+_GSI(g_ipt_5d[is][it][0][0][0])), VOL3*24*sizeof(double));
+        }
+      }
+
 
       // reorder, multiply with g2
-      for(ix=threadid; ix<L5*VOLUME; ix+=g_num_threads-1) {
-        _fv_eq_zero(smearing_spinor_field[1]+_GSI(ix));
-      }
-
-      // synchronize
-      omp_set_lock(gen_lck);
-      key++;
-      omp_unset_lock(gen_lck);
-      while(key<nthreads) {};
-      fprintf(stdout, "# [] proc%.2d thread%.2d key(3) = %d\n", g_cart_id, threadid, key);
+      for(is=0; is<L5; is++) {
+        for(it=threadid; it<T; it+=nthreads) {
+          for(i3=0; i3<VOL3; i3++) {
+            ix = (is*T+it)*VOL3 + i3;
+            _fv_eq_zero(smearing_spinor_field[1]+_GSI(ix));
+      }}} 
 
       if(rotate_gamma_basis) {
-        for(ix=threadid; ix<VOLUME; ix+=nthreads) {
-          iy = lexic2eot_5d(0, ix);
-          _fv_eq_gamma_ti_fv(smearing_spinor_field[1]+_GSI(iy), 2, smearing_spinor_field[0]+_GSI(ix));
-        }
-        for(ix=threadid; ix<VOLUME; ix+=nthreads) {
-          iy = lexic2eot_5d(L5-1, ix);
-          _fv_eq_gamma_ti_fv(smearing_spinor_field[1]+_GSI(iy), 2, smearing_spinor_field[0]+_GSI(ix+(L5-1)*VOLUME));
-        }
+        for(it=threadid; it<T; it+=nthreads) {
+          for(i3=0; i3<VOL3; i3++) {
+            ix = it * VOL3 + i3;
+            iy = lexic2eot_5d(0, ix);
+            _fv_eq_gamma_ti_fv(smearing_spinor_field[1]+_GSI(iy), 2, smearing_spinor_field[0]+_GSI(ix));
+        }}
+        for(it=threadid; it<T; it+=nthreads) {
+          for(i3=0; i3<VOL3; i3++) {
+            ix = it * VOL3 + i3;
+            iy = lexic2eot_5d(L5-1, ix);
+            _fv_eq_gamma_ti_fv(smearing_spinor_field[1]+_GSI(iy), 2, smearing_spinor_field[0]+_GSI(ix+(L5-1)*VOLUME));
+        }}
       } else {
-        for(ix=threadid; ix<VOLUME; ix+=nthreads) {
-          iy = lexic2eot_5d(0, ix);
-          _fv_eq_fv(smearing_spinor_field[1]+_GSI(iy), smearing_spinor_field[0]+_GSI(ix));
-        }
-        for(ix=threadid; ix<VOLUME; ix+=nthreads) {
-          iy = lexic2eot_5d(L5-1, ix);
-          _fv_eq_fv(smearing_spinor_field[1]+_GSI(iy), smearing_spinor_field[0]+_GSI(ix+(L5-1)*VOLUME));
-        }
+        for(it=threadid; it<T; it+=nthreads) {
+          for(i3=0; i3<VOL3; i3++) {
+            ix = it * VOL3 + i3;
+            iy = lexic2eot_5d(0, ix);
+            _fv_eq_fv(smearing_spinor_field[1]+_GSI(iy), smearing_spinor_field[0]+_GSI(ix));
+        }}
+        for(it=threadid; it<T; it+=nthreads) {
+          for(i3=0; i3<VOL3; i3++) {
+            ix = it * VOL3 + i3;
+            iy = lexic2eot_5d(L5-1, ix);
+            _fv_eq_fv(smearing_spinor_field[1]+_GSI(iy), smearing_spinor_field[0]+_GSI(ix+(L5-1)*VOLUME));
+        }}
       }
-  } else if(threadid == g_num_threads-1) {  // else branch on threadid
-      fprintf(stdout, "# [] proc%.2d thread%.2d starting inversion");
+      fprintf(stdout, "# [] proc%.2d thread%.2d finished source preparation\n", g_cart_id, threadid);
+
+  } else if(threadid == g_num_threads-1 && dummy_flag > 0) {  // else branch on threadid
+      fprintf(stdout, "# [] proc%.2d thread%.2d starting inversion for dummy_flag = %d\n", g_cart_id, threadid, dummy_flag);
 
       /***********************************************
        * perform the inversion
@@ -938,21 +942,20 @@ omp_set_num_threads(g_num_threads);
       if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] starting inversion\n");
 
       xchange_field_5d(g_spinor_field[0]);
-      memset(g_spinor_field[1], 0, VOLUME*L5*24*sizeof(double));
-      xchange_field_5d(g_spinor_field[1]);
+      memset(g_spinor_field[1], 0, (VOLUME+RAND)*L5*24*sizeof(double));
       ratime = CLOCK;
 #ifdef MPI
       if(inv_param.inv_type == QUDA_BICGSTAB_INVERTER  || inv_param.inv_type == QUDA_GCR_INVERTER) {
         if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] calling invertQuda\n");
-        invertQuda(g_spinor_field[1], g_spinor_field[2], &inv_param);
+        invertQuda(g_spinor_field[1], g_spinor_field[0], &inv_param);
       } else if(inv_param.inv_type == QUDA_CG_INVERTER) {
         if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] calling testCG\n");
-        testCG(g_spinor_field[1], g_spinor_field[2], &inv_param);
+        testCG(g_spinor_field[1], g_spinor_field[0], &inv_param);
       } else {
         if(g_cart_id==0) fprintf(stderr, "# [invert_dw_quda] unrecognized inverter\n");
       }
 #else
-      invertQuda(g_spinor_field[1], g_spinor_field[2], &inv_param);
+      invertQuda(g_spinor_field[1], g_spinor_field[0], &inv_param);
 #endif
       retime = CLOCK;
 
@@ -975,20 +978,22 @@ omp_set_num_threads(g_num_threads);
         }
       }
   
+#pragma omp barrier
       // reorder, multiply with g2
       for(is=0;is<L5;is++) {
       for(ix=threadid; ix<VOLUME; ix+=g_num_threads) {
         iy  = lexic2eot_5d(is, ix);
         iix = is*VOLUME + ix;
-        _fv_eq_fv(g_spinor_field[2]+_GSI(iix), g_spinor_field[1]+_GSI(iy));
+        _fv_eq_fv(g_spinor_field[0]+_GSI(iix), g_spinor_field[1]+_GSI(iy));
       }}
+#pragma omp barrier
       if(rotate_gamma_basis) {
         for(ix=threadid; ix<VOLUME*L5; ix+=g_num_threads) {
-          _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, g_spinor_field[2]+_GSI(ix));
+          _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, g_spinor_field[0]+_GSI(ix));
         }
       } else {
         for(ix=threadid; ix<VOLUME*L5;ix+=g_num_threads) {
-          _fv_eq_fv(g_spinor_field[1]+_GSI(ix), g_spinor_field[2]+_GSI(ix));
+          _fv_eq_fv(g_spinor_field[1]+_GSI(ix), g_spinor_field[0]+_GSI(ix));
         }
       }
       if(g_cart_id==0 && threadid==g_num_threads-1) fprintf(stdout, "# [invert_dw_quda] inversion done in %e seconds\n", retime-ratime);
@@ -1002,50 +1007,175 @@ omp_set_num_threads(g_num_threads);
       /***********************************************
        * check residuum
        ***********************************************/
-      if(check_residuum) {
+      if(check_residuum && dummy_flag>0) {
         // apply the Wilson Dirac operator in the gamma-basis defined in cvc_linalg,
         //   which uses the tmLQCD conventions (same as in contractions)
         //   without explicit boundary conditions
 #ifdef MPI
+        xchange_field_5d(g_spinor_field[2]);
         xchange_field_5d(g_spinor_field[1]);
 #endif
-        for(ix=0;ix<L5*VOLUME;ix++) { _fv_eq_zero(g_spinor_field[2]); }
-        //xchange_field_5d(g_spinor_field[2]);
+        memset(g_spinor_field[0], 0, 24*(VOLUME+RAND)*L5*sizeof(double));
 
         //sprintf(filename, "%s.inverted.ascii.%.2d", source_filename, g_cart_id);
         //ofs = fopen(filename, "w");
         //printf_spinor_field_5d(g_spinor_field[1], ofs);
         //fclose(ofs);
 
-#ifndef HAVE_QUDA
-        if(rotate_gamma_basis) {
-          if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] Attention: rotating solution with gamma_2 in non-QUDA case\n");
-          for(ix=0;ix<L5*VOLUME;ix++) { 
-            _fv_eq_gamma_ti_fv(spinor1, 2, g_spinor_field[1]+_GSI(ix));
-            _fv_eq_fv(g_spinor_field[1]+_GSI(ix), spinor1);
-          }
-        }
-#endif
-
-        Q_DW_Wilson_phi(g_spinor_field[2], g_spinor_field[1]);
+        Q_DW_Wilson_phi(g_spinor_field[0], g_spinor_field[1]);
   
         for(ix=0;ix<VOLUME*L5;ix++) {
-          _fv_mi_eq_fv(g_spinor_field[2]+_GSI(ix), g_spinor_field[0]+_GSI(ix));
+          _fv_mi_eq_fv(g_spinor_field[0]+_GSI(ix), g_spinor_field[2]+_GSI(ix));
         }
   
-        spinor_scalar_product_re(&norm, g_spinor_field[2], g_spinor_field[2], VOLUME*L5);
-        spinor_scalar_product_re(&norm2, g_spinor_field[0], g_spinor_field[0], VOLUME*L5);
+        spinor_scalar_product_re(&norm2, g_spinor_field[2], g_spinor_field[2], VOLUME*L5);
+        spinor_scalar_product_re(&norm, g_spinor_field[0], g_spinor_field[0], VOLUME*L5);
         if(g_cart_id==0) fprintf(stdout, "\n# [invert_dw_quda] absolut residuum squared: %e; relative residuum %e\n", norm, sqrt(norm/norm2) );
 
-#ifndef HAVE_QUDA
-        if(rotate_gamma_basis) {
-          if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] Attention: rotating solution back to original version in non-QUDA case\n");
-          for(ix=0;ix<L5*VOLUME;ix++) { 
-            _fv_eq_gamma_ti_fv(spinor1, 2, g_spinor_field[1]+_GSI(ix));
-            _fv_eq_fv(g_spinor_field[1]+_GSI(ix), spinor1);
-          }
+      }
+  
+      if(dummy_flag>0) {
+        /***********************************************
+         * create 4-dim. propagator
+         ***********************************************/
+        if(convert_sign == 0) {
+          spinor_5d_to_4d(g_spinor_field[1], g_spinor_field[1]);
+        } else if(convert_sign == -1 || convert_sign == +1) {
+          spinor_5d_to_4d_sign(g_spinor_field[1], g_spinor_field[1], convert_sign);
         }
+  
+        /***********************************************
+         * write the solution 
+         ***********************************************/
+        sprintf(filename, "%s.inverted", source_filename_write);
+        if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] writing propagator to file %s\n", filename);
+        check_error(write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision), "write_propagator", NULL, 22);
+        
+        //sprintf(filename, "prop.ascii.4d.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
+        //ofs = fopen(filename, "w");
+        //printf_spinor_field(g_spinor_field[1], ofs);
+        //fclose(ofs);
+      }
+
+      if(check_residuum) memcpy(g_spinor_field[2], smearing_spinor_field[0], 24*VOLUME*L5*sizeof(double));
+
+  }  // of omp single
+
+}    // of omp parallel region
+
+      if(dummy_flag > 0) strcpy(source_filename_write, source_filename);
+
+      dummy_flag++;
+ 
+    }  // of loop on momenta
+
+  }  // of isc
+
+#if 0
+  // last inversion
+
+  {
+      memcpy(g_spinor_field[0], smearing_spinor_field[1], 24*VOLUME*L5*sizeof(double));
+      if(g_cart_id==0) fprintf(stdout, "# [] proc%.2d starting last inversion\n", g_cart_id);
+
+
+      /***********************************************
+       * perform the inversion
+       ***********************************************/
+      if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] starting inversion\n");
+
+      xchange_field_5d(g_spinor_field[0]);
+      memset(g_spinor_field[1], 0, (VOLUME+RAND)*L5*24*sizeof(double));
+      ratime = CLOCK;
+#ifdef MPI
+      if(inv_param.inv_type == QUDA_BICGSTAB_INVERTER  || inv_param.inv_type == QUDA_GCR_INVERTER) {
+        if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] calling invertQuda\n");
+        invertQuda(g_spinor_field[1], g_spinor_field[0], &inv_param);
+      } else if(inv_param.inv_type == QUDA_CG_INVERTER) {
+        if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] calling testCG\n");
+        testCG(g_spinor_field[1], g_spinor_field[0], &inv_param);
+      } else {
+        if(g_cart_id==0) fprintf(stderr, "# [invert_dw_quda] unrecognized inverter\n");
+      }
+#else
+      invertQuda(g_spinor_field[1], g_spinor_field[0], &inv_param);
 #endif
+      retime = CLOCK;
+
+      if(g_cart_id==0) {
+        fprintf(stdout, "# [invert_dw_quda] QUDA time:  %e seconds\n", inv_param.secs);
+        fprintf(stdout, "# [invert_dw_quda] QUDA Gflops: %e\n", inv_param.gflops/inv_param.secs);
+        fprintf(stdout, "# [invert_dw_quda] wall time:  %e seconds\n", retime-ratime);
+        fprintf(stdout, "# [invert_dw_quda] Device memory used:\n\tSpinor: %f GiB\n\tGauge: %f GiB\n",
+        inv_param.spinorGiB, gauge_param.gaugeGiB);
+      }
+
+      omp_set_num_threads(g_num_threads);
+#pragma omp parallel private(threadid,_2_kappa,is,ix,iy,iix) shared(VOLUME,L5,g_kappa,g_spinor_field,g_num_threads)
+    {
+      threadid = omp_get_thread_num();
+
+      if(inv_param.mass_normalization == QUDA_KAPPA_NORMALIZATION) {
+        _2_kappa = 2. * g_kappa5d;
+        for(ix=threadid; ix<VOLUME*L5;ix+=g_num_threads) {
+          _fv_ti_eq_re(g_spinor_field[1]+_GSI(ix), _2_kappa );
+        }
+      }
+#pragma omp barrier
+      // reorder, multiply with g2
+      for(is=0;is<L5;is++) {
+      for(ix=threadid; ix<VOLUME; ix+=g_num_threads) {
+        iy  = lexic2eot_5d(is, ix);
+        iix = is*VOLUME + ix;
+        _fv_eq_fv(g_spinor_field[0]+_GSI(iix), g_spinor_field[1]+_GSI(iy));
+      }}
+#pragma omp barrier
+      if(rotate_gamma_basis) {
+        for(ix=threadid; ix<VOLUME*L5; ix+=g_num_threads) {
+          _fv_eq_gamma_ti_fv(g_spinor_field[1]+_GSI(ix), 2, g_spinor_field[0]+_GSI(ix));
+        }
+      } else {
+        for(ix=threadid; ix<VOLUME*L5;ix+=g_num_threads) {
+          _fv_eq_fv(g_spinor_field[1]+_GSI(ix), g_spinor_field[0]+_GSI(ix));
+        }
+      }
+
+    }  // end of parallel region
+
+    if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] inversion done in %e seconds\n", retime-ratime);
+
+
+#ifdef MPI
+      xchange_field_5d(g_spinor_field[1]);
+#endif
+      /***********************************************
+       * check residuum
+       ***********************************************/
+      if(check_residuum && dummy_flag>0) {
+        // apply the Wilson Dirac operator in the gamma-basis defined in cvc_linalg,
+        //   which uses the tmLQCD conventions (same as in contractions)
+        //   without explicit boundary conditions
+#ifdef MPI
+        xchange_field_5d(g_spinor_field[2]);
+#endif
+        memset(g_spinor_field[0], 0, 24*(VOLUME+RAND)*L5*sizeof(double));
+
+        //sprintf(filename, "%s.inverted.ascii.%.2d", source_filename, g_cart_id);
+        //ofs = fopen(filename, "w");
+        //printf_spinor_field_5d(g_spinor_field[1], ofs);
+        //fclose(ofs);
+
+
+        Q_DW_Wilson_phi(g_spinor_field[0], g_spinor_field[1]);
+  
+        for(ix=0;ix<VOLUME*L5;ix++) {
+          _fv_mi_eq_fv(g_spinor_field[0]+_GSI(ix), g_spinor_field[2]+_GSI(ix));
+        }
+  
+        spinor_scalar_product_re(&norm, g_spinor_field[0], g_spinor_field[0], VOLUME*L5);
+        spinor_scalar_product_re(&norm2, g_spinor_field[2], g_spinor_field[2], VOLUME*L5);
+        if(g_cart_id==0) fprintf(stdout, "\n# [invert_dw_quda] absolut residuum squared: %e; relative residuum %e\n", norm, sqrt(norm/norm2) );
+
       }
   
       /***********************************************
@@ -1056,30 +1186,26 @@ omp_set_num_threads(g_num_threads);
       } else if(convert_sign == -1 || convert_sign == +1) {
         spinor_5d_to_4d_sign(g_spinor_field[1], g_spinor_field[1], convert_sign);
       }
-
+  
       /***********************************************
        * write the solution 
        ***********************************************/
-      sprintf(filename, "%s.inverted", source_filename);
+      sprintf(filename, "%s.inverted", source_filename_write);
       if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] writing propagator to file %s\n", filename);
       check_error(write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision), "write_propagator", NULL, 22);
-      
-      sprintf(filename, "prop.ascii.4d.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
-      ofs = fopen(filename, "w");
-      printf_spinor_field(g_spinor_field[1], ofs);
-      fclose(ofs);
+        
+      //sprintf(filename, "prop.ascii.4d.%.2d.%.2d.%.2d", isc, g_nproc, g_cart_id);
+      //ofs = fopen(filename, "w");
+      //printf_spinor_field(g_spinor_field[1], ofs);
+      //fclose(ofs);
+  }  // of last inversion
 
-  }  // of omp single
-}    // of omp parallel region
-
- 
-    }  // of loop on momenta
-
-  }  // of isc
+#endif  // of if 0
 
   /***********************************************
    * free the allocated memory, finalize 
    ***********************************************/
+
 #ifdef HAVE_QUDA
   // finalize the QUDA library
   if(g_cart_id==0) fprintf(stdout, "# [invert_dw_quda] finalizing quda\n");
@@ -1107,6 +1233,7 @@ omp_set_num_threads(g_num_threads);
   }
   if(source_momentum != NULL) free(source_momentum);
   if(lck != NULL) free(lck);
+
 
 #ifdef MPI
 #ifdef HAVE_QUDA
