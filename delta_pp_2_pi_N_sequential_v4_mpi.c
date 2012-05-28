@@ -278,7 +278,7 @@ int main(int argc, char **argv) {
       fprintf(stdout, "# [] measured plaquette value = %25.16e\n", plaq_m);
     }
 
-    if(N_Jacobi>0) {
+    if(N_ape > 0) {
       if(g_cart_id==0) fprintf(stdout, "# [delta_pp_2_pi_N_sequential_v4_mpi] APE smearing gauge field with paramters N_APE=%d, alpha_APE=%e\n", N_ape, alpha_ape);
 #ifdef OPENMP
       APE_Smearing_Step_threads(g_gauge_field, N_ape, alpha_ape);
@@ -288,6 +288,10 @@ int main(int argc, char **argv) {
       }
 #endif
       xchange_gauge_field(g_gauge_field);
+    }
+    plaquette(&plaq_m);
+    if(g_cart_id==0) {
+      fprintf(stdout, "# [] measured plaquette value after smearing = %25.16e\n", plaq_m);
     }
   } else {
     g_gauge_field = NULL;
@@ -557,7 +561,7 @@ int main(int argc, char **argv) {
          ******************************************************/
 #ifdef OPENMP
         omp_set_num_threads(g_num_threads);
-#pragma omp parallel private (ix,icomp,threadid) \
+#pragma omp parallel private (ix,iix,icomp,threadid) \
         firstprivate (fermion_type,gamma_component,connq,\
             gamma_component_sign,VOL3,g_spinor_field,fp1,fp2,fp3,fpaux,fp4,uprop,dprop,sp1,sp2,timeslice)
   //      shared (num_component)
