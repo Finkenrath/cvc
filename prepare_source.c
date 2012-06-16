@@ -515,3 +515,94 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
 */
   return(0);
 }  // end of function
+
+
+int prepare_space_diluted_source(double *s, unsigned int degree, unsigned int number, int is, int ic, int*rng_state, int rng_reset) {
+
+  unsigned int it, ix, iy, iz, iix;
+  int i;
+  int *rng_state=NULL;
+  double *ran = NULL;
+  unsigned int VLat = 0, count;
+  char filename[200];
+  unsigned int degree2 = 1;
+  unsigned int num_comp = 0, step = 0, offset = 0;
+  int isLat;
+
+  if(rng_state == NULL) {
+    fprintf(stderr, "[] Error, rng_state is NULL\n");
+    EXIT(16);
+  }
+  rlxd_reset(rng_state);
+
+  // initialize
+  memset(s, 0, 24*VOLUME*sizeof(double));
+
+  for(i=0;i<degree;i++) degree2 *= 2;
+  if( number >= degree2 ) {
+    EXIT_WITH_MSG(17, "[] Error, number is larger/equal 2^degree\n");
+  }
+
+  if(is==-1 && ic==-1) {
+    num_comp = 24;  // only space dilution
+    offset   =  0;
+    step     =  1;
+  } else if(ic == -1) {
+    num_comp =  6;  // space and spin dilution
+    offset   =  6*is;
+    step     =  1;
+  } else if(is == -1) {
+    num_comp =  8;  // space and color dilution
+    offset   =  2*ic;
+    step     =  3;
+  } else {
+    num_comp =  2;  // space, spin and color dilution
+    offset   =  2*( 3 * is + ic );
+    step     =  1;
+  }
+
+  VLat = VOLUME / degree2;
+  if(g_cart_id==0) fprintf(stdout, "# [] sub-lattice volume = %u; number of components = %u; step = %u, offset = %u\n",
+      VLat, num_comp, step, offset);
+
+  ran = (double*)malloc(num_comp*VLat*sizeof(double));
+  if(ran == NULL) {
+    EXIT_WITH_MSG(18, "[] Error, could not alloc ran\n");
+  }
+
+  switch(g_noise_type) {
+    case 1:
+      rangauss(ran, num_comp*VLat);
+      break;
+    case 2:
+      ranz2(ran, num_comp*VLat);
+      break;
+  }
+
+  count = 0;
+  for(it=0; it<T; it++) {
+  for(ix=0; ix<LX; ix++) {
+  for(iy=0; iy<LY; iy++) {
+  for(iz=0; iz<LZ; iz++) {
+
+    isLat = ( ( it + g_proc_corrds[0]*T  + ix + g_proc_coords[1]*LX \
+              + iy + g_proc_coords[2]*LY + iz + g_proc_coords[3]*LZ ) % degree2 == number );
+
+    if( !isLat ) continue;
+
+    iix = _GSI( g_ipt[it][ix][iy][iz] );
+    iiy = num_comp * count;
+
+    for(i=0; i < num_comp; i += 2) {
+      s[iix + offset + i*step    ] = ran[iiy + i    ];  // real part
+      s[iix + offset + i*step + 1] = ran[iiy + i + 1];  // imag part
+    }
+    count++;
+  }}}}  // of iz, iy, ix, it
+
+  if(ran != NULL) free(ran);
+
+  sync_rng_state(id, rng_reset);
+
+  return(0);
+}
