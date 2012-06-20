@@ -133,4 +133,6 @@
 #define _default_gpu_prec_sloppy 1
 #define _default_inverter_type_name "none"
 
+#define _default_space_dilution_depth 0
+
 #endif

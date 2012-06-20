@@ -548,6 +548,7 @@ void plaquette(double *pl) {
   int ix, mu, nu; 
   double s[18], t[18], u[18], pl_loc;
   complex w;
+  double linksum[2], ls[2];
 
   pl_loc=0;
 
@@ -563,12 +564,34 @@ void plaquette(double *pl) {
     }
   }
 
+
 #ifdef MPI
   MPI_Reduce(&pl_loc, pl, 1, MPI_DOUBLE, MPI_SUM, 0, g_cart_grid);
 #else
   *pl = pl_loc;
 #endif
   *pl = *pl / ((double)T_global * (double)(LX*g_nproc_x) * (double)(LY*g_nproc_y) * (double)LZ * 18.);
+
+  linksum[0] = 0.;
+  linksum[1] = 0.;
+  for(ix=0; ix<VOLUME; ix++) {
+    for(mu=0; mu<4; mu++) {
+      for(nu=0; nu<9; nu++) {
+        linksum[0] += g_gauge_field[_GGI(ix,mu)+2*nu  ];
+        linksum[1] += g_gauge_field[_GGI(ix,mu)+2*nu+1];
+      }
+    }
+  }
+#ifdef MPI
+  MPI_Reduce(linksum, ls, 2, MPI_DOUBLE, MPI_SUM, 0, g_cart_grid);
+#else
+  ls[0] = linksum[0];
+  ls[1] = linksum[1];
+#endif
+  if(g_cart_id==0) {
+    fprintf(stdout, "# [plaquette] measured linksuj value = %25.16e + I %25.16e\n", ls[0], ls[1]);
+  }
+
 }
 
 /*****************************************************
@@ -1700,6 +1723,7 @@ int printf_spinor_field(double *s, FILE *ofs) {
   int i, start_valuet=0, start_valuex=0;
   int x0, x1, x2, x3, ix;
   int y0, y1, y2, y3;
+  int z0, z1, z2, z3;
 
   if( (ofs == (FILE*)NULL) || (s==(double*)NULL) ) return(108);
 #ifdef MPI
@@ -1713,6 +1737,7 @@ int printf_spinor_field(double *s, FILE *ofs) {
   start_valuet = 0;
 #endif
 
+
   for(x0=-start_valuet; x0<T +start_valuet; x0++) {
   for(x1=-start_valuex; x1<LX+start_valuex; x1++) {
     if( (x0==-1 || x0==T) && (x1==-1 || x1==LX)) continue;
@@ -1721,7 +1746,12 @@ int printf_spinor_field(double *s, FILE *ofs) {
     y0=x0; y1=x1; y2=x2; y3=x3;
     if(x0==-1) y0=T+1;
     ix = _GSI(g_ipt[y0][y1][y2][y3]);
-    fprintf(ofs, "# [%2d] t=%3d, x=%3d, y=%3d, z=%3d\n", g_cart_id, x0, x1, x2, x3);
+    // fprintf(ofs, "# [%2d] t=%3d, x=%3d, y=%3d, z=%3d\n", g_cart_id, x0, x1, x2, x3);
+    z0 = x0 + g_proc_coords[0] * T;
+    z1 = x1 + g_proc_coords[1] * LX;
+    z2 = x2 + g_proc_coords[2] * LY;
+    z3 = x3 + g_proc_coords[3] * LZ;
+    fprintf(ofs, "# [%2d] t=%3d, x=%3d, y=%3d, z=%3d\n", g_cart_id, z0, z1, z2, z3);
 /*
     fprintf(ofs, "%18.9e %18.9e\t%18.9e %18.9e\t%18.9e %18.9e\n"\
                  "%18.9e %18.9e\t%18.9e %18.9e\t%18.9e %18.9e\n"\
@@ -1990,6 +2020,8 @@ void set_default_input_values(void) {
   g_cpu_prec = _default_cpu_prec;
   g_gpu_prec = _default_gpu_prec;
   g_gpu_prec_sloppy = _default_gpu_prec_sloppy;
+
+  g_space_dilution_depth = _default_space_dilution_depth;
 }
 
 void  TraceAB(complex *w, double A[12][24], double B[12][24]) {

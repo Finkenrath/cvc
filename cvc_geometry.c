@@ -397,3 +397,159 @@ void free_geometry() {
   free(g_iseven);
   free(g_isevent);
 }
+
+
+int init_multigrid_decompositon(int degree, int**lexic2sub, int***sub2lexic, int**insub) {
+
+  unsigned int nsublat = 0, lvol = 0;
+  unsigned int length=0;
+  unsigned int ix, isub, isub2, i, latnum;
+  unsigned int *eocounter[2] = {NULL, NULL};
+  int gx[4], rx[4], lx[4];
+  int x0, x1, x2, x3, lsize[4];
+  int isodd = degree % 2;
+
+  if(*lexic2sub != NULL) {
+    free(*lexic2sub);
+    *lexic2sub = NULL;
+  }
+
+  if(*sub2lexic != NULL) {
+    free(*sub2lexic);
+    *sub2lexic = NULL;
+  }
+
+  if(*insub != NULL) {
+    free(*insub);
+    *insub = NULL;
+  }
+  
+  nsublat = 1<<((degree/2)*4 + isodd);
+  if(VOLUME % nsublat != 0) {
+    if(g_cart_id == 0) fprintf(stderr, "[] Error, nsublat !| VOLUME\n");
+    return(4);
+  }
+  lvol = VOLUME / nsublat;
+  length = 1<<(degree/2);
+
+  lsize[0] = T / length;
+  lsize[1] = LX / length;
+  lsize[2] = LY / length;
+  lsize[3] = LZ / length;
+
+  if(g_cart_id == 0) fprintf(stdout, "# number of sublattices = %u; sites per sublattice = %u, length = %u\n",
+      nsublat, lvol, length);
+
+  if( (*insub = (int*)malloc(VOLUME * sizeof(int))) == NULL ) {
+    return(1);
+  }
+
+  if( (*lexic2sub = (int*)malloc(VOLUME * sizeof(int))) == NULL ) {
+    return(2);
+  }
+
+  if( (*sub2lexic = (int**)malloc(nsublat * sizeof(int*))) == NULL ) return(3);
+  if( ( (*sub2lexic)[0] = (int*)malloc(nsublat*lvol * sizeof(int))) == NULL ) return(4);
+  for(i=1;i<nsublat;i++) (*sub2lexic)[i]  = (*sub2lexic)[i-1] + lvol;
+  
+  if(isodd) {
+    eocounter[0] = (unsigned int*)malloc(nsublat/2*sizeof(int));
+    eocounter[1] = (unsigned int*)malloc(nsublat/2*sizeof(int));
+    memset(eocounter[0],0,nsublat/2*sizeof(int));
+    memset(eocounter[1],0,nsublat/2*sizeof(int));
+  } else {
+    eocounter[0] = (unsigned int*)malloc(nsublat*sizeof(int));
+    memset(eocounter[0],0,nsublat*sizeof(int));
+  }
+
+  for(x0=0; x0<T;  x0++) {
+    gx[0] = x0 + g_proc_coords[0] * T;
+    lx[0] = gx[0] / length;
+    rx[0] = gx[0] % length;
+  for(x1=0; x1<LX; x1++) {
+    gx[1] = x1 + g_proc_coords[1] * LX;
+    lx[1] = gx[1] / length;
+    rx[1] = gx[1] % length;
+  for(x2=0; x2<LY; x2++) {
+    gx[2] = x2 + g_proc_coords[2] * LY;
+    lx[2] = gx[2] / length;
+    rx[2] = gx[2] % length;
+  for(x3=0; x3<LZ; x3++) {
+    gx[3] = x3 + g_proc_coords[3] * LZ;
+    lx[3] = gx[3] / length;
+    rx[3] = gx[3] % length;
+
+    ix = g_ipt[x0][x1][x2][x3];
+
+    latnum = ( ( rx[0] * length + rx[1] ) * length + rx[2] ) * length + rx[3];
+    //fprintf(stdout, "# inital latnum = %d\n", latnum);
+
+    // check for odd degree
+    if(isodd) {
+      i = ( lx[0] + lx[1] + lx[2] + lx[3] ) % 2;
+      isub = eocounter[i][latnum];
+      eocounter[i][latnum]++;
+      latnum = 2 * latnum + i;
+    } else {
+      // isub = ( ( lx[0] * lsize[1] + lx[1] ) * lsize[2] + lx[2] ) * lsize[3] + lx[3];
+      isub = eocounter[0][latnum];
+      eocounter[0][latnum]++;
+    }
+    //fprintf(stdout, "# final isub = %u\n", isub);
+    //fprintf(stdout, "# final latnum = %d\n", latnum);
+
+    (*lexic2sub)[ix]           = isub;
+    (*insub)[ix]               = latnum;
+    (*sub2lexic)[latnum][isub] = ix;
+
+  }}}}
+
+  // TEST
+
+  FILE *ofs=NULL;
+  char filename[200];
+  sprintf(filename, "geom.%.2d.%.2d", g_nproc, g_cart_id);
+  ofs = fopen(filename, "w");
+
+  fprintf(ofs, "# lexic2sub:\n");
+  for(x0=0; x0<T;  x0++) {
+  for(x1=0; x1<LX; x1++) {
+  for(x2=0; x2<LY; x2++) {
+  for(x3=0; x3<LZ; x3++) {
+    ix = g_ipt[x0][x1][x2][x3];
+    fprintf(ofs, "\t%6d |%3d%3d%3d%3d | %4d%6d\n", ix, x0, x1, x2, x3, (*insub)[ix], (*lexic2sub)[ix]);
+  }}}}
+
+  fprintf(ofs, "\n# sub2lexic:\n");
+  for(i=0;i<nsublat;i++) {
+      fprintf(ofs, "# sub lattice no. %d\n", i);
+    for(ix=0;ix<lvol;ix++) {
+      fprintf(ofs, "\t%3d%6d%6d\n", i, ix, (*sub2lexic)[i][ix]);
+    }
+  }
+  fclose(ofs);
+
+  if(eocounter[0] != NULL) free(eocounter[0]);
+  if(eocounter[1] != NULL) free(eocounter[1]);
+  return(0);
+}
+
+
+void fini_multigrid_decompositon(int**lexic2sub, int***sub2lexic, int**insub) {
+  if(*lexic2sub != NULL) {
+    free(*lexic2sub);
+    *lexic2sub = NULL;
+  }
+  if(*sub2lexic != NULL) {
+    if((*sub2lexic)[0] != NULL) {
+      free((*sub2lexic)[0]);
+    }
+    free(*sub2lexic);
+    *sub2lexic = NULL;
+  }
+  if(*insub != NULL) {
+    free(*insub);
+    *insub = NULL;
+  }
+  return;
+}

@@ -35,6 +35,15 @@
 #include "smearing_techniques.h"
 #include "fuzz.h"
 
+#ifndef _NON_ZERO
+#  define _NON_ZERO (5.e-14)
+#endif
+
+
+int display_source_entries(double *s, int*plane);
+int count_nonzero_source_entries(double *s);
+double minimal_distance(double *s, int y0, int y1, int y2, int y3);
+
 int prepare_timeslice_source(double *s, double *gauge_field, int timeslice, unsigned int V, int*rng_state, int rng_reset) {
 #if !(defined PARALLELTX) && !(defined PARALLELTXY)
   int c;
@@ -215,7 +224,7 @@ int prepare_timeslice_source_one_end(double *s, double *gauge_field, int timesli
   double ran[6];
   unsigned int VOL3 = LX*LY*LZ;
 
-  if(isc<0 || isc>4) {
+  if(isc>4) {
     fprintf(stderr, "[] Error, component number too large\n");
     return(15);
   }
@@ -245,6 +254,8 @@ int prepare_timeslice_source_one_end(double *s, double *gauge_field, int timesli
     coords[3] = 0;
     MPI_Cart_rank(g_cart_grid, coords, &id);
     timeslice = g_cart_id==id ? timeslice % T : -1;
+#else
+    id = 0;
 #endif
 
   if(timeslice >= 0) {
@@ -313,7 +324,7 @@ int prepare_timeslice_source_one_end_color(double *s, double *gauge_field, int t
   double ran[2];
   unsigned int VOL3 = LX*LY*LZ;
 
-  if(isc<0 || isc>=12) {
+  if(isc>=12) {
     fprintf(stderr, "[] Error, component number too large\n");
     return(15);
   }
@@ -342,6 +353,8 @@ int prepare_timeslice_source_one_end_color(double *s, double *gauge_field, int t
     coords[3] = 0;
     MPI_Cart_rank(g_cart_grid, coords, &id);
     timeslice = g_cart_id==id ? timeslice % T : -1;
+#else
+    id = 0;
 #endif
 
   if(timeslice>=0) {
@@ -497,7 +510,7 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
     }}}
   }  // of if have_source
 
-
+/*
   // TEST
 /*
   {
@@ -517,20 +530,19 @@ int prepare_sequential_point_source (double*source, int isc, int timeslice, int*
 }  // end of function
 
 
-int prepare_space_diluted_source(double *s, unsigned int degree, unsigned int number, int is, int ic, int*rng_state, int rng_reset) {
+int prepare_space_diluted_source(double *s, unsigned int degree, unsigned int number, int is, int ic, int *isLat, int*rng_state, int rng_reset) {
 
-  unsigned int it, ix, iy, iz, iix;
-  int i;
-  int *rng_state=NULL;
+  unsigned int ix, iix, iiy;
+  unsigned int gx[4], modval, length;
+  int i, pid;
   double *ran = NULL;
   unsigned int VLat = 0, count;
   char filename[200];
   unsigned int degree2 = 1;
   unsigned int num_comp = 0, step = 0, offset = 0;
-  int isLat;
 
   if(rng_state == NULL) {
-    fprintf(stderr, "[] Error, rng_state is NULL\n");
+    fprintf(stderr, "[prepare_space_diluted_source] Error, rng_state is NULL\n");
     EXIT(16);
   }
   rlxd_reset(rng_state);
@@ -538,10 +550,14 @@ int prepare_space_diluted_source(double *s, unsigned int degree, unsigned int nu
   // initialize
   memset(s, 0, 24*VOLUME*sizeof(double));
 
-  for(i=0;i<degree;i++) degree2 *= 2;
+  //for(i=0;i<degree;i++) degree2 *= 2;
+  degree2 = 1 << ((degree/2)*4 + degree%2 );
   if( number >= degree2 ) {
-    EXIT_WITH_MSG(17, "[] Error, number is larger/equal 2^degree\n");
+    EXIT_WITH_MSG(17, "[prepare_space_diluted_source] Error, number is larger/equal 2^degree\n");
   }
+ 
+  if(g_cart_id==0) fprintf(stdout, "# [prepare_space_diluted_source] source parameters: number=%u; is=%d; ic=%d\n", number , is, ic);
+
 
   if(is==-1 && ic==-1) {
     num_comp = 24;  // only space dilution
@@ -562,35 +578,37 @@ int prepare_space_diluted_source(double *s, unsigned int degree, unsigned int nu
   }
 
   VLat = VOLUME / degree2;
-  if(g_cart_id==0) fprintf(stdout, "# [] sub-lattice volume = %u; number of components = %u; step = %u, offset = %u\n",
+  if(g_cart_id==0) fprintf(stdout, "# [prepare_space_diluted_source] sub-lattice volume = %u; number of components = %u; step = %u, offset = %u\n",
       VLat, num_comp, step, offset);
 
   ran = (double*)malloc(num_comp*VLat*sizeof(double));
   if(ran == NULL) {
-    EXIT_WITH_MSG(18, "[] Error, could not alloc ran\n");
+    EXIT_WITH_MSG(18, "[prepare_space_diluted_source] Error, could not alloc ran\n");
   }
 
-  switch(g_noise_type) {
-    case 1:
-      rangauss(ran, num_comp*VLat);
-      break;
-    case 2:
-      ranz2(ran, num_comp*VLat);
-      break;
+  for(pid = 0; pid<g_nproc; pid++) {
+    if(g_cart_id == pid) {
+      switch(g_noise_type) {
+        case 1:
+          rangauss(ran, num_comp*VLat);
+          break;
+        case 2:
+          ranz2(ran, num_comp*VLat);
+          break;
+      }
+    }
+#ifdef MPI
+    MPI_Barrier(g_cart_grid);
+    sync_rng_state(pid, 0);
+#endif
   }
 
   count = 0;
-  for(it=0; it<T; it++) {
-  for(ix=0; ix<LX; ix++) {
-  for(iy=0; iy<LY; iy++) {
-  for(iz=0; iz<LZ; iz++) {
+  for(ix=0; ix<VOLUME; ix++) {
 
-    isLat = ( ( it + g_proc_corrds[0]*T  + ix + g_proc_coords[1]*LX \
-              + iy + g_proc_coords[2]*LY + iz + g_proc_coords[3]*LZ ) % degree2 == number );
+    if( isLat[ix] != number ) continue;
 
-    if( !isLat ) continue;
-
-    iix = _GSI( g_ipt[it][ix][iy][iz] );
+    iix = _GSI( ix );
     iiy = num_comp * count;
 
     for(i=0; i < num_comp; i += 2) {
@@ -598,11 +616,145 @@ int prepare_space_diluted_source(double *s, unsigned int degree, unsigned int nu
       s[iix + offset + i*step + 1] = ran[iiy + i + 1];  // imag part
     }
     count++;
-  }}}}  // of iz, iy, ix, it
+  }  // of ix
 
   if(ran != NULL) free(ran);
 
-  sync_rng_state(id, rng_reset);
+  sync_rng_state(0, rng_reset);
+
+#ifndef MPI
+#if 0
+  int plane[4];
+  plane[0] = 0; plane[1] = 0; plane[2] = -1; plane[3] = -1;
+  display_source_entries(s, plane );
+
+  plane[0] = 0; plane[1] = 1; plane[2] = -1; plane[3] = -1;
+  display_source_entries(s, plane );
+
+  plane[0] = 0; plane[1] = 2; plane[2] = -1; plane[3] = -1;
+  display_source_entries(s, plane );
+
+  plane[0] = 1; plane[1] = 0; plane[2] = -1; plane[3] = -1;
+  display_source_entries(s, plane );
+#endif
+#endif
+  // TEST
+  //if(number == 0) {
+  //  fprintf(stdout, "\n# [%2d] minimal distance for degree %u = %e\n", g_cart_id, degree, minimal_distance(s, 0, 0, 0, 0));
+  //}
+  //count_nonzero_source_entries(s);
 
   return(0);
+}
+
+int display_source_entries(double *s, int*plane) {
+
+  int i, j, k;
+  int Lmax[2], Lmaxordered[4];
+  int coords[4];
+  double norm[2];
+  int LL[4], LLordered[4];
+  FILE *ofs = NULL;
+  char filename[200];
+
+  LLordered[0] = LX*LY*LZ;
+  LLordered[1] =    LY*LZ;
+  LLordered[2] =       LZ;
+  LLordered[3] =        1;
+
+  Lmaxordered[0] = T;
+  Lmaxordered[1] = LX;
+  Lmaxordered[2] = LY;
+  Lmaxordered[3] = LZ;
+ 
+  sprintf(filename, "source_field");
+
+  j = 0;
+  k = 0;
+  for(i=0;i<4;i++) {
+    if(plane[i]>=0) {  // fixed coordinate
+      coords[2+j] = plane[i];
+      LL[2+j] = LLordered[i];
+      j++;
+    } else {
+      Lmax[k] = Lmaxordered[i];
+      LL[k] = LLordered[i];
+      sprintf(filename, "%s_%d", filename, i);
+      k++;
+    }
+  }
+
+  sprintf(filename, "%s.%.2d%.2d", filename, coords[2], coords[3]);
+
+  if( (k!=2) || (j!=2) ) {
+    return(1);
+  }
+
+  ofs = fopen(filename, "w");
+
+  for(i=0;i<Lmax[0]; i++) {
+    coords[0] = i;
+  for(j=0;j<Lmax[1]; j++) {
+    coords[1] = j;
+    k = coords[0]*LL[0] + coords[1]*LL[1] +coords[2]*LL[2] +coords[3]*LL[3];
+    _co_eq_fv_dag_ti_fv((complex*)norm, s+_GSI(k), s+_GSI(k));
+    if(norm[0]>0) fprintf(ofs, " 1");
+    else fprintf(ofs, " 0");
+  }
+    fprintf(ofs, "\n");
+  }
+  fclose(ofs);
+  return(0);
+}
+
+
+int count_nonzero_source_entries(double *s) {
+
+  unsigned int i, k;
+  double norm[2];
+
+  k = 0;
+  for(i=0;i<VOLUME;i++) {
+    _co_eq_fv_dag_ti_fv((complex*)norm, s+_GSI(i), s+_GSI(i));
+    k = k + (norm[0] > _NON_ZERO);
+  }
+
+  fprintf(stdout, "# [%2d] Number of non-zero source entries is %u\n", g_cart_id, k);
+
+  return(0);
+}
+
+double minimal_distance(double *s, int y0, int y1, int y2, int y3) {
+#define _SQR(_a) ((_a)*(_a))
+
+  unsigned int ix, ix_min=0;
+  int x0, x1, x2, x3;
+  int z0, z1, z2, z3;
+  double dist=0, dist_min = (double)LX * 2.;
+  complex w;
+
+  for(x0=0;x0<T; x0++) {
+    z0 = x0 + g_proc_coords[0]* T - y0;
+  for(x1=0;x1<LX;x1++) {
+    z1 = x1 + g_proc_coords[1]*LX - y1;
+  for(x2=0;x2<LY;x2++) {
+    z2 = x2 + g_proc_coords[2]*LY - y2;
+  for(x3=0;x3<LZ;x3++) {
+    z3 = x3 + g_proc_coords[3]*LZ - y3;
+
+    if( (z0==0) && (z1==0) && (z2==0) && (z3==0) ) continue;
+
+    ix = g_ipt[x0][x1][x2][x3];
+
+    _co_eq_fv_dag_ti_fv(&w, s+_GSI(ix), s+_GSI(ix));
+    if(w.re > _NON_ZERO) {
+      dist = sqrt( _SQR( z0 ) + _SQR( z1 ) + _SQR( z2 ) + _SQR( z3 ) );
+      if(dist < dist_min) {
+        dist_min = dist;
+        ix_min   = ix;
+      }
+    }
+  }}}}
+  return(dist_min);
+#undef _SQR
 }

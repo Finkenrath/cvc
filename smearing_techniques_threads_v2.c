@@ -538,11 +538,13 @@ int Jacobi_Smearing_Step_one_threads(double *smeared_gauge_field, double *psi, d
 
 #ifdef OPENMP
   omp_set_num_threads(nthreads);
-#pragma omp parallel private(istep,it,ix,idx,index_s,spinor,s,threadid,            \
+#pragma omp parallel default(none) \
+  private(istep,it,ix,idx,index_s,spinor,s,threadid,            \
     index_s_mx, index_s_px, index_s_my, index_s_py, index_s_mz, index_s_pz,        \
     index_g_mx,index_g_px, index_g_my, index_g_py, index_g_mz, index_g_pz,         \
     Up,Um,s_old)                                                                   \
-  firstprivate(VOLUME,norm,kappa,spinor_buffer,g_idn,g_iup,psi_old,smeared_gauge_field,nstep,psi,U_buffer,VOL3)
+  firstprivate(VOLUME,norm,kappa,spinor_buffer,g_idn,g_iup,psi_old,smeared_gauge_field,nstep,psi,U_buffer,VOL3, stdout) \
+  shared(nthreads, g_cart_id, T)
 {
   threadid = omp_get_thread_num();
   spinor = spinor_buffer + 24*threadid;
