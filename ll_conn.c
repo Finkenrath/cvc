@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
 
   /* the global time stamp */
   g_the_time = time(NULL);
-  fprintf(stdout, "\n# [ll_conn_x2dep_extract] using global time stamp %s", ctime(&g_the_time));
+  fprintf(stdout, "\n# [ll_conn] using global time stamp %s", ctime(&g_the_time));
 
   /* set the default values */
   if(filename_set==0) strcpy(filename, "cvc.input");

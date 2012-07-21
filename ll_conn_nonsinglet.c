@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
   int sigmalight=0, sigmaheavy=0;
   double correlator_norm = 1.;
   int source_coords[4];
+  size_t prec = 64;
 
   int verbose = 0;
   char filename[200];
@@ -352,7 +353,7 @@ int main(int argc, char **argv) {
   ratime = (double)clock() / CLOCKS_PER_SEC;
 #endif
   for(i=0; i<n_s*n_c; i++) {
-    prepare_propagator2(source_coords, i,  1, g_spinor_field[i],         position, 0);
+    prepare_propagator2(source_coords, i,  1, g_spinor_field[i],         position, 0, prec);
 //    prepare_propagator2(source_coords, i, -1, g_spinor_field[i+n_s*n_c], position, format);
   }
 #ifdef MPI
@@ -387,13 +388,13 @@ int main(int argc, char **argv) {
 
     /* (pseudo-)scalar sector */
     for(idx=0; idx<16; idx++) {
-      contract_twopoint_xdep(cconn + 2*(count*K + idx), xgindex1[idx], xgindex2[idx], chi, psi, n_c, K, 1.0);
+      contract_twopoint_xdep(cconn + 2*(count*K + idx), xgindex1[idx], xgindex2[idx], chi, psi, n_c, K, 1.0, prec);
     }
     /* (pseudo-)vector sector */
     for(idx = 16; idx < 64; idx+=3) {
       for(i = 0; i < 3; i++) {
         contract_twopoint_xdep(cconn + 2*(count*K + (16+(idx-16)/3)), 
-          xgindex1[idx+i], xgindex2[idx+i], chi, psi, n_c, K, conf_gamma_sign[(idx-16)/3]*xvsign[idx-16+i]);
+          xgindex1[idx+i], xgindex2[idx+i], chi, psi, n_c, K, conf_gamma_sign[(idx-16)/3]*xvsign[idx-16+i], prec);
       }
     }
   }}

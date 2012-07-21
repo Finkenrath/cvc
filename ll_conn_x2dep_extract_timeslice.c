@@ -259,13 +259,22 @@ int main(int argc, char **argv) {
     }
     items = 2 * (size_t)NumFlComb * (size_t)K * (size_t)VOL3;
     bytes = (prec==64) ? sizeof(double) : sizeof(float);
-    offset = 2 * (size_t)NumFlComb * (size_t)K * (size_t)VOL3 * (size_t)timeslice * bytes;
+//    offset = 2 * (size_t)NumFlComb * (size_t)K * (size_t)VOL3 * (size_t)timeslice * bytes;
+    offset = 2 * (size_t)NumFlComb * (size_t)K * (size_t)VOL3 * bytes;
     
     fprintf(stdout, "\n# [ll_conn_x2dep_extract] trying to read %lu items of size %lu bytes with offset %lu\n", items, bytes, offset);
 
-    if( fseek(ofs, offset, SEEK_SET) != 0 ) {
-      fprintf(stderr, "[ll_conn_x2dep_extract] Error, could not seek file position\n");
-      exit(6);
+//    if( fseek(ofs, offset, SEEK_SET) != 0 ) {
+//      fprintf(stderr, "[ll_conn_x2dep_extract] Error, could not seek file position\n");
+//      exit(6);
+//    }
+
+    rewind(ofs);
+    for(i=0;i<timeslice;i++) {
+      if( fseek(ofs, offset, SEEK_CUR) != 0 ) {
+        fprintf(stderr, "[ll_conn_x2dep_extract] Error, could not seek file position in step %d\n", i);
+        exit(6);
+      }
     }
       
     if( fread(buffer, bytes, items, ofs) != items) {
