@@ -523,3 +523,382 @@ int init_x_orbits(int**xid, int**xid_count, double ***xid_val, int***xid_rep, in
   return(0);
 }
 
+
+/********************************************************************************
+ * 4d x^2 orbits
+ ********************************************************************************/
+int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc, int ***xid_rep) {
+
+  size_t ix;
+  int x0, x1, x2, x3, y[4], z[4];
+  int s0, s1, s2, s3;
+  int Thp1  = T/2+1;
+  int Thalf = T/2; 
+  int Thm1  = T/2-1;
+  int L     = LX;
+  int Lhalf = L/2;
+  int Lhp1  = L/2+1;
+  int Lhm1  = L/2-1;
+  int index_s, xcoords[4];
+  size_t Nclasses, iclass;
+  int i, status;
+  int new_flag;
+
+  
+  /***************************************
+   * number of classes 
+   ***************************************/
+  Nclasses = \
+  /* 0 <= t,x,y,z <= L/2 */ \
+  + (Lhalf+1) * (Lhalf) * (Lhalf-1) * (Lhalf-2) / 24 /* 1111 */ \
+  + (Lhalf+1) * (Lhalf) * (Lhalf-1) / 12             /* 112  */ \
+  + (Lhalf+1) * (Lhalf) / 6                          /* 22   */ \
+  + (Lhalf+1) * (Lhalf) / 4                          /* 13   */ \
+  + Lhp1                                             /* 4    */ \
+  /* L/2+1 <= t < 2L */ \
+  + Lhm1 * ( (Lhalf+1)*Lhalf*(Lhalf-1) / 6 /* 111 */ \
+           + (Lhalf+1)*Lhalf / 3           /* 12  */ \
+           + (Lhalf+1) )                   /* 3   */;
+
+  fprintf(stdout, "# [make_x_orbits_4d] Nclasses = %u\n", Nclasses);
+  
+  status = init_x_orbits(xid, xid_count, xid_val, xid_rep, Nclasses);
+  if(status != 0) {
+    fprintf(stderr, "Error, could not intialise fields\n");
+    return(1);
+  }
+
+  /***************************************
+   * initialize the permutation tables
+   ***************************************/
+  init_perm_tabs();
+
+  /***************************************
+   * characterize the classes
+   ***************************************/
+  iclass = 0;
+  /******************************************************
+   * (1) t = 0,...,L/2
+   ******************************************************/
+  // 1111
+  for(x0=0;    x0<Lhp1-3; x0++) {
+  for(x1=x0+1; x1<Lhp1-2; x1++) {
+  for(x2=x1+1; x2<Lhp1-1; x2++) {
+  for(x3=x2+1; x3<Lhp1;   x3++) {
+    (*xid_rep)[iclass][0] = x0;
+    (*xid_rep)[iclass][1] = x1; 
+    (*xid_rep)[iclass][2] = x2; 
+    (*xid_rep)[iclass][3] = x3;
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip< 24;ip++) {
+      y[perm_tab_4[ip][0]] = x0;
+      y[perm_tab_4[ip][1]] = x1;
+      y[perm_tab_4[ip][2]] = x2;
+      y[perm_tab_4[ip][3]] = x3;
+
+      for(s0=-1; s0<2; s0+=2) {
+        z[0] = ((1+s0) * y[0] + (1-s0) * (T-y[0]) ) / 2;
+      for(s1=-1; s1<2; s1+=2) {
+        z[1] = ((1+s1) * y[1] + (1-s1) * (L-y[1]) ) / 2;
+      for(s2=-1; s2<2; s2+=2) {
+        z[2] = ((1+s2) * y[2] + (1-s2) * (L-y[2]) ) / 2;
+      for(s3=-1; s3<2; s3+=2) {
+        z[3] = ((1+s3) * y[3] + (1-s3) * (L-y[3]) ) / 2;
+        ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+        if( (*xid)[ix] == -1 ) {
+          (*xid)[ix] = iclass;
+          (*xid_count)[iclass]++;
+        } else if ((*xid)[ix] != iclass) {
+          fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          return(2);
+        }
+      }}}}
+    }
+    iclass++;
+  }}}}
+
+  // 112
+  for(x0=0;    x0<Lhp1-2; x0++) {
+  for(x1=x0+1; x1<Lhp1-1; x1++) {
+  for(x2=x1+1; x2<Lhp1  ; x2++) {
+    (*xid_rep)[iclass][0] = x0;
+    (*xid_rep)[iclass][1] = x1; 
+    (*xid_rep)[iclass][2] = x2; 
+    (*xid_rep)[iclass][3] = x2;
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip< 24;ip++) {
+      y[perm_tab_4[ip][0]] = x0;
+      y[perm_tab_4[ip][1]] = x1;
+      y[perm_tab_4[ip][2]] = x2;
+      y[perm_tab_4[ip][3]] = x2;
+
+      for(s0=-1; s0<2; s0+=2) {
+        z[0] = ((1+s0) * y[0] + (1-s0) * (T-y[0]) ) / 2;
+      for(s1=-1; s1<2; s1+=2) {
+        z[1] = ((1+s1) * y[1] + (1-s1) * (L-y[1]) ) / 2;
+      for(s2=-1; s2<2; s2+=2) {
+        z[2] = ((1+s2) * y[2] + (1-s2) * (L-y[2]) ) / 2;
+      for(s3=-1; s3<2; s3+=2) {
+        z[3] = ((1+s3) * y[3] + (1-s3) * (L-y[3]) ) / 2;
+        ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+        if( (*xid)[ix] == -1 ) {
+          (*xid)[ix] = iclass;
+          (*xid_count)[iclass]++;
+        } else if ((*xid)[ix] != iclass) {
+          fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          return(3);
+        }
+      }}}}
+    }
+    iclass++;
+  }}}
+
+  // 22
+  for(x0=0;    x0<Lhp1-1; x0++) {
+  for(x2=x0+1; x2<Lhp1  ; x2++) {
+    (*xid_rep)[iclass][0] = x0;
+    (*xid_rep)[iclass][1] = x0; 
+    (*xid_rep)[iclass][2] = x2; 
+    (*xid_rep)[iclass][3] = x2;
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip< 24;ip++) {
+      y[perm_tab_4[ip][0]] = x0;
+      y[perm_tab_4[ip][1]] = x0;
+      y[perm_tab_4[ip][2]] = x2;
+      y[perm_tab_4[ip][3]] = x2;
+
+      for(s0=-1; s0<2; s0+=2) {
+        z[0] = ((1+s0) * y[0] + (1-s0) * (T-y[0]) ) / 2;
+      for(s1=-1; s1<2; s1+=2) {
+        z[1] = ((1+s1) * y[1] + (1-s1) * (L-y[1]) ) / 2;
+      for(s2=-1; s2<2; s2+=2) {
+        z[2] = ((1+s2) * y[2] + (1-s2) * (L-y[2]) ) / 2;
+      for(s3=-1; s3<2; s3+=2) {
+        z[3] = ((1+s3) * y[3] + (1-s3) * (L-y[3]) ) / 2;
+        ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+        if( (*xid)[ix] == -1 ) {
+          (*xid)[ix] = iclass;
+          (*xid_count)[iclass]++;
+        } else if ((*xid)[ix] != iclass) {
+          fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          return(3);
+        }
+      }}}}
+    }
+    iclass++;
+  }}
+
+  // 13
+  for(x0=0;    x0<Lhp1-1; x0++) {
+  for(x3=x0+1; x3<Lhp1  ; x3++) {
+    (*xid_rep)[iclass][0] = x0;
+    (*xid_rep)[iclass][1] = x0; 
+    (*xid_rep)[iclass][2] = x0; 
+    (*xid_rep)[iclass][3] = x3;
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip<4;ip++) {
+      y[ip      ] = x3;
+      y[(ip+1)%4] = x0;
+      y[(ip+2)%4] = x0;
+      y[(ip+3)%4] = x0; 
+
+      for(s0=-1; s0<2; s0+=2) {
+        z[0] = ((1+s0) * y[0] + (1-s0) * (T-y[0]) ) / 2;
+      for(s1=-1; s1<2; s1+=2) {
+        z[1] = ((1+s1) * y[1] + (1-s1) * (L-y[1]) ) / 2;
+      for(s2=-1; s2<2; s2+=2) {
+        z[2] = ((1+s2) * y[2] + (1-s2) * (L-y[2]) ) / 2;
+      for(s3=-1; s3<2; s3+=2) {
+        z[3] = ((1+s3) * y[3] + (1-s3) * (L-y[3]) ) / 2;
+        ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+        if( (*xid)[ix] == -1 ) {
+          (*xid)[ix] = iclass;
+          (*xid_count)[iclass]++;
+        } else if ((*xid)[ix] != iclass) {
+          fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          return(4);
+        }
+      }}}}
+    }
+    iclass++;
+  }}
+
+  // 4
+  for(x0=0;    x0<Lhp1; x0++) {
+    (*xid_rep)[iclass][0] = x0;
+    (*xid_rep)[iclass][1] = x0; 
+    (*xid_rep)[iclass][2] = x0; 
+    (*xid_rep)[iclass][3] = x0;
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    y[0] = x0;
+    y[1] = x0;
+    y[2] = x0;
+    y[3] = x0;
+
+    for(s0=-1; s0<2; s0+=2) {
+      z[0] = ((1+s0) * y[0] + (1-s0) * (T-y[0]) ) / 2;
+    for(s1=-1; s1<2; s1+=2) {
+      z[1] = ((1+s1) * y[1] + (1-s1) * (L-y[1]) ) / 2;
+    for(s2=-1; s2<2; s2+=2) {
+      z[2] = ((1+s2) * y[2] + (1-s2) * (L-y[2]) ) / 2;
+    for(s3=-1; s3<2; s3+=2) {
+      z[3] = ((1+s3) * y[3] + (1-s3) * (L-y[3]) ) / 2;
+      ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+      if( (*xid)[ix] == -1 ) {
+        (*xid)[ix] = iclass;
+        (*xid_count)[iclass]++;
+      } else if ((*xid)[ix] != iclass) {
+        fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+        return(5);
+      }
+    }}}}
+    iclass++;
+  }}
+
+  /******************************************************
+   * (2) t = L/2+1,...,2L-1
+   ******************************************************/
+
+  for(x0=Lhp1; x0<T; x0++) {
+    (*xid_rep)[iclass][0] = x0;
+    y[0] = x0;
+    // 111
+    for(x1=0;    x1<Lhp1-2; x1++) {
+    for(x2=x1+1; x2<Lhp1-1; x2++) {
+    for(x3=x2+1; x3<Lhp1;   x3++) {
+      (*xid_rep)[iclass][1] = x1; 
+      (*xid_rep)[iclass][2] = x2; 
+      (*xid_rep)[iclass][3] = x3;
+      _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+      for(ip = 0; ip< 6; ip++) {
+        y[perm_tab_3[ip][0]+1] = x1;
+        y[perm_tab_3[ip][1]+1] = x2;
+        y[perm_tab_3[ip][2]+1] = x3;
+  
+        for(s0=-1; s0<2; s0+=2) {
+          z[0] = ((1+s0) * y[0] + (1-s0) * (T-y[0]) ) / 2;
+        for(s1=-1; s1<2; s1+=2) {
+          z[1] = ((1+s1) * y[1] + (1-s1) * (L-y[1]) ) / 2;
+        for(s2=-1; s2<2; s2+=2) {
+          z[2] = ((1+s2) * y[2] + (1-s2) * (L-y[2]) ) / 2;
+        for(s3=-1; s3<2; s3+=2) {
+          z[3] = ((1+s3) * y[3] + (1-s3) * (L-y[3]) ) / 2;
+          ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+          if( (*xid)[ix] == -1 ) {
+            (*xid)[ix] = iclass;
+            (*xid_count)[iclass]++;
+          } else if ((*xid)[ix] != iclass) {
+            fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+            return(3);
+          }
+        }}}}
+      }
+      iclass++;
+    }}}
+  
+    // 12
+    for(x1=0;    x1<Lhp1-1; x1++) {
+    for(x2=x1+1; x2<Lhp1;   x2++) {
+      (*xid_rep)[iclass][1] = x1; 
+      (*xid_rep)[iclass][2] = x2; 
+      (*xid_rep)[iclass][3] = x2;
+      _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+      for(ip = 0; ip<3; ip++) {
+        y[ip      +1] = x1;
+        y[(ip+1)%3+1] = x2;
+        y[(ip+2)%3+2] = x2;
+  
+        for(s0=-1; s0<2; s0+=2) {
+          z[0] = ((1+s0) * y[0] + (1-s0) * (T-y[0]) ) / 2;
+        for(s1=-1; s1<2; s1+=2) {
+          z[1] = ((1+s1) * y[1] + (1-s1) * (L-y[1]) ) / 2;
+        for(s2=-1; s2<2; s2+=2) {
+          z[2] = ((1+s2) * y[2] + (1-s2) * (L-y[2]) ) / 2;
+        for(s3=-1; s3<2; s3+=2) {
+          z[3] = ((1+s3) * y[3] + (1-s3) * (L-y[3]) ) / 2;
+          ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+          if( (*xid)[ix] == -1 ) {
+            (*xid)[ix] = iclass;
+            (*xid_count)[iclass]++;
+          } else if ((*xid)[ix] != iclass) {
+            fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+            return(3);
+          }
+        }}}}
+      }
+      iclass++;
+    }}
+  
+    // 3
+    for(x1=0; x1<Lhp1; x1++) {
+      (*xid_rep)[iclass][1] = x1; 
+      (*xid_rep)[iclass][2] = x1; 
+      (*xid_rep)[iclass][3] = x1;
+      _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+      y[1] = x1;
+      y[2] = x1;
+      y[3] = x1;
+  
+      for(s0=-1; s0<2; s0+=2) {
+        z[0] = ((1+s0) * y[0] + (1-s0) * (T-y[0]) ) / 2;
+      for(s1=-1; s1<2; s1+=2) {
+        z[1] = ((1+s1) * y[1] + (1-s1) * (L-y[1]) ) / 2;
+      for(s2=-1; s2<2; s2+=2) {
+        z[2] = ((1+s2) * y[2] + (1-s2) * (L-y[2]) ) / 2;
+      for(s3=-1; s3<2; s3+=2) {
+        z[3] = ((1+s3) * y[3] + (1-s3) * (L-y[3]) ) / 2;
+        ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+        if( (*xid)[ix] == -1 ) {
+          (*xid)[ix] = iclass;
+          (*xid_count)[iclass]++;
+        } else if ((*xid)[ix] != iclass) {
+          fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          return(5);
+        }
+      }}}}
+      iclass++;
+    }
+
+  }  // of loop on times
+
+  if(Nclasses != iclass) {
+    fprintf(stderr, "[] Error, counted number of classes %u differs from calculated number %u\n", iclass, Nclasses);
+    return(6);
+  }
+  *xid_nc = Nclasses;
+
+   // TEST:
+   // - print the lists 
+
+  fprintf(stdout, "# t\tx\ty\tz\txid\n");
+  for(x0=0; x0<T; x0++) {
+  for(x1=0; x1<L; x1++) {
+  for(x2=0; x2<L; x2++) {
+  for(x3=0; x3<L; x3++) {
+    ix = g_ipt[x0][x1][x2][x3];
+    fprintf(stdout, "%3d%3d%3d%3d%4d\n", x0, x1, x2, x3, (*xid)[ix]);
+  }}}}
+
+
+  fprintf(stdout, "# n\tt\tx\ty\tz\tx^[2]\tx^[4]\tx^[6]\tx^[8]\tmembers\n");
+  for(n=0; n<Nclasses; n++) {
+    fprintf(stdout, "%5d%5d%5d%5d%5d%16.7e%16.7e%16.7e%16.7e%4d\n",
+      n, (*xid_rep)[n][0], (*xid_rep)[n][1], (*xid_rep)[n][2], (*xid_rep)[n][3],
+      (*xid_val)[n][0], (*xid_val)[n][1], (*xid_val)[n][2],(*xid_val)[n][3], (*xid_count)[n]);
+  }
+
+/*
+  for(i=0; i<Nclasses; i++) {
+    fprintf(stdout, "# class number %d; members: %d\n", i, (*xid_count)[i]);
+    for(it=0; it<T; it++) {
+    for(ix=0; ix<L; ix++) {
+    for(iy=0; iy<L; iy++) {
+    for(iz=0; iz<L; iz++) {
+      iix = g_ipt[it][ix][iy][iz];
+      if((*xid)[iix]==i) fprintf(stdout, "%5d\t%5d%5d%5d%5d\n", i, it, ix, iy, iz);
+    }}}}
+    fprintf(stdout, "-----------------------------------------------------------\n");
+  }
+*/
+  return(0);
+}
