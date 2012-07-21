@@ -41,10 +41,15 @@ void usage() {
   EXIT(0);
 }
 
+#ifdef MPI
+#define CLOCK MPI_Wtime()
+#else
+#define CLOCK ((double)clock() / CLOCKS_PER_SEC)
+#endif
 
 int main(int argc, char **argv) {
   
-  int c, mu, nu, status, dims[4], i;
+  int c, mu, nu, status, dims[4], i, gid;
   int filename_set = 0;
   int l_LX_at, l_LXstart_at;
   int x0, x1, x2, x3, ix, iix;
@@ -55,6 +60,7 @@ int main(int argc, char **argv) {
   double q[4];
   FILE *ofs=NULL;
   int check_WI = 0;
+  complex w;
 
   fftw_complex *in=NULL;
 
@@ -130,7 +136,7 @@ int main(int argc, char **argv) {
   // make the H4 orbits
   status = make_x_orbits_4d(&h4_id, &h4_count, &h4_val, &h4_nc, &h4_rep);
   if(status != 0) {
-    fprintf(stderr, "Error while creating orbit-lists\n");
+    fprintf(stderr, "[jj_x2_v2] Error while creating orbit-lists, status was %d\n", status);
     EXIT(2);
   }
 
@@ -147,8 +153,8 @@ int main(int argc, char **argv) {
     fprintf(stderr, "[jj_x2_v2] Error, could not allocate memory for jjx0\n");
     EXIT(4);
   }
-
-  for(gid = g_gaugeid; gid<g_gaugeid2; gid+=g_gaugeid_step) {
+#if 0
+  for(gid = g_gaugeid; gid<g_gaugeid2; gid+=g_gauge_step) {
 
     /***********************
      * read contractions   *
@@ -253,7 +259,7 @@ int main(int argc, char **argv) {
     retime = CLOCK;
     fprintf(stdout, "# [jj_x2_v2] time to write correlator %e seconds\n", retime-ratime);
   }  // of loop on gauge id
-
+#endif  // of if 0
   /***************************************
    * free the allocated memory, finalize *
    ***************************************/
@@ -264,8 +270,8 @@ int main(int argc, char **argv) {
   fftwnd_destroy_plan(plan_m);
   if(in!=NULL) free(in);
 
-   fprintf(stdout, "\n# [jj_x2_v2] %s# [jj_x2_v2] end of run\n", ctime(&g_the_time));
-   fprintf(stderr, "\n[jj_x2_v2] %s[jj_x2_v2] end of run\n", ctime(&g_the_time));
+  fprintf(stdout, "\n# [jj_x2_v2] %s# [jj_x2_v2] end of run\n", ctime(&g_the_time));
+  fprintf(stderr, "\n[jj_x2_v2] %s[jj_x2_v2] end of run\n", ctime(&g_the_time));
 
   return(0);
 

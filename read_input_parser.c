@@ -2692,13 +2692,13 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 1 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 /***********************************************************************
 * read_input_parser.l
 * - parsing cvc.input to program
 * - use flex -P <prefix_> ...
 ***********************************************************************/
-#line 21 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 21 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -3141,7 +3141,7 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 167 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 167 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 
 #line 3147 "<stdout>"
 
@@ -3225,557 +3225,557 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 168 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 168 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(TT);
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 169 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 169 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(LL);
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 170 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 170 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(LL5);
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 171 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 171 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(LLX);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 172 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 172 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(LLY);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 173 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 173 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(LLZ);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 174 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 174 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(MU);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 175 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 175 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(MUSIGMA);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 176 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 176 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(MUDELTA);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 177 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 177 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(MUBAR);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 178 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 178 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(M5);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 179 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 179 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(M0);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 180 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 180 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(EPSBAR);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 181 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 181 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NNCONF);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 182 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 182 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(KAPPA);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 183 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 183 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SOURCEID);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 184 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 184 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SOURCEID2);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 185 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 185 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(GAUGEID);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 186 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 186 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(GAUGEID2);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 187 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 187 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(GAUGESTEP);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 188 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 188 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NNSAVE);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 189 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 189 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(FFORMAT);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 190 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 190 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(BCT);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 191 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 191 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(BCX);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 192 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 192 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(BCY);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 193 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 193 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(BCZ);
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 194 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 194 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(PREFIX);
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 195 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 195 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(PREFIX2);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 196 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 196 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(GAUGEPREFIX);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 197 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 197 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(OUTPREFIX);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 198 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 198 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(RESUME);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 199 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 199 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SUBTRACT);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 200 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 200 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SOURCELOC);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 201 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 201 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SSEED);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 202 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 202 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NOISETYPE);
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 203 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 203 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SRCTYPE);
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 204 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 204 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SPREC);
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 205 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 205 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(RELDELTA);
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 206 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 206 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(MAXITER);
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 207 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 207 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SOURCEIDSTEP);
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 208 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 208 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(HPEMIN);
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 209 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 209 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(HPEMAX);
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 210 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 210 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(HPEORD);
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 211 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 211 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(CUTANG);
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 212 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 212 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(CUTRAD);
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 213 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 213 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(CUTDIRT);
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 214 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 214 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(CUTDIRX);
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 215 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 215 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(CUTDIRY);
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 216 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 216 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(CUTDIRZ);
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 217 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 217 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(RMIN);
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 218 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 218 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(RMAX);
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 219 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 219 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(AVGTT);
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 220 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 220 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(AVGLL);
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 221 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 221 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(MODEL_DCOEFFRE);
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 222 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 222 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(MODEL_DCOEFFIM);
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 223 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 223 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(MODEL_MRHO);
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 224 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 224 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(FTRMAX1);
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 225 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 225 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(FTRMAX2);
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 226 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 226 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(FTRMAX3);
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 227 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 227 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(FTRMAX4);
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 228 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 228 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(PROPNORMSQR);
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 229 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 229 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(QHATSQRMIN);
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 230 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 230 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(QHATSQRMAX);
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 231 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 231 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NLONG);
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 232 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 232 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NAPE);
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 233 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 233 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NJACOBI);
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 234 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 234 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(ALPHAAPE);
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 235 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 235 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(KAPPAJACOBI);
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 236 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 236 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SRCTIMESLICE);
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 237 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 237 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(MMSNOMASSES);
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 238 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 238 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NOLIGHTMASSES);
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 239 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 239 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NOSTRANGEMASSES);
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 240 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 240 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NOTPROCS);
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 241 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 241 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NOXPROCS);
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 242 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 242 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NOYPROCS);
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 243 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 243 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(LOCLOC);
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 244 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 244 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(LOCSME);
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 245 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 245 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SMELOC);
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 246 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 246 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SMESME);
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 247 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 247 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(ROTATE);
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 248 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 248 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(PROPPOS);
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 249 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 249 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(GPUDEVICENUMBER);
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 250 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 250 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(GPUPERNODE);
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 251 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 251 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(COHSRC);
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 252 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 252 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(COHSRCBASE);
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 253 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 253 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(COHSRCDELTA);
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 254 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 254 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(GAUGEFILEFORMAT);
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 255 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 255 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(RNGFILE);
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 256 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 256 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SRCINDEX);
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 257 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 257 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(PROPBCTYPE);
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 258 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 258 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(PROPGAMMA);
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 259 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 259 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(PROPPREC);
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 260 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 260 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(WRITESRC);
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 261 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 261 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(READSRC);
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 262 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 262 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NSAMPLE);
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 263 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 263 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(ASOVERA);
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 264 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 264 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(NUMTHREADS);
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 265 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 265 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SRCMOMX);
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 266 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 266 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SRCMOMY);
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 267 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 267 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SRCMOMZ);
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 268 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 268 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SNKMOMX);
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 269 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 269 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SNKMOMY);
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 270 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 270 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SNKMOMZ);
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 271 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 271 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SEQSRCMOMX);
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 272 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 272 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SEQSRCMOMY);
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 273 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 273 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(SEQSRCMOMZ);
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 274 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 274 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(CPUPREC);
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 275 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 275 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(GPUPREC);
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 276 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 276 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(GPUPRECSLOPPY);
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 277 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 277 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 BEGIN(INVERTERTYPE);
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 279 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 279 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   T_global = atoi(yytext);
   if(myverbose!=0) printf("T_global =%s\n", yytext);
@@ -3783,7 +3783,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 283 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 283 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   L = atoi(yytext);
   if(myverbose!=0) printf("L =%s\n", yytext);
@@ -3791,7 +3791,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 287 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 287 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   L5 = atoi(yytext);
   if(myverbose!=0) printf("L5 =%s\n", yytext);
@@ -3799,7 +3799,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 291 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 291 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   LX = atoi(yytext);
   if(myverbose!=0) printf("LX =%s\n", yytext);
@@ -3807,7 +3807,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 295 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 295 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   LY = atoi(yytext);
   if(myverbose!=0) printf("LY =%s\n", yytext);
@@ -3815,7 +3815,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 299 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 299 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   LZ = atoi(yytext);
   if(myverbose!=0) printf("LZ =%s\n", yytext);
@@ -3823,7 +3823,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 303 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 303 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_kappa=atof(yytext);
   if(myverbose!=0) printf("kappa=%s \n", yytext);
@@ -3831,7 +3831,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 307 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 307 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_mu=atof(yytext);
   if(myverbose!=0) printf("mu=%s \n", yytext);
@@ -3839,7 +3839,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 311 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 311 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_m5 = atof(yytext);
   if(myverbose!=0) printf("m5=%s \n", yytext);
@@ -3847,7 +3847,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 315 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 315 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_musigma=atof(yytext);
   if(myverbose!=0) printf("musigma=%s \n", yytext);
@@ -3855,7 +3855,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 319 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 319 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_mudelta=atof(yytext);
   if(myverbose!=0) printf("mudelta=%s \n", yytext);
@@ -3863,7 +3863,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 323 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 323 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_mubar=atof(yytext);
   if(myverbose!=0) printf("mubar=%s \n", yytext);
@@ -3871,7 +3871,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 327 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 327 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_m0 = atof(yytext);
   if(myverbose!=0) printf("m0=%s \n", yytext);
@@ -3879,7 +3879,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 331 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 331 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_epsbar=atof(yytext);
   if(myverbose!=0) printf("mu=%s \n", yytext);
@@ -3887,7 +3887,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 335 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 335 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   Nsave=atoi(yytext); 
   if(myverbose!=0) printf("Nsave= %s \n",yytext);
@@ -3895,7 +3895,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 339 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 339 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   Nconf=atoi(yytext);
   if(myverbose!=0) printf("Nconf=%s\n", yytext);
@@ -3903,7 +3903,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 343 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 343 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   BCangle[0]=atof(yytext);
   if(myverbose != 0) printf("BCangle[0] for bound. in time set to %e\n", BCangle[0]);
@@ -3911,7 +3911,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 347 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 347 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   BCangle[1]=atof(yytext);
   if(myverbose != 0) printf("BCangle[1] for bound. in x set to %e\n", BCangle[1]);
@@ -3919,7 +3919,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 351 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 351 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   BCangle[2]=atof(yytext);
   if(myverbose != 0) printf("BCangle[2] for bound. in y set to %e\n", BCangle[2]);
@@ -3927,7 +3927,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 355 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 355 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   BCangle[3]=atof(yytext);
   if(myverbose != 0) printf("BCangle[3] for bound. in z set to %e\n", BCangle[3]);
@@ -3935,7 +3935,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 359 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 359 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_sourceid = atoi(yytext);
   if(myverbose!=0) printf("first source id set to %s\n", yytext);
@@ -3943,7 +3943,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 363 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 363 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_sourceid2 = atoi(yytext);
   if(myverbose!=0) printf("second source id set to %s\n", yytext);
@@ -3951,7 +3951,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 367 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 367 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_sourceid_step = atoi(yytext);
   if(myverbose!=0) printf("source id step set to %s\n", yytext);
@@ -3959,7 +3959,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 371 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 371 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_gaugeid = atoi(yytext);
   if(myverbose!=0) printf("first gauge id set to %s\n", yytext);
@@ -3967,7 +3967,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 375 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 375 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_gaugeid2 = atoi(yytext);
   if(myverbose!=0) printf("second gauge id set to %s\n", yytext);
@@ -3975,7 +3975,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 379 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 379 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_gauge_step = atoi(yytext);
   if(myverbose!=0) printf("gauge step size set to %s\n", yytext);
@@ -3983,7 +3983,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 383 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 383 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   strcpy(filename_prefix,yytext);
   if(myverbose!=0) printf("prop. filename prefix set to %s\n",yytext);
@@ -3991,7 +3991,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 387 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 387 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   strcpy(filename_prefix2,yytext);
   if(myverbose!=0) printf("prop. 2 filename prefix set to %s\n",yytext);
@@ -3999,7 +3999,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 391 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 391 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   strcpy(gaugefilename_prefix,yytext);
   if(myverbose!=0) printf("gauge filename prefix set to %s\n",yytext);
@@ -4007,7 +4007,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 395 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 395 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   strcpy(g_outfile_prefix,yytext);
   if(myverbose!=0) printf("out filename prefix set to %s\n",yytext);
@@ -4015,7 +4015,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 399 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 399 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_resume=atoi(yytext);
   if(myverbose!=0) printf("g_resume set to %s\n",yytext);
@@ -4023,7 +4023,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 403 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 403 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_subtract=atoi(yytext);
   if(myverbose!=0) printf("g_subtract set to %s\n",yytext);
@@ -4031,7 +4031,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 407 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 407 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_source_location=atoi(yytext);
   if(myverbose!=0) printf("source location set to %s\n",yytext);
@@ -4039,7 +4039,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 411 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 411 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   format = atoi(yytext);
   if(myverbose!=0) printf("format set to %s\n",yytext);
@@ -4047,7 +4047,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 415 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 415 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_seed = (unsigned int)atoi(yytext);
   if(myverbose!=0) printf("g_seed set to %s\n",yytext);
@@ -4055,7 +4055,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 419 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 419 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "Gaussian")==0 ) {
     g_noise_type = 1;
@@ -4067,7 +4067,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 427 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 427 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "Point")==0) {
     g_source_type = 0;
@@ -4081,13 +4081,15 @@ YY_RULE_SETUP
     g_source_type = 4;
   } else if (strcmp(yytext, "SequentialPoint")==0 ) {
     g_source_type = 5;
+  } else if (strcmp(yytext, "Other")==0 ) {
+    g_source_type = -1;
   } 
   if(myverbose!=0) printf("source type set to %s\n",yytext);
 }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 443 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 445 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   solver_precision = atof(yytext);
   if(myverbose!=0) printf("solver precision set to %s\n",yytext);
@@ -4095,7 +4097,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 447 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 449 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   reliable_delta = atof(yytext);
   if(myverbose!=0) printf("reliable delta set to %s\n",yytext);
@@ -4103,7 +4105,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 451 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 453 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   niter_max = atoi(yytext);
   if(myverbose!=0) printf("max. number of iterations set to %s\n",yytext);
@@ -4111,7 +4113,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 455 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 457 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   hpe_order_min = atoi(yytext);
   if(myverbose!=0) printf("min. HPE order set to %s\n",yytext);
@@ -4119,7 +4121,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 459 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 461 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   hpe_order_max = atoi(yytext);
   if(myverbose!=0) printf("max. HPE order set to %s\n",yytext);
@@ -4127,7 +4129,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 463 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 465 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   hpe_order = atoi(yytext);
   if(myverbose!=0) printf("HPE order set to %s\n",yytext);
@@ -4135,7 +4137,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 467 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 469 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_cutangle = atof(yytext);
   if(myverbose!=0) printf("cone cut angle set to %s\n",yytext);
@@ -4143,7 +4145,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 471 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 473 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_cutradius = atof(yytext);
   if(myverbose!=0) printf("cone cut radius set to %s\n",yytext);
@@ -4151,7 +4153,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 475 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 477 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_cutdir[0] = atoi(yytext);
   if(myverbose!=0) printf("t-comp. of cut dir angle set to %s\n",yytext);
@@ -4159,7 +4161,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 479 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 481 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_cutdir[1] = atoi(yytext);
   if(myverbose!=0) printf("x-comp. of cut dir angle set to %s\n",yytext);
@@ -4167,7 +4169,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 483 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 485 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_cutdir[2] = atoi(yytext);
   if(myverbose!=0) printf("y-comp. of cut dir angle set to %s\n",yytext);
@@ -4175,7 +4177,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 487 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 489 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_cutdir[3] = atoi(yytext);
   if(myverbose!=0) printf("z-comp. of cut dir angle set to %s\n",yytext);
@@ -4183,7 +4185,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 491 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 493 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_rmin = atof(yytext);
   if(myverbose!=0) printf("minimal distance set to %s\n",yytext);
@@ -4191,7 +4193,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 495 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 497 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_rmax = atof(yytext);
   if(myverbose!=0) printf("maximal distance set to %s\n",yytext);
@@ -4199,7 +4201,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 499 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 501 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   avgT = atoi(yytext);
   if(myverbose!=0) printf("avgT =%s\n", yytext);
@@ -4207,7 +4209,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 503 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 505 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   avgL = atoi(yytext);
   if(myverbose!=0) printf("avgL =%s\n", yytext);
@@ -4215,7 +4217,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 507 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 509 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   model_dcoeff_re = atof(yytext);
   if(myverbose!=0) printf("real part of d-coeff. set to %s\n", yytext);
@@ -4223,7 +4225,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 511 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 513 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   model_dcoeff_im = atof(yytext);
   if(myverbose!=0) printf("imaginary part of d-coeff. set to %s\n", yytext);
@@ -4231,7 +4233,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 515 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 517 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   model_mrho = atof(yytext);
   if(myverbose!=0) printf("rho-meson mass set to %s\n", yytext);
@@ -4239,7 +4241,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 519 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 521 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   ft_rmax[0] = atof(yytext);
   if(myverbose!=0) printf("1st rmax for FT set to %s\n", yytext);
@@ -4247,7 +4249,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 523 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 525 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   ft_rmax[1] = atof(yytext);
   if(myverbose!=0) printf("2nd rmax for FT set to %s\n", yytext);
@@ -4255,7 +4257,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 527 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 529 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   ft_rmax[2] = atof(yytext);
   if(myverbose!=0) printf("3rd rmax for FT set to %s\n", yytext);
@@ -4263,7 +4265,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 531 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 533 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   ft_rmax[3] = atof(yytext);
   if(myverbose!=0) printf("4th rmax for FT set to %s\n", yytext);
@@ -4271,7 +4273,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 535 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 537 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_prop_normsqr = atof(yytext);
   if(myverbose!=0) printf("propagator norm squared set to %s\n", yytext);
@@ -4279,7 +4281,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 539 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 541 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_qhatsqr_min = atof(yytext);
   if(myverbose!=0) printf("set minimal squared Qhat to %s\n", yytext);
@@ -4287,7 +4289,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 543 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 545 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_qhatsqr_max = atof(yytext);
   if(myverbose!=0) printf("set maximal squared Qhat to %s\n", yytext);
@@ -4295,7 +4297,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
-#line 547 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 549 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   Nlong = atoi(yytext);
   if(myverbose!=0) printf("set Nlong to %s\n", yytext);
@@ -4303,7 +4305,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 551 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 553 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   N_ape = atoi(yytext);
   if(myverbose!=0) printf("set N_ape to %s\n", yytext);
@@ -4311,7 +4313,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 555 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 557 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   N_Jacobi = atoi(yytext);
   if(myverbose!=0) printf("set N_Jacobi to %s\n", yytext);
@@ -4319,7 +4321,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 559 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 561 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   alpha_ape = atof(yytext);
   if(myverbose!=0) printf("set alpha_ape to %s\n", yytext);
@@ -4327,7 +4329,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 563 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 565 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   kappa_Jacobi = atof(yytext);
   if(myverbose!=0) printf("set kappa_Jacobi to %s\n", yytext);
@@ -4335,7 +4337,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 567 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 569 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_source_timeslice = atoi(yytext);
   if(myverbose!=0) printf("set source timeslice to %s\n", yytext);
@@ -4343,7 +4345,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-#line 571 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 573 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_no_extra_masses = atoi(yytext);
   if(myverbose!=0) printf("set no. of extra masses for mms to %s\n", yytext);
@@ -4351,7 +4353,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-#line 575 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 577 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_no_light_masses = atoi(yytext);
   if(myverbose!=0) printf("set no. of light masses for mms to %s\n", yytext);
@@ -4359,7 +4361,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 579 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 581 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_no_strange_masses = atoi(yytext);
   if(myverbose!=0) printf("set no. of strange masses for mms to %s\n", yytext);
@@ -4367,7 +4369,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-#line 583 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 585 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_nproc_t = atoi(yytext);
   if(myverbose!=0) printf("set g_nproc_t to %s\n", yytext);
@@ -4375,7 +4377,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 184:
 YY_RULE_SETUP
-#line 587 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 589 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_nproc_x = atoi(yytext);
   if(myverbose!=0) printf("set g_nproc_x to %s\n", yytext);
@@ -4383,7 +4385,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 185:
 YY_RULE_SETUP
-#line 591 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 593 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_nproc_y = atoi(yytext);
   if(myverbose!=0) printf("set g_nproc_y to %s\n", yytext);
@@ -4391,7 +4393,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 186:
 YY_RULE_SETUP
-#line 595 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 597 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "yes")==0) {
     g_local_local = 1;
@@ -4401,7 +4403,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 187:
 YY_RULE_SETUP
-#line 601 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 603 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "yes")==0) {
     g_local_smeared = 1;
@@ -4411,7 +4413,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 188:
 YY_RULE_SETUP
-#line 607 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 609 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "yes")==0) {
     g_smeared_local = 1;
@@ -4421,7 +4423,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 189:
 YY_RULE_SETUP
-#line 613 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 615 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "yes")==0) {
     g_smeared_smeared = 1;
@@ -4431,7 +4433,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 190:
 YY_RULE_SETUP
-#line 619 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 621 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "yes")==0) {
     g_rotate_ETMC_UKQCD = 1;
@@ -4441,7 +4443,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 191:
 YY_RULE_SETUP
-#line 625 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 627 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_propagator_position = atoi(yytext);
   if(myverbose!=0) printf("set propagator position to %s\n", yytext);
@@ -4449,7 +4451,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 192:
 YY_RULE_SETUP
-#line 630 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 632 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_gpu_device_number = atoi(yytext);
   if(myverbose!=0) printf("set GPU device number to %s\n", yytext);
@@ -4457,7 +4459,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 193:
 YY_RULE_SETUP
-#line 634 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 636 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_gpu_per_node = atoi(yytext);
   if(myverbose!=0) printf("set number of GPUs  per node to %s\n", yytext);
@@ -4465,7 +4467,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 194:
 YY_RULE_SETUP
-#line 639 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 641 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_coherent_source = atoi(yytext);
   if(myverbose!=0) printf("set coherent source to %s\n", yytext);
@@ -4473,7 +4475,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 195:
 YY_RULE_SETUP
-#line 644 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 646 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_coherent_source_base = atoi(yytext);
   if(myverbose!=0) printf("set coherent source base to %s\n", yytext);
@@ -4481,7 +4483,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 196:
 YY_RULE_SETUP
-#line 649 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 651 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_coherent_source_delta = atoi(yytext);
   if(myverbose!=0) printf("set coherent source delta to %s\n", yytext);
@@ -4489,7 +4491,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 197:
 YY_RULE_SETUP
-#line 653 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 655 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "ildg")==0) {
     g_gauge_file_format = 0;
@@ -4501,7 +4503,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 198:
 YY_RULE_SETUP
-#line 661 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 663 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
 //  g_rng_filename = (char*)malloc((strlen(yytext)+1)*sizeof(char));
   strcpy(g_rng_filename, yytext);
@@ -4510,7 +4512,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 199:
 YY_RULE_SETUP
-#line 666 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 668 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_source_index[0] = atoi(yytext);
   g_source_index[1] = g_source_index[0];
@@ -4519,7 +4521,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 200:
 YY_RULE_SETUP
-#line 671 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 673 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   sscanf(yytext, "-%d", g_source_index+1);
   if(myverbose!=0) printf("end index set to %d\n", g_source_index[1]);
@@ -4527,7 +4529,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 201:
 YY_RULE_SETUP
-#line 675 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 677 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "Phase")==0) {
     g_propagator_bc_type = 0;
@@ -4541,7 +4543,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 202:
 YY_RULE_SETUP
-#line 685 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 687 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext,"yes")==0) {
     g_write_source = 1;
@@ -4553,7 +4555,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 203:
 YY_RULE_SETUP
-#line 693 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 695 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext,"yes")==0) {
     g_read_source = 1;
@@ -4565,7 +4567,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 204:
 YY_RULE_SETUP
-#line 701 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 703 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext,"DeGrandRossi")==0) {
     g_propagator_gamma_basis = 1;
@@ -4577,7 +4579,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 205:
 YY_RULE_SETUP
-#line 709 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 711 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_propagator_precision = atoi(yytext);
   if(myverbose!=0) printf("set propagator precision to %d\n", g_propagator_precision);
@@ -4585,7 +4587,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 206:
 YY_RULE_SETUP
-#line 713 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 715 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_nsample = atoi(yytext);
   if(myverbose!=0) printf("set number of samples to %d\n", g_nsample);
@@ -4593,7 +4595,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 207:
 YY_RULE_SETUP
-#line 717 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 719 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_as_over_a = atof(yytext);
   if(myverbose!=0) printf("as / a set to  %s\n",yytext);
@@ -4601,7 +4603,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 208:
 YY_RULE_SETUP
-#line 721 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 723 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_num_threads = atoi(yytext);
   if(myverbose!=0) printf("number of threads =%d\n", g_num_threads);
@@ -4609,7 +4611,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-#line 725 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 727 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_source_momentum[0] = atoi(yytext);
   g_source_momentum_set = 1;
@@ -4618,7 +4620,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-#line 730 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 732 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_source_momentum[1] = atoi(yytext);
   g_source_momentum_set = 1;
@@ -4627,7 +4629,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-#line 735 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 737 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_source_momentum[2] = atoi(yytext);
   g_source_momentum_set = 1;
@@ -4636,7 +4638,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 212:
 YY_RULE_SETUP
-#line 740 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 742 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_sink_momentum[0] = atoi(yytext);
   g_sink_momentum_set = 1;
@@ -4645,7 +4647,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 213:
 YY_RULE_SETUP
-#line 745 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 747 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_sink_momentum[1] = atoi(yytext);
   g_sink_momentum_set = 1;
@@ -4654,7 +4656,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 214:
 YY_RULE_SETUP
-#line 750 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 752 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_sink_momentum[2] = atoi(yytext);
   g_sink_momentum_set = 1;
@@ -4663,7 +4665,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 215:
 YY_RULE_SETUP
-#line 755 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 757 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_seq_source_momentum[0] = atoi(yytext);
   g_seq_source_momentum_set = 1;
@@ -4672,7 +4674,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 216:
 YY_RULE_SETUP
-#line 760 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 762 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_seq_source_momentum[1] = atoi(yytext);
   g_seq_source_momentum_set = 1;
@@ -4681,7 +4683,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 217:
 YY_RULE_SETUP
-#line 765 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 767 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   g_seq_source_momentum[2] = atoi(yytext);
   g_seq_source_momentum_set = 1;
@@ -4690,7 +4692,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 218:
 YY_RULE_SETUP
-#line 770 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 772 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "half")==0 ) {
     g_cpu_prec = 0;
@@ -4704,7 +4706,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 219:
 YY_RULE_SETUP
-#line 780 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 782 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "half")==0 ) {
     g_gpu_prec = 0;
@@ -4718,7 +4720,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 220:
 YY_RULE_SETUP
-#line 790 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 792 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   if(strcmp(yytext, "half")==0 ) {
     g_gpu_prec_sloppy = 0;
@@ -4732,7 +4734,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 221:
 YY_RULE_SETUP
-#line 800 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 802 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   strcpy(g_inverter_type_name, yytext);
   if(myverbose!=0) printf("inverter type name set to %s\n",yytext);
@@ -4740,7 +4742,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 222:
 YY_RULE_SETUP
-#line 805 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 807 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
    comment_caller = YY_START;   
    BEGIN(COMMENT);
@@ -4748,7 +4750,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 223:
 YY_RULE_SETUP
-#line 809 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 811 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
    comment_caller = YY_START;
    BEGIN(COMMENT);
@@ -4756,7 +4758,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 224:
 YY_RULE_SETUP
-#line 813 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 815 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   BEGIN(comment_caller);
 }
@@ -4764,7 +4766,7 @@ YY_RULE_SETUP
 case 225:
 /* rule 225 can match eol */
 YY_RULE_SETUP
-#line 817 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 819 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   line_of_file++;
   BEGIN(0);
@@ -4772,14 +4774,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 226:
 YY_RULE_SETUP
-#line 822 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 824 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   BEGIN(ERROR);
 }
 	YY_BREAK
 case 227:
 YY_RULE_SETUP
-#line 825 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 827 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 {
   printf("Parsing error in line %d\nAborting...!\n", line_of_file);
   exit(1);
@@ -4787,10 +4789,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 228:
 YY_RULE_SETUP
-#line 831 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 833 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 ECHO;
 	YY_BREAK
-#line 4794 "<stdout>"
+#line 4796 "<stdout>"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(TT):
 case YY_STATE_EOF(LLX):
@@ -5900,7 +5902,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 831 "/home/marcuspe/cvc_parallel_5d/read_input_parser.l"
+#line 833 "/users/stud/marcuspe/cvc_parallel_5d/read_input_parser.l"
 
 
 
