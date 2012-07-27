@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
   int x0, x1, x2, x3, ix, iix;
   double *conn = NULL;
   double *jjx0=NULL;
-  char filename[800];
+  char filename[800], contype[400];
   double ratime, retime;
   double q[4];
   FILE *ofs=NULL;
@@ -153,8 +153,8 @@ int main(int argc, char **argv) {
     fprintf(stderr, "[jj_x2_v2] Error, could not allocate memory for jjx0\n");
     EXIT(4);
   }
-#if 0
-  for(gid = g_gaugeid; gid<g_gaugeid2; gid+=g_gauge_step) {
+
+  for(gid = g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
 
     /***********************
      * read contractions   *
@@ -219,6 +219,18 @@ int main(int argc, char **argv) {
     retime = CLOCK;
     fprintf(stdout, "# [jj_x2_v2] time for backward Fourier transform: %e seconds\n", retime-ratime);
   
+    ratime = CLOCK;
+    sprintf(filename, "vacpol_x.%.4d", gid);
+    sprintf(contype, "Pi_mu_mu with full x-dependence");
+    status =  write_lime_contraction(conn, filename, 64, 1, contype, Nconf, 0);
+    if(status != 0) {
+      fprintf(stderr, "Error from write_lime_contraction, status was %d\n", status);
+      EXIT(8);
+    }
+    retime = CLOCK;
+    fprintf(stdout, "# [jj_x2_v2] time write x-dep. correlator: %e seconds\n", retime-ratime);
+
+
     /********************************************
      * construct the x^2-dependent correlator
      ********************************************/
@@ -240,7 +252,7 @@ int main(int argc, char **argv) {
      * write to file
      *****************************************/
     ratime = CLOCK;
-    sprintf(filename, "jj_x2_v2.%.4d", gid);
+    sprintf(filename, "vacpol_x2.%.4d", gid);
     if( (ofs=fopen(filename, "w")) == (FILE*)NULL ) {
       fprintf(stderr, "[jj_x2_v2] Error: could not open file %s for writing\n", filename);
       EXIT(6);
@@ -258,8 +270,10 @@ int main(int argc, char **argv) {
     fclose(ofs);
     retime = CLOCK;
     fprintf(stdout, "# [jj_x2_v2] time to write correlator %e seconds\n", retime-ratime);
-  }  // of loop on gauge id
+#if 0
 #endif  // of if 0
+  }  // of loop on gauge id
+
   /***************************************
    * free the allocated memory, finalize *
    ***************************************/
