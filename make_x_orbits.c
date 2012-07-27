@@ -546,13 +546,13 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
   Nclasses = \
   /* 0 <= t,x,y,z <= L/2 */ \
   + (Lhalf+1) * (Lhalf) * (Lhalf-1) * (Lhalf-2) / 24 /* 1111 */ \
-  + (Lhalf+1) * (Lhalf) * (Lhalf-1) / 4             /* 112  */ \
-  + (Lhalf+1) * (Lhalf) / 6                          /* 22   */ \
-  + (Lhalf+1) * (Lhalf) / 4                          /* 13   */ \
+  + (Lhalf+1) * (Lhalf) * (Lhalf-1) / 2             /* 112  */ \
+  + (Lhalf+1) * (Lhalf) / 2                          /* 22   */ \
+  + (Lhalf+1) * (Lhalf)                              /* 13   */ \
   + Lhp1                                             /* 4    */ \
   /* L/2+1 <= t < 2L */ \
   + Lhalf * ( (Lhalf+1)*Lhalf*(Lhalf-1) / 6 /* 111 */ \
-            + (Lhalf+1)*Lhalf / 3           /* 12  */ \
+            + (Lhalf+1)*Lhalf               /* 12  */ \
             + (Lhalf+1) )                   /* 3   */;
 
   fprintf(stdout, "# [make_x_orbits_4d] Nclasses = %u\n", Nclasses);
@@ -565,7 +565,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
 
   /***************************************
    * initialize the permutation tables
-   ***************************************/
+   **************************************/
   init_perm_tabs();
 
   /***************************************
@@ -600,7 +600,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
       for(s3=-1; s3<2; s3+=2) {
         z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
         ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
-        fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+        // fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
         if( (*xid)[ix] == -1 ) {
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
@@ -613,7 +613,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
     iclass++;
   }}}}
 
-  fprintf(stdout, "# [make_x_orbits_4d] finished classes 1111\n");
+  // fprintf(stdout, "# [make_x_orbits_4d] finished classes 1111\n");
 
   // 112
   for(x[0]=0;    x[0]<Lhp1-2; x[0]++) {
@@ -641,7 +641,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
       for(s3=-1; s3<2; s3+=2) {
         z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
         ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
-        fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+        // fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
         if( (*xid)[ix] == -1 ) {
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
@@ -653,10 +653,10 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
     }
     iclass++;
   }}}}
-  fprintf(stdout, "# [make_x_orbits_4d] finished classes 112\n");
-#if 0
+  // fprintf(stdout, "# [make_x_orbits_4d] finished classes 112\n");
+
   // 22
-  for(x[0]=0;    x[0]<Lhp1-1; x[0]++) {
+  for(x[0]=0;      x[0]<Lhp1-1; x[0]++) {
   for(x[2]=x[0]+1; x[2]<Lhp1  ; x[2]++) {
     (*xid_rep)[iclass][0] = x[0];
     (*xid_rep)[iclass][1] = x[0]; 
@@ -678,7 +678,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
       for(s3=-1; s3<2; s3+=2) {
         z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
         ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
-        fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+        // fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
         if( (*xid)[ix] == -1 ) {
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
@@ -690,21 +690,24 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
     }
     iclass++;
   }}
-  fprintf(stdout, "# [make_x_orbits_4d] finished classes 22\n");
+  // fprintf(stdout, "# [make_x_orbits_4d] finished classes 22\n");
 
   // 13
-  for(x[0]=0;    x[0]<Lhp1-1; x[0]++) {
-  for(x[3]=x[0]+1; x[3]<Lhp1  ; x[3]++) {
+  for(x[0]=0;      x[0]<Lhp1-1; x[0]++) {
+  for(x[1]=x[0]+1; x[1]<Lhp1  ; x[1]++) {
+  for(i=0; i<2; i++) {
+    x[2] = x[i];
+    x[3] = x[i];
     (*xid_rep)[iclass][0] = x[0];
-    (*xid_rep)[iclass][1] = x[0]; 
-    (*xid_rep)[iclass][2] = x[0]; 
+    (*xid_rep)[iclass][1] = x[1];
+    (*xid_rep)[iclass][2] = x[2]; 
     (*xid_rep)[iclass][3] = x[3];
     _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
     for(ip = 0; ip<4;ip++) {
-      y[ip      ] = x[3];
-      y[(ip+1)%4] = x[0];
-      y[(ip+2)%4] = x[0];
-      y[(ip+3)%4] = x[0]; 
+      y[ip      ] = x[2] != x[0] ? x[0] : x[1];
+      y[(ip+1)%4] = x[2];
+      y[(ip+2)%4] = x[2];
+      y[(ip+3)%4] = x[2]; 
 
       for(s0=-1; s0<2; s0+=2) {
         z[0] = ((1+s0) * y[0] + (1-s0) * ((T-y[0])%T) ) / 2;
@@ -715,7 +718,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
       for(s3=-1; s3<2; s3+=2) {
         z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
         ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
-        fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+        // fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
         if( (*xid)[ix] == -1 ) {
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
@@ -726,8 +729,8 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
       }}}}
     }
     iclass++;
-  }}
-  fprintf(stdout, "# [make_x_orbits_4d] finished classes 13\n");
+  }}}
+  // fprintf(stdout, "# [make_x_orbits_4d] finished classes 13\n");
 
   // 4
   for(x[0]=0;    x[0]<Lhp1; x[0]++) {
@@ -750,7 +753,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
     for(s3=-1; s3<2; s3+=2) {
       z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
       ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
-      fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+      // fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
       if( (*xid)[ix] == -1 ) {
         (*xid)[ix] = iclass;
         (*xid_count)[iclass]++;
@@ -761,19 +764,19 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
     }}}}
     iclass++;
   }
-  fprintf(stdout, "# [make_x_orbits_4d] finished classes 4\n");
+  // fprintf(stdout, "# [make_x_orbits_4d] finished classes 4\n");
 
   /******************************************************
    * (2) t = L/2+1,...,2L-1
    ******************************************************/
 
   for(x[0]=Lhp1; x[0]<=L; x[0]++) {
-    (*xid_rep)[iclass][0] = x[0];
     y[0] = x[0];
     // 111
-    for(x[1]=0;    x[1]<Lhp1-2; x[1]++) {
+    for(x[1]=0;      x[1]<Lhp1-2; x[1]++) {
     for(x[2]=x[1]+1; x[2]<Lhp1-1; x[2]++) {
     for(x[3]=x[2]+1; x[3]<Lhp1;   x[3]++) {
+      (*xid_rep)[iclass][0] = x[0];
       (*xid_rep)[iclass][1] = x[1]; 
       (*xid_rep)[iclass][2] = x[2]; 
       (*xid_rep)[iclass][3] = x[3];
@@ -792,7 +795,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
         for(s3=-1; s3<2; s3+=2) {
           z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
           ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
-          fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+          // fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
           if( (*xid)[ix] == -1 ) {
             (*xid)[ix] = iclass;
             (*xid_count)[iclass]++;
@@ -804,19 +807,22 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
       }
       iclass++;
     }}}
-    fprintf(stdout, "# [make_x_orbits_4d] finished classes 1+111\n");
+    // fprintf(stdout, "# [make_x_orbits_4d] finished classes t%.2d+111\n", x[0]);
   
     // 12
-    for(x[1]=0;    x[1]<Lhp1-1; x[1]++) {
+    for(x[1]=0;      x[1]<Lhp1-1; x[1]++) {
     for(x[2]=x[1]+1; x[2]<Lhp1;   x[2]++) {
+    for(i=1; i<3; i++) {
+      x[3] = x[i];
+      (*xid_rep)[iclass][0] = x[0];
       (*xid_rep)[iclass][1] = x[1]; 
       (*xid_rep)[iclass][2] = x[2]; 
-      (*xid_rep)[iclass][3] = x[2];
+      (*xid_rep)[iclass][3] = x[3];
       _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
       for(ip = 0; ip<3; ip++) {
-        y[ip      +1] = x[1];
-        y[(ip+1)%3+1] = x[2];
-        y[(ip+2)%3+1] = x[2];
+        y[ip      +1] = x[3] != x[1] ? x[1] : x[2];
+        y[(ip+1)%3+1] = x[3];
+        y[(ip+2)%3+1] = x[3];
   
         for(s0=-1; s0<2; s0+=2) {
           z[0] = ((1+s0) * y[0] + (1-s0) * ((T-y[0])%T) ) / 2;
@@ -827,7 +833,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
         for(s3=-1; s3<2; s3+=2) {
           z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
           ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
-          fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+          // fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
           if( (*xid)[ix] == -1 ) {
             (*xid)[ix] = iclass;
             (*xid_count)[iclass]++;
@@ -838,11 +844,12 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
         }}}}
       }
       iclass++;
-    }}
-    fprintf(stdout, "# [make_x_orbits_4d] finished classes 1+12\n");
+    }}}
+    // fprintf(stdout, "# [make_x_orbits_4d] finished classes t%.2d+12\n",x[0]);
   
     // 3
     for(x[1]=0; x[1]<Lhp1; x[1]++) {
+      (*xid_rep)[iclass][0] = x[0];
       (*xid_rep)[iclass][1] = x[1]; 
       (*xid_rep)[iclass][2] = x[1]; 
       (*xid_rep)[iclass][3] = x[1];
@@ -860,7 +867,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
       for(s3=-1; s3<2; s3+=2) {
         z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
         ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
-        fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+        // fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
         if( (*xid)[ix] == -1 ) {
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
@@ -871,7 +878,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
       }}}}
       iclass++;
     }
-    fprintf(stdout, "# [make_x_orbits_4d] finished classes 1+12\n");
+    // fprintf(stdout, "# [make_x_orbits_4d] finished classes t%.2d+3 \n", x[0]);
 
   }  // of loop on times
 
@@ -882,18 +889,16 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
   }
   *xid_nc = Nclasses;
 
-   // TEST:
-   // - print the lists 
-
+   // TEST: print the lists 
+/*
   fprintf(stdout, "# t\tx\ty\tz\txid\n");
   for(x[0]=0; x[0]<T; x[0]++) {
   for(x[1]=0; x[1]<L; x[1]++) {
   for(x[2]=0; x[2]<L; x[2]++) {
   for(x[3]=0; x[3]<L; x[3]++) {
     ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
-    fprintf(stdout, "%3d%3d%3d%3d%4d\n", x[0], x[1], x[2], x[3], (*xid)[ix]);
+    fprintf(stdout, "%3d%3d%3d%3d%6d\n", x[0], x[1], x[2], x[3], (*xid)[ix]);
   }}}}
-
 
   fprintf(stdout, "# n\tt\tx\ty\tz\tx^[2]\tx^[4]\tx^[6]\tx^[8]\tmembers\n");
   for(i=0; i<Nclasses; i++) {
@@ -901,19 +906,20 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
       i, (*xid_rep)[i][0], (*xid_rep)[i][1], (*xid_rep)[i][2], (*xid_rep)[i][3],
       (*xid_val)[i][0], (*xid_val)[i][1], (*xid_val)[i][2],(*xid_val)[i][3], (*xid_count)[i]);
   }
-#endif  // of if 0
-/*
+
   for(i=0; i<Nclasses; i++) {
     fprintf(stdout, "# class number %d; members: %d\n", i, (*xid_count)[i]);
-    for(it=0; it<T; it++) {
-    for(ix=0; ix<L; ix++) {
-    for(iy=0; iy<L; iy++) {
-    for(iz=0; iz<L; iz++) {
-      iix = g_ipt[it][ix][iy][iz];
-      if((*xid)[iix]==i) fprintf(stdout, "%5d\t%5d%5d%5d%5d\n", i, it, ix, iy, iz);
+    for(x[0]=0; x[0]<T; x[0]++) {
+    for(x[1]=0; x[1]<L; x[1]++) {
+    for(x[2]=0; x[2]<L; x[2]++) {
+    for(x[3]=0; x[3]<L; x[3]++) {
+      ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+      if(i == (*xid)[ix])  {
+        fprintf(stdout, "%4d%5d%3d%3d%3d%3d\n", i, ix, x[0], x[1], x[2], x[3]);
+      }
     }}}}
-    fprintf(stdout, "-----------------------------------------------------------\n");
   }
 */
+
   return(0);
 }
