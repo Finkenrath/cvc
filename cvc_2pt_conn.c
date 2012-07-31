@@ -43,10 +43,12 @@
 #include "mpi_init.h"
 #include "io.h"
 #include "propagator_io.h"
+#include "gauge_io.h"
 #include "Q_phi.h"
 #include "fuzz.h"
 #include "read_input_parser.h"
 #include "smearing_techniques.h"
+#include "make_q_orbits.h"
 
 void usage() {
   fprintf(stdout, "Code to perform contractions for connected contributions\n");
@@ -56,11 +58,7 @@ void usage() {
   fprintf(stdout, "         -l Nlong for fuzzing [default -1, no fuzzing]\n");
   fprintf(stdout, "         -a no of steps for APE smearing [default -1, no smearing]\n");
   fprintf(stdout, "         -k alpha for APE smearing [default 0.]\n");
-#ifdef MPI
-  MPI_Abort(MPI_COMM_WORLD, 1);
-  MPI_Finalize();
-#endif
-  exit(0);
+  EXIT(0);
 }
 
 int n_c=1, n_s=4;
@@ -105,7 +103,6 @@ int main(int argc, char **argv) {
   int use_mms=0;
   int full_orbit=0;
   int do_shifts = 0, shifts_num=1, ishift;
-  int gid;
   int source_coords[4], source_coords_orig[4], source_proc_coords[4], source_proc_id, source_location, lsource_coords[4];
   double *cconn = (double*)NULL;
   double *nconn = (double*)NULL;
@@ -126,6 +123,7 @@ int main(int argc, char **argv) {
   double **qlatt_list=NULL;
   int snk_momentum_runs = 1, snk_momentum_id=0, snk_momentum[3], src_momentum[3], imom;
   int shift_vector[5][4] =  {{0,0,0,0}, {1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0,1}};
+  size_t nconn_length=0, cconn_length=0;
 
   /**************************************************************************************************
    * charged stuff
@@ -213,7 +211,7 @@ int main(int argc, char **argv) {
         fermion_type = _TM_FERMION;
       } else {
         fprintf(stderr, "[] Error, unrecognized fermion type\n");
-        exit(145);
+        EXIT(145);
       }
       fprintf(stdout, "# [] will use fermion type %s ---> no. %d\n", optarg, fermion_type);
       break;
@@ -250,7 +248,7 @@ int main(int argc, char **argv) {
 
   if(!g_sink_momentum_set && full_orbit) {
     if(g_cart_id==0) fprintf(stderr, "[] Error, full orbit but no sink momentum specified\n");
-    exit(123);
+    EXIT(123);
   }
 
 
@@ -283,11 +281,7 @@ int main(int argc, char **argv) {
 
   if(init_geometry() != 0) {
     fprintf(stderr, "ERROR from init_geometry\n");
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-#endif
-    exit(1);
+    EXIT(1);
   }
 
   geometry();
@@ -297,7 +291,7 @@ int main(int argc, char **argv) {
     status = make_qcont_orbits_3d_parity_avg( &qlatt_id, &qlatt_count, &qlatt_list, &qlatt_nclass, &qlatt_rep, &qlatt_map);
     if(status != 0) {
       fprintf(stderr, "\n[baryon_corr_qdep] Error while creating O_3-lists\n");
-      exit(4);
+      EXIT(4);
     }
     fprintf(stdout, "# [baryon_corr_qdep] number of classes = %d\n", qlatt_nclass);
   }
@@ -336,7 +330,7 @@ int main(int argc, char **argv) {
     lsource_coords[1] = source_coords[1] % LX;
     lsource_coords[2] = source_coords[2] % LY;
     lsource_coords[3] = source_coords[3] % LZ;
-    if(g_proc_id == source_prod_id) {
+    if(g_proc_id == source_proc_id) {
       source_location = g_ipt[lsource_coords[0]][lsource_coords[1]][lsource_coords[2]][lsource_coords[3]];
       fprintf(stdout, "# [] local source_location %d ---> local source coordinates = (%d, %d, %d, %d)\n", source_location,
           lsource_coords[0], lsource_coords[1], lsource_coords[2], lsource_coords[3]);
@@ -353,10 +347,151 @@ int main(int argc, char **argv) {
 
   for(i = 0; i < 20; i++) isneg[i] = isneg_std[i];
 
-for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
-
-  for(ishift=0: ishift<shift_num; ishift++) {
+  // allocate memory for the contractions
+  if(g_cart_id==0) { idx = 8*K*T_global; } 
+  else             { idx = 8*K*T; }
+  cconn_length = idx;
+  cconn = (double*)calloc(idx, sizeof(double));
+  if( cconn==(double*)NULL ) {
+    fprintf(stderr, "could not allocate memory for cconn\n");
+    EXIT(3);
+  }
+  for(ix=0; ix<idx; ix++) cconn[ix] = 0.;
   
+  if(g_cart_id==0) { idx = 8*nK*T_global; } 
+  else             { idx = 8*nK*T; }
+  nconn_length = idx;
+  nconn = (double*)calloc(idx, sizeof(double));
+  if( nconn==(double*)NULL ) {
+    fprintf(stderr, "could not allocate memory for nconn\n");
+    EXIT(5);
+  }
+  for(ix=0; ix<idx; ix++) nconn[ix] = 0.;
+
+  if( (Ctmp = (double*)calloc(2*T, sizeof(double))) == NULL ) {
+    fprintf(stderr, "Error, could not allocate mem for Ctmp\n");
+    EXIT(4);
+  }
+  
+
+  if( N_Jacobi>0) {
+    alloc_gauge_field(&g_gauge_field, VOLUMEPLUSRAND);
+ 
+    // read the gauge field
+    switch(g_gauge_file_format) {
+      case 0:
+        sprintf(filename, "%s.%.4d", gaugefilename_prefix, Nconf);
+        if(g_cart_id==0) fprintf(stdout, "reading gauge field from file %s\n", filename);
+        status = read_lime_gauge_field_doubleprec(filename);
+        break;
+      case 1:
+        sprintf(filename, "%s.%.5d", gaugefilename_prefix, Nconf);
+        if(g_cart_id==0) fprintf(stdout, "\n# [] reading gauge field from file %s\n", filename);
+        status = read_nersc_gauge_field(g_gauge_field, filename, &plaq_r);
+      break;
+    }
+    if(status != 0) {
+      fprintf(stderr, "[] Error, could not read gauge field\n");
+      EXIT(21);
+    }
+    xchange_gauge();
+  
+    // measure the plaquette
+    plaquette(&plaq_m);
+    if(g_cart_id==0) fprintf(stdout, "# plaquette values measures = %25.16e; read = %25.16e\n", plaq_m, plaq_r);
+  
+    if(g_cart_id==0) fprintf(stdout, "# apply fuzzing of gauge field and propagators with parameters:\n"\
+                                     "# Nlong = %d\n# N_ape = %d\n# alpha_ape = %f\n", Nlong, N_ape, alpha_ape);
+    alloc_gauge_field(&gauge_field_f, VOLUMEPLUSRAND);
+    // copy the gauge field to smear it
+    memcpy(gauge_field_f, g_gauge_field, 72*VOLUMEPLUSRAND*sizeof(double));
+    if(g_cart_id==0) fprintf(stdout, "# APE-smearing / fuzzing gauge field with Nlong=%d, N_APE=%d, alpha_APE=%f\n", Nlong, N_ape, alpha_ape);
+#ifdef OPENMP
+    if(N_ape>0) {
+      APE_Smearing_Step_threads(gauge_field_f, N_ape, alpha_ape);
+    }
+    if(Nlong>0) {
+      if(g_cart_id==0) fprintf(stdout, "[] Warning, no threaded version of fuzzing\n");
+      alloc_gauge_field(&gauge_field_timeslice, VOL3);
+      for(x0=0; x0<T; x0++) {
+        memcpy( gauge_field_timeslice, gauge_field_f + _GGI(g_ipt[x0][0][0][0],0), 72*VOL3*sizeof(double));
+        fuzzed_links_Timeslice(gauge_field_f, gauge_field_timeslice, Nlong, x0);
+      }
+      free(gauge_field_timeslice);
+    }
+#else
+    alloc_gauge_field(&gauge_field_timeslice, VOL3);
+    for(x0=0; x0<T; x0++) {
+      memcpy((void*)gauge_field_timeslice, (void*)(g_gauge_field+_GGI(g_ipt[x0][0][0][0],0)), 72*VOL3*sizeof(double));
+      for(i=0; i<N_ape; i++) {
+        APE_Smearing_Step_Timeslice(gauge_field_timeslice, alpha_ape);
+      }
+      if(Nlong > 0) {
+        fuzzed_links_Timeslice(gauge_field_f, gauge_field_timeslice, Nlong, x0);
+      } else {
+        memcpy((void*)(gauge_field_f+_GGI(g_ipt[x0][0][0][0],0)), (void*)gauge_field_timeslice, 72*VOL3*sizeof(double));
+      }
+    }
+    free(gauge_field_timeslice);
+#endif
+  // test: print the fuzzed APE smeared gauge field to stdout
+  //  for(ix=0; ix<36*VOLUME; ix++) {
+  //    fprintf(stdout, "%6d%25.16e%25.16e\n", ix, g_gauge_field[2*ix], g_gauge_field[2*ix+1]);
+  //  }
+  } else {
+    g_gauge_field = NULL;
+  }
+  
+  // allocate memory for the spinor fields
+  no_fields = n_s;
+  if( fermion_type==0 || (g_sink_momentum_set && ( g_source_type==2  || g_source_type==3 || g_source_type==4) ) ) no_fields+=n_s;
+  if(Nlong>0) no_fields += n_s;
+  no_fields *= n_c;
+  no_fields++;
+  if(g_cart_id==0) fprintf(stdout, "# [] total number of fields = %d\n", no_fields);
+  g_spinor_field = (double**)calloc(no_fields, sizeof(double*));
+  for(i=0; i<no_fields-1; i++) alloc_spinor_field(&g_spinor_field[i], VOLUME);
+  alloc_spinor_field(&g_spinor_field[no_fields-1], VOLUMEPLUSRAND);
+  
+  timeslice = g_source_timeslice;
+  
+  // check source/sink momentum
+  if(g_sink_momentum_set) {
+  /*
+    if(g_source_momentum[0]<0) g_source_momentum[0] += LX_global;
+    if(g_source_momentum[1]<0) g_source_momentum[1] += LY_global;
+    if(g_source_momentum[2]<0) g_source_momentum[2] += LZ_global;
+  */
+    if(g_sink_momentum[0]<0) g_sink_momentum[0] += LX_global;
+    if(g_sink_momentum[1]<0) g_sink_momentum[1] += LY_global;
+    if(g_sink_momentum[2]<0) g_sink_momentum[2] += LZ_global;
+    fprintf(stdout, "# [] using final sink momentum ( %d, %d, %d )\n", g_sink_momentum[0], g_sink_momentum[1], g_sink_momentum[2]);
+  
+    g_source_momentum[0] = (-g_sink_momentum[0] + LX_global ) % LX_global;
+    g_source_momentum[1] = (-g_sink_momentum[1] + LY_global ) % LY_global;
+    g_source_momentum[2] = (-g_sink_momentum[2] + LZ_global ) % LZ_global;
+    fprintf(stdout, "# [] using final source momentum ( %d, %d, %d )\n", g_source_momentum[0], g_source_momentum[1], g_source_momentum[2]);
+  
+    if(full_orbit) {
+      snk_momentum_id   = qlatt_id[g_ipt[0][g_sink_momentum[0]][g_sink_momentum[1]][g_sink_momentum[2]]];
+      snk_momentum_runs = qlatt_count[snk_momentum_id] + 1;
+    }
+  }
+  fprintf(stdout, "# [] number of runs = %d\n", snk_momentum_runs);
+  
+  // set the correlator norm
+  //  correlator_norm = 1. / ( (double)VOL3 * g_kappa * g_kappa * 2.);
+  correlator_norm = 1.;
+  fprintf(stdout, "# [] using correlator norm %e\n", correlator_norm);
+
+  /*************************************
+   * loop on shifts of source location
+   *************************************/
+  for(ishift=0; ishift<shifts_num; ishift++) {
+ 
+    memset(cconn, 0, cconn_length*sizeof(double));
+    memset(nconn, 0, nconn_length*sizeof(double));
+
     if(ishift>0) {
       source_coords[0] = (source_coords_orig[0] + shift_vector[ishift][0] ) % T_global;
       source_coords[1] = (source_coords_orig[1] + shift_vector[ishift][1] ) % LX_global;
@@ -377,144 +512,6 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
       lsource_coords[3] = source_coords[1] % LZ;
       source_location = g_ipt[lsource_coords[0]][lsource_coords[1]][lsource_coords[2]][lsource_coords[3]];
     }
-    if( N_Jacobi>0) {
-  
-      // read the gauge field
-      alloc_gauge_field(&g_gauge_field, VOLUMEPLUSRAND);
-      switch(g_gauge_file_format) {
-        case 0:
-          sprintf(filename, "%s.%.4d", gaugefilename_prefix, gid);
-          if(g_cart_id==0) fprintf(stdout, "reading gauge field from file %s\n", filename);
-          status = read_lime_gauge_field_doubleprec(filename);
-          break;
-        case 1:
-          sprintf(filename, "%s.%.5d", gaugefilename_prefix, gid);
-          if(g_cart_id==0) fprintf(stdout, "\n# [] reading gauge field from file %s\n", filename);
-          status = read_nersc_gauge_field(g_gauge_field, filename, &plaq_r);
-        break;
-      }
-      if(status != 0) {
-        fprintf(stderr, "[] Error, could not read gauge field\n");
-  #ifdef MPI
-        MPI_Abort(MPI_COMM_WORLD, 21);
-        MPI_Finalize();
-  #endif
-        exit(21);
-      }
-      xchange_gauge();
-  
-      // measure the plaquette
-      plaquette(&plaq_m);
-      if(g_cart_id==0) fprintf(stdout, "# plaquette values measures = %25.16e; read = %25.16e\n", plaq_m, plaq_r);
-  
-      if(g_cart_id==0) fprintf(stdout, "# apply fuzzing of gauge field and propagators with parameters:\n"\
-                                       "# Nlong = %d\n# N_ape = %d\n# alpha_ape = %f\n", Nlong, N_ape, alpha_ape);
-      alloc_gauge_field(&gauge_field_f, VOLUMEPLUSRAND);
-      // copy the gauge field to smear it
-      memcpy(gauge_field_f, g_gauge_field, 72*VOLUMEPLUSRAND*sizeof(double));
-      if(g_cart_id==0) fprintf(stdout, "# APE-smearing / fuzzing gauge field with Nlong=%d, N_APE=%d, alpha_APE=%f\n", Nlong, N_ape, alpha_ape);
-  #ifdef OPENMP
-      if(N_ape>0) {
-        APE_Smearing_Step_threads(gauge_field_f, N_ape, alpha_ape);
-      }
-      if(Nlong>0) {
-        if(g_cart_id==0) fprintf(stdout, "[] Warning, no threaded version of fuzzing\n");
-        alloc_gauge_field(&gauge_field_timeslice, VOL3);
-        for(x0=0; x0<T; x0++) {
-          memcpy( gauge_field_timeslice, gauge_field_f + _GGI(g_ipt[x0][0][0][0],0), 72*VOL3*sizeof(double));
-          fuzzed_links_Timeslice(gauge_field_f, gauge_field_timeslice, Nlong, x0);
-        }
-        free(gauge_field_timeslice);
-      }
-  #else
-      alloc_gauge_field(&gauge_field_timeslice, VOL3);
-      for(x0=0; x0<T; x0++) {
-        memcpy((void*)gauge_field_timeslice, (void*)(g_gauge_field+_GGI(g_ipt[x0][0][0][0],0)), 72*VOL3*sizeof(double));
-        for(i=0; i<N_ape; i++) {
-          APE_Smearing_Step_Timeslice(gauge_field_timeslice, alpha_ape);
-        }
-        if(Nlong > 0) {
-          fuzzed_links_Timeslice(gauge_field_f, gauge_field_timeslice, Nlong, x0);
-        } else {
-          memcpy((void*)(gauge_field_f+_GGI(g_ipt[x0][0][0][0],0)), (void*)gauge_field_timeslice, 72*VOL3*sizeof(double));
-        }
-      }
-      free(gauge_field_timeslice);
-  #endif
-    // test: print the fuzzed APE smeared gauge field to stdout
-    //  for(ix=0; ix<36*VOLUME; ix++) {
-    //    fprintf(stdout, "%6d%25.16e%25.16e\n", ix, g_gauge_field[2*ix], g_gauge_field[2*ix+1]);
-    //  }
-    } else {
-      g_gauge_field = NULL;
-    }
-  
-    // allocate memory for the spinor fields
-    no_fields = n_s;
-    if( fermion_type==0 || (g_sink_momentum_set && ( g_source_type==2  || g_source_type==3 || g_source_type==4) ) ) no_fields+=n_s;
-    if(Nlong>0) no_fields += n_s;
-    no_fields *= n_c;
-    no_fields++;
-    if(g_cart_id==0) fprintf(stdout, "# [] total number of fields = %d\n", no_fields);
-    g_spinor_field = (double**)calloc(no_fields, sizeof(double*));
-    for(i=0; i<no_fields-1; i++) alloc_spinor_field(&g_spinor_field[i], VOLUME);
-    alloc_spinor_field(&g_spinor_field[no_fields-1], VOLUMEPLUSRAND);
-  
-    // allocate memory for the contractions
-    if(g_cart_id==0) { idx = 8*K*T_global; } 
-    else             { idx = 8*K*T; }
-    cconn = (double*)calloc(idx, sizeof(double));
-    if( cconn==(double*)NULL ) {
-      fprintf(stderr, "could not allocate memory for cconn\n");
-      EXIT(3);
-    }
-    for(ix=0; ix<idx; ix++) cconn[ix] = 0.;
-  
-    if(g_cart_id==0) { idx = 8*nK*T_global; } 
-    else             { idx = 8*nK*T; }
-    nconn = (double*)calloc(idx, sizeof(double));
-    if( nconn==(double*)NULL ) {
-      fprintf(stderr, "could not allocate memory for nconn\n");
-      EXIT(5);
-    }
-    for(ix=0; ix<idx; ix++) nconn[ix] = 0.;
-  
-    if( (Ctmp = (double*)calloc(2*T, sizeof(double))) == NULL ) {
-      fprintf(stderr, "Error, could not allocate mem for Ctmp\n");
-      EXIT(4);
-    }
-  
-    timeslice = g_source_timeslice;
-  
-    // check source/sink momentum
-    if(g_sink_momentum_set) {
-  /*
-      if(g_source_momentum[0]<0) g_source_momentum[0] += LX_global;
-      if(g_source_momentum[1]<0) g_source_momentum[1] += LY_global;
-      if(g_source_momentum[2]<0) g_source_momentum[2] += LZ_global;
-  */
-      if(g_sink_momentum[0]<0) g_sink_momentum[0] += LX_global;
-      if(g_sink_momentum[1]<0) g_sink_momentum[1] += LY_global;
-      if(g_sink_momentum[2]<0) g_sink_momentum[2] += LZ_global;
-      fprintf(stdout, "# [] using final sink momentum ( %d, %d, %d )\n", g_sink_momentum[0], g_sink_momentum[1], g_sink_momentum[2]);
-  
-      g_source_momentum[0] = (-g_sink_momentum[0] + LX_global ) % LX_global;
-      g_source_momentum[1] = (-g_sink_momentum[1] + LY_global ) % LY_global;
-      g_source_momentum[2] = (-g_sink_momentum[2] + LZ_global ) % LZ_globa;
-      fprintf(stdout, "# [] using final source momentum ( %d, %d, %d )\n", g_source_momentum[0], g_source_momentum[1], g_source_momentum[2]);
-  
-      if(full_orbit) {
-        snk_momentum_id   = qlatt_id[g_ipt[0][g_sink_momentum[0]][g_sink_momentum[1]][g_sink_momentum[2]]];
-        snk_momentum_runs = qlatt_count[snk_momentum_id] + 1;
-      }
-    }
-    fprintf(stdout, "# [] number of runs = %d\n", snk_momentum_runs);
-  
-    // set the correlator norm
-  //  correlator_norm = 1. / ( (double)VOL3 * g_kappa * g_kappa * 2.);
-    correlator_norm = 1.;
-    fprintf(stdout, "# [] using correlator norm %e\n", correlator_norm);
-  
   
     /*************************************
      * loop on sink momentum runs
@@ -562,15 +559,16 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
          * begin loop on LL, LS, SL, SS
          *************************************/
           ll = 0;
-    //      for(j=0; j<4; j++) {
-          for(j=0; j<1; j++) {
+    //      for(j=0; j<4; j++)
+          for(j=0; j<1; j++)
+          {
             work = g_spinor_field[no_fields-1];
             if(j==0) {
               // local-local (source-sink) -> phi[0-3]^dagger.p[0-3] -> p.p
               ll = 0;
               for(i=0; i<n_s*n_c; i++) {
                 if(use_mms) {
-                  sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, gid, timeslice, i, mms1);
+                  sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, timeslice, i, mms1);
                   read_lime_spinor(work, filename, 0);
                   xchange_field(work);
                   Qf5(g_spinor_field[i], work, -g_mu);
@@ -578,16 +576,16 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
                     Qf5(g_spinor_field[i+n_s*n_c], work, g_mu);
                   }
                 } else {
-                  get_propagator_filename(filename, filename_prefix, source_coords, i, src_momentum_zero, gid);
+                  get_propagator_filename(filename, filename_prefix, source_coords, i, src_momentum_zero, Nconf);
                   check_error(read_lime_spinor(g_spinor_field[i], filename, 0), "read_lime_spinor", NULL, 15);
                   if(g_sink_momentum_set) {
-                    get_propagator_filename(filename, filename_prefix, source_coords, i, src_momentum, gid);
+                    get_propagator_filename(filename, filename_prefix, source_coords, i, src_momentum, Nconf);
                     check_error(read_lime_spinor(g_spinor_field[i+n_s*n_c], filename, 0), "read_lime_spinor", NULL, 15);
                   }
                   if(fermion_type == 0) { // read down propagators
-                    get_propagator_filename(filename, filename_prefix2, source_coords, i, src_momentum, gid);
-                    check_error(read_lime_spinor(g_spinor_field[i+n_s*n_c*(1+g_sink_momentum_set)], filename, 0), "read_lime_spinor", NULL, 16);
-                    //status = read_lime_spinor(g_spinor_field[i+n_s*n_c], filename, 1);
+                    // get_propagator_filename(filename, filename_prefix2, source_coords, i, src_momentum, Nconf);
+                    // check_error(read_lime_spinor(g_spinor_field[i+n_s*n_c*(1+g_sink_momentum_set)], filename, 0), "read_lime_spinor", NULL, 16);
+                    check_error(read_lime_spinor(g_spinor_field[i+n_s*n_c*(1+g_sink_momentum_set)], filename, 1), "read_lime_spinor", NULL, 16);
                   }
                 }  // of if use_mms
               }    // of loop on isc
@@ -614,19 +612,18 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
                 }
                 for(i=n_s*n_c; i<2*n_s*n_c; i++) {
                   if(use_mms) {
-                    sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, gid, timeslice, i, mms1);
+                    sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, timeslice, i, mms1);
                     read_lime_spinor(work, filename, 0);
-                    xchange_field(work);
                     Qf5(g_spinor_field[i], work, -g_mu);
                     if(fermion_type==0) {
                       Qf5(g_spinor_field[i+n_s*n_c], work, g_mu);
                     }
                   } else {
-                    get_propagator_filename(filename, filename_prefix, source_coords, i, src_momentum, gid);
+                    get_propagator_filename(filename, filename_prefix, source_coords, i, src_momentum, Nconf);
                     check_error( read_lime_spinor(g_spinor_field[i], filename, 0), "read_lime_spinor", NULL, 17);
       
                     if(fermion_type==0) {
-                      get_propagator_filename(filename, filename_prefix2, source_coords, i, src_momentum, gid);
+                      get_propagator_filename(filename, filename_prefix2, source_coords, i, src_momentum, Nconf);
                       check_error( read_lime_spinor(g_spinor_field[i+n_s*n_c], filename, 0), "read_lime_spinor", NULL, 17);
       /*              read_lime_spinor(g_spinor_field[i+n_s*n_c], filename, 1); */
                     }
@@ -664,7 +661,7 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
                 psi2 = fermion_type == 0 ? &g_spinor_field[2*n_s*n_c] : NULL;
                 for(i=0; i<n_s*n_c; i++) {
                   if(use_mms) {
-                    sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, gid, timeslice, i, mms1);
+                    sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, timeslice, i, mms1);
                     read_lime_spinor(work, filename, 0);
                     xchange_field(work);
                     Qf5(g_spinor_field[i+n_s*n_c], work, -g_mu);
@@ -672,10 +669,10 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
                       Qf5(g_spinor_field[i+2*n_s*n_c], work, g_mu);
                     }
                   } else {
-                    get_propagator_filename(filename, filename_prefix, source_coords, i, src_momentum, gid);
+                    get_propagator_filename(filename, filename_prefix, source_coords, i, src_momentum, Nconf);
                     check_error( read_lime_spinor(g_spinor_field[i+n_s*n_c], filename, 0), "read_lime_spinor", NULL, 18);
                     if(fermion_type==0) {
-                      get_propagator_filename(filename, filename_prefix2, source_coords, i, src_momentum, gid);
+                      get_propagator_filename(filename, filename_prefix2, source_coords, i, src_momentum, Nconf);
                       check_error(read_lime_spinor(g_spinor_field[i+2*n_s*n_c], filename, 0), "read_lime_spinor", NULL, 19);
                       //status = read_lime_spinor(g_spinor_field[i+2*n_s*n_c], filename, 1);
                     }
@@ -696,7 +693,7 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
                 psi2 = fermion_type == 0 ? &g_spinor_field[n_s*n_c*(1+g_sink_momentum_set)] : NULL;
                 for(i=0; i<n_s*n_c; i++) {
                   if(use_mms) {
-                    sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, gid, timeslice, i+n_s*n_c, mms1);
+                    sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, timeslice, i+n_s*n_c, mms1);
                     read_lime_spinor(work, filename, 0);
                     xchange_field(work);
                     Qf5(g_spinor_field[i], work, -g_mu);
@@ -704,14 +701,14 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
                       Qf5(g_spinor_field[i+n_s*n_c], work, g_mu);
                     }
                   } else {
-                    get_propagator_filename(filename, filename_prefix, source_coords, i+n_s*n_c, src_momentum_zero, gid);
+                    get_propagator_filename(filename, filename_prefix, source_coords, i+n_s*n_c, src_momentum_zero, Nconf);
                     check_error( read_lime_spinor(g_spinor_field[i], filename, 0), "read_lime_spinor", NULL, 20);
                     if(g_sink_momentum_set) {
-                      get_propagator_filename(filename, filename_prefix, source_coords, i+n_s*n_c, src_momentum, gid);
+                      get_propagator_filename(filename, filename_prefix, source_coords, i+n_s*n_c, src_momentum, Nconf);
                       check_error( read_lime_spinor(g_spinor_field[i+n_s*n_c], filename, 0), "read_lime_spinor", NULL, 20);
                     }
                     if(fermion_type==0) {
-                      get_propagator_filename(filename, filename_prefix2, source_coords, i+n_s*n_c, src_momentum, gid);
+                      get_propagator_filename(filename, filename_prefix2, source_coords, i+n_s*n_c, src_momentum, Nconf);
                       check_error( read_lime_spinor(g_spinor_field[i+n_s*n_c*(1+g_sink_momentum_set)], filename, 0), "read_lime_spinor", NULL, 21);
                       //status = read_lime_spinor(g_spinor_field[i+n_s*n_c], filename, 1);
                     }
@@ -729,12 +726,12 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
                 psi2 = fermion_type == 0 ? &g_spinor_field[2*n_s*n_c]: NULL;
                 for(i=0; i<n_s*n_c; i++) {
                   if(use_mms) {
-                    sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, gid, timeslice, i+n_s*n_c, mms1);
+                    sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, timeslice, i+n_s*n_c, mms1);
                     read_lime_spinor(work, filename, 0);
                     xchange_field(work);
                     Qf5(g_spinor_field[i], work, -g_mu);
                   } else {
-                    get_propagator_filename(filename, filename_prefix, source_coords, i+n_s*n_c, src_momentum_zero, gid);
+                    get_propagator_filename(filename, filename_prefix, source_coords, i+n_s*n_c, src_momentum_zero, Nconf);
                     check_error( read_lime_spinor(g_spinor_field[i], filename, 0), "read_lime_spinor", NULL, 22);
                   }
                 }
@@ -870,10 +867,10 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
         // write to file
         if(g_cart_id==0) {
           if(g_source_type == 0) {
-            sprintf(filename, "charged.t%.2dx%.2d.y%.2dz%.2d.%.4d", source_coords[0], source_coords[1], source_coords[2],
-             source_coords[3], gid);
+            sprintf(filename, "charged.t%.2dx%.2dy%.2dz%.2d.%.4d", source_coords[0], source_coords[1], source_coords[2],
+             source_coords[3], Nconf);
           } else {
-            sprintf(filename, "charged.%.2d.%.4d", timeslice, gid);
+            sprintf(filename, "charged.%.2d.%.4d", timeslice, Nconf);
           }
           if(imom==0) {
             ofs=fopen(filename, "w");
@@ -887,41 +884,42 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
           fprintf(stdout, "# writing charged correlators to file %s\n", filename);
           fprintf(ofs, "# %3d%3d%3d%3d%10.6f%8.4f (%d,%d,%d) (%d,%d,%d)\n", T, LX, LY, LZ, g_kappa, g_mu,
               src_momentum[0], src_momentum[1], src_momentum[2], snk_momentum[0], snk_momentum[1], snk_momentum[2]);
-      //    for(idx=0; idx<K; idx++)
-          for(idx=0; idx<1; idx++)
+          for(idx=0; idx<K; idx++)
           {
-            for(ll=0; ll<4; ll++) {
-      //        x1 = (0+timeslice) % T_global;
-      //        i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T ) + isimag[idx];
-      //        fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, 0, isneg[idx]*cconn[i]*correlator_norm, 0.);
-      //        for(x0=1; x0<T_global/2; x0++) {
-      //          x1 = ( x0+timeslice) % T_global;
-      //          x2 = (-x0+timeslice+T_global) % T_global;
-      //          i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T ) + isimag[idx];
-      //          j = 2* ( (x2/T)*4*K*T + ll*K*T + idx*T + x2%T ) + isimag[idx];
-      //          //fprintf(stdout, "idx=%d; x0=%d, x1=%d, x2=%d, i=%d, j=%d\n", idx, x0, x1, x2, i, j);
-      //          fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, x0, isneg[idx]*cconn[i]*correlator_norm, isneg[idx]*cconn[j]*correlator_norm); 
-      //        }
-      //        x0 = T_global/2;
-      //        x1 = (x0+timeslice) % T_global;
-      //        i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T ) + isimag[idx];
-      //        fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, x0, isneg[idx]*cconn[i]*correlator_norm, 0.);
-              for(x0=0; x0<T_global; x0++) {
-                x1 = x0;
-                i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T );
-                fprintf(ofs, "%3d%3d%4d%25.16e%25.16e%3d%3d%3d\n", idx+1, 2*ll+1, x0, isneg[idx]*cconn[i]*correlator_norm, isneg[idx]*cconn[i+1]*correlator_norm,
-                    snk_momentum[0], snk_momentum[1], snk_momentum[2]); 
+            // for(ll=0; ll<4; ll++)
+            for(ll=0; ll<1; ll++)
+            {
+              x1 = (0+timeslice) % T_global;
+              i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T ) + isimag[idx];
+              fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, 0, isneg[idx]*cconn[i]*correlator_norm, 0.);
+              for(x0=1; x0<T_global/2; x0++) {
+                x1 = ( x0+timeslice) % T_global;
+                x2 = (-x0+timeslice+T_global) % T_global;
+                i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T ) + isimag[idx];
+                j = 2* ( (x2/T)*4*K*T + ll*K*T + idx*T + x2%T ) + isimag[idx];
+                //fprintf(stdout, "idx=%d; x0=%d, x1=%d, x2=%d, i=%d, j=%d\n", idx, x0, x1, x2, i, j);
+                fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, x0, isneg[idx]*cconn[i]*correlator_norm, isneg[idx]*cconn[j]*correlator_norm); 
               }
+              x0 = T_global/2;
+              x1 = (x0+timeslice) % T_global;
+              i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T ) + isimag[idx];
+              fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, x0, isneg[idx]*cconn[i]*correlator_norm, 0.);
+              //for(x0=0; x0<T_global; x0++) {
+              //  x1 = x0;
+              //  i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T );
+              //  fprintf(ofs, "%3d%3d%4d%25.16e%25.16e%3d%3d%3d\n", idx+1, 2*ll+1, x0, isneg[idx]*cconn[i]*correlator_norm, isneg[idx]*cconn[i+1]*correlator_norm,
+              //      snk_momentum[0], snk_momentum[1], snk_momentum[2]); 
+              //}
             }
           }   
           fclose(ofs);
       
           if(fermion_type==0) {
             if(g_source_type == 0) {
-              sprintf(filename, "neutral.t%.2dx%.2d.y%.2dz%.2d.%.4d", source_coords[0], source_coords[1], source_coords[2],
-               source_coords[3], gid);
+              sprintf(filename, "neutral.t%.2dx%.2dy%.2dz%.2d.%.4d", source_coords[0], source_coords[1], source_coords[2],
+               source_coords[3], Nconf);
             } else {
-              sprintf(filename, "neutral.%.2d.%.4d", timeslice, gid);
+              sprintf(filename, "neutral.%.2d.%.4d", timeslice, Nconf);
             }
             if(imom==0) {
               ofs=fopen(filename, "w");
@@ -935,28 +933,31 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
             fprintf(stdout, "# writing neutral correlators to file %s\n", filename);
             fprintf(ofs, "# %3d%3d%3d%3d%10.6f%8.4f (%d,%d,%d) (%d,%d,%d)\n", T, LX, LY, LZ, g_kappa, g_mu,
                 src_momentum[0], src_momentum[1], src_momentum[2], snk_momentum[0], snk_momentum[1], snk_momentum[2]);
-            for(idx=0; idx<nK; idx++) {
-              for(ll=0; ll<4; ll++) {
-      //          x1 = (0+timeslice) % T_global;
-      //          i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T ) + nisimag[idx];
-      //          fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, 0, isneg[idx]*nconn[i]*correlator_norm, 0.);
-      //          for(x0=1; x0<T_global/2; x0++) {
-      //            x1 = ( x0+timeslice) % T_global;
-      //            x2 = (-x0+timeslice+T_global) % T_global;
-      //            i = 2* ( (x1/T)*4*nK*T + ll*nK*T + idx*T + x1%T ) + nisimag[idx];
-      //            j = 2* ( (x2/T)*4*nK*T + ll*nK*T + idx*T + x2%T ) + nisimag[idx];
-      //            fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, x0, isneg[idx]*nconn[i]*correlator_norm, isneg[idx]*nconn[j]*correlator_norm); 
-      //          }
-      //          x0 = T_global/2;
-      //          x1 = (x0+timeslice) % T_global;
-      //          i = 2* ( (x1/T)*4*nK*T + ll*nK*T + idx*T + x1%T ) + nisimag[idx];
-      //          fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, x0, isneg[idx]*nconn[i]*correlator_norm, 0.);
-                for(x0=0; x0<T_global; x0++) {
-                  x1 = x0;
-                  i = 2* ( (x1/T)*4*nK*T + ll*nK*T + idx*T + x1%T );
-                  fprintf(ofs, "%3d%3d%4d%25.16e%25.16e%3d%3d%3d\n", idx+1, 2*ll+1, x0, isneg[idx]*nconn[i]*correlator_norm, isneg[idx]*nconn[i+1]*correlator_norm,
-                    snk_momentum[0], snk_momentum[1], snk_momentum[2]); 
+            for(idx=0; idx<nK; idx++)
+            {
+              // for(ll=0; ll<4; ll++)
+              for(ll=0; ll<1; ll++)
+              {
+                x1 = (0+timeslice) % T_global;
+                i = 2* ( (x1/T)*4*K*T + ll*K*T + idx*T + x1%T ) + nisimag[idx];
+                fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, 0, isneg[idx]*nconn[i]*correlator_norm, 0.);
+                for(x0=1; x0<T_global/2; x0++) {
+                  x1 = ( x0+timeslice) % T_global;
+                  x2 = (-x0+timeslice+T_global) % T_global;
+                  i = 2* ( (x1/T)*4*nK*T + ll*nK*T + idx*T + x1%T ) + nisimag[idx];
+                  j = 2* ( (x2/T)*4*nK*T + ll*nK*T + idx*T + x2%T ) + nisimag[idx];
+                  fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, x0, isneg[idx]*nconn[i]*correlator_norm, isneg[idx]*nconn[j]*correlator_norm); 
                 }
+                x0 = T_global/2;
+                x1 = (x0+timeslice) % T_global;
+                i = 2* ( (x1/T)*4*nK*T + ll*nK*T + idx*T + x1%T ) + nisimag[idx];
+                fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", idx+1, 2*ll+1, x0, isneg[idx]*nconn[i]*correlator_norm, 0.);
+                //for(x0=0; x0<T_global; x0++) {
+                //  x1 = x0;
+                //  i = 2* ( (x1/T)*4*nK*T + ll*nK*T + idx*T + x1%T );
+                //  fprintf(ofs, "%3d%3d%4d%25.16e%25.16e%3d%3d%3d\n", idx+1, 2*ll+1, x0, isneg[idx]*nconn[i]*correlator_norm, isneg[idx]*nconn[i+1]*correlator_norm,
+                //    snk_momentum[0], snk_momentum[1], snk_momentum[2]); 
+                //}
               }
             }    
             fclose(ofs);
@@ -964,9 +965,10 @@ for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
         }  // of if g_cart_id == 0
       }    // of loop on sink momenta
     }      // of loop on shift vectors
-  }        // of loop on gauge configurations
 
-  /* free the allocated memory, finalize */
+  /****************************************************
+   * free the allocated memory, finalize
+   ****************************************************/
   free(g_gauge_field); g_gauge_field=(double*)NULL;
   for(i=0; i<no_fields; i++) free(g_spinor_field[i]);
   free(g_spinor_field); g_spinor_field=(double**)NULL;
