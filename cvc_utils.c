@@ -2285,14 +2285,14 @@ void get_filename(char *filename, const int nu, const int sc, const int sign) {
   int isx[4], Lsize[4];
 
   if(format==2 || format==3) {
-    isx[0] =  g_source_location/(LX*LY*LZ);
-    isx[1] = (g_source_location%(LX*LY*LZ)) / (LY*LZ);
-    isx[2] = (g_source_location%(LY*LZ)) / LZ;
-    isx[3] = (g_source_location%LZ);
+    isx[0] =  g_source_location/(LX_global * LY_global * LZ_global);
+    isx[1] = (g_source_location%(LX_global * LY_global * LZ_global)) / (LY_global * LZ_global);
+    isx[2] = (g_source_location%(LY_global * LZ_global)) / LZ_global;
+    isx[3] = (g_source_location%LZ_global);
     Lsize[0] = T_global;
-    Lsize[1] = LX;
-    Lsize[2] = LY;
-    Lsize[3] = LZ;
+    Lsize[1] = LX_global;
+    Lsize[2] = LY_global;
+    Lsize[3] = LZ_global;
   }
 
   if(format==0) {

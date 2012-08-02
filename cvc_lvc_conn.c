@@ -2,9 +2,11 @@
   
  * cvc_lvc_conn.c
  *
- * Thu Aug  5 21:23:23 CEST 2010
+ * Do 2. Aug 18:13:59 CEST 2012
  *
  * PURPOSE:
+ * - contraction for cvc - lvc : conserved / local vector current
+ *   at sink / source
  * DONE:
  * TODO:
  ****************************************************/
@@ -33,39 +35,10 @@
 #include "Q_phi.h"
 #include "read_input_parser.h"
 
-#ifdef QMAT
-#  define _CVC_RE_FACT (5./9.)
-#  define _CVC_IM_FACT (1./3.)
-#else
-#  define _CVC_RE_FACT (1.)
-#  define _CVC_IM_FACT (1.)
-#endif
-
-#ifdef AVCMAT
-#  define _AVC_RE_FACT  (2.)
-#  define _AVC_IM_FACT  (0.)
-#  define _PSEU_RE_FACT (2.)
-#  define _PSEU_IM_FACT (0.)
-#  define _SCAL_RE_FACT (0.)
-#  define _SCAL_IM_FACT (2.)
-#  define _XAVC_RE_FACT (2.)
-#  define _XAVC_IM_FACT (0.)
-#else
-#  define _AVC_RE_FACT  (1.)
-#  define _AVC_IM_FACT  (1.)
-#  define _PSEU_RE_FACT (1.)
-#  define _PSEU_IM_FACT (1.)
-#  define _SCAL_RE_FACT (1.)
-#  define _SCAL_IM_FACT (1.)
-#  define _XAVC_RE_FACT (1.)
-#  define _XAVC_IM_FACT (1.)
-#endif
-
 void usage() {
-  fprintf(stdout, "Code to perform AV current correlator conn. contractions\n");
+  fprintf(stdout, "Code to perform C/L vector current correlator conn. contractions\n");
   fprintf(stdout, "Usage:    [options]\n");
   fprintf(stdout, "Options: -v verbose\n");
-  fprintf(stdout, "         -g apply a random gauge transformation\n");
   fprintf(stdout, "         -f input filename [default cvc.input]\n");
 #ifdef MPI
   MPI_Abort(MPI_COMM_WORLD, 1);
@@ -90,7 +63,7 @@ int main(int argc, char **argv) {
   int verbose = 0;
   char filename[100];
   double ratime, retime;
-  int psource[4];
+  int psource[4], source_proc_coords[4];
   double plaq, ssource[4];
   double spinor1[24], spinor2[24], U_[18], q[4];
   complex w, w1;
@@ -184,11 +157,7 @@ int main(int argc, char **argv) {
 
   if(init_geometry() != 0) {
     fprintf(stderr, "ERROR from init_geometry\n");
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-#endif
-    exit(1);
+    EXIT(1);
   }
 
   geometry();
@@ -215,48 +184,48 @@ int main(int argc, char **argv) {
   conn = (double*)calloc(2 * 16 * VOLUME, sizeof(double));
   if( conn == NULL ) {
     fprintf(stderr, "could not allocate memory for contr. fields\n");
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-#endif
-    exit(3);
+    EXIT(3);
   }
   for(ix=0; ix<32*VOLUME; ix++) conn[ix] = 0.;
 
   /* prepare Fourier transformation arrays */
   in  = (fftw_complex*)malloc(FFTW_LOC_VOLUME*sizeof(fftw_complex));
   if(in==(fftw_complex*)NULL) {    
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-#endif
-    exit(4);
+    EXIT(4);
   }
 
   /* determine source coordinates, find out, if source_location is in this process */
-  have_source_flag = (int)(g_source_location/(LX*LY*LZ)>=Tstart && g_source_location/(LX*LY*LZ)<(Tstart+T));
-  if(have_source_flag==1) fprintf(stdout, "process %2d has source location\n", g_cart_id);
-  sx0 = g_source_location/(LX*LY*LZ)-Tstart;
-  sx1 = (g_source_location%(LX*LY*LZ)) / (LY*LZ);
-  sx2 = (g_source_location%(LY*LZ)) / LZ;
-  sx3 = (g_source_location%LZ);
+  sx0 =   g_source_location / (LX_global * LY_global * LZ_global);
+  sx1 = ( g_source_location % (LX_global * LY_global * LZ_gloval)) / (LY_global * LZ_global);
+  sx2 = ( g_source_location % (LY_global * LZ_global ) ) / LZ_global;
+  sx3 = ( g_source_location % LZ_global);
+  if(g_cart_id == 0) fprintf(stdout, "# [cvc_lvc_conn] local source coordinates: (%3d,%3d,%3d,%3d)\n", sx0, sx1, sx2, sx3);
+#ifdef MPI
+  source_proc_coords[0] = sx0 / T;
+  source_proc_coords[1] = sx1 / LX;
+  source_proc_coords[2] = sx2 / LY;
+  source_proc_coords[3] = sx3 / LZ;
+  MPI_Cart_rank(g_cart_grid, source_proc_coords, &have_source_flag);
+  have_source_flag == have_source_flag == g_cart_id;
+  sx0 = sx0 % T;
+  sx1 = sx1 % LX;
+  sx2 = sx2 % LY;
+  sx3 = sx3 % LZ;
+#else
+  have_source_flag = 1;
+#endif
   if(have_source_flag==1) { 
-    fprintf(stdout, "local source coordinates: (%3d,%3d,%3d,%3d)\n", sx0, sx1, sx2, sx3);
+    fprintf(stdout, "# [cvc_lvc_conn] local source coordinates: (%3d,%3d,%3d,%3d)\n", sx0, sx1, sx2, sx3);
     source_location = g_ipt[sx0][sx1][sx2][sx3];
   }
-
-#ifdef MPI
-  ratime = MPI_Wtime();
-#else
-  ratime = (double)clock() / CLOCKS_PER_SEC;
-#endif
 
   /**********************************************
    * loop on colour index
    **********************************************/
+  ratime = CLOCK;
   for(ia=0; ia<3; ia++) {
   
-    /* read the 4 spinor components */
+    // read the 4 spinor components 
     for(ib=0; ib<4; ib++) {
       get_filename(filename, 4, ib*3+ia, 1);
       read_lime_spinor(g_spinor_field[ib], filename, 0);
@@ -267,7 +236,7 @@ int main(int argc, char **argv) {
       xchange_field(g_spinor_field[4+ib]);
     }
 
-    /* loop on right Lorentz index nu */
+    // loop on right Lorentz index nu 
     for(nu=0; nu<4; nu++) {
       psource[0] = gamma_permutation[nu][ 0] / 6;
       psource[1] = gamma_permutation[nu][ 6] / 6;
@@ -276,8 +245,8 @@ int main(int argc, char **argv) {
 //      fprintf(stdout, "# [cvc_lvc_conn] psource = (%d, %d, %d, %d)\n", psource[0], 
 //        psource[1], psource[2], psource[3]);
       isimag = gamma_permutation[nu][ 0] % 2;
-      /* sign from the source gamma matrix; the minus sign
-       * in the lower two lines is the action of gamma_5 */
+      // sign from the source gamma matrix; the minus sign
+       * in the lower two lines is the action of gamma_5 
       ssource[0] =  gamma_sign[nu][ 0] * gamma_sign[5][gamma_permutation[nu][ 0]];
       ssource[1] =  gamma_sign[nu][ 6] * gamma_sign[5][gamma_permutation[nu][ 6]];
       ssource[2] =  gamma_sign[nu][12] * gamma_sign[5][gamma_permutation[nu][12]];
@@ -304,34 +273,23 @@ int main(int argc, char **argv) {
 
       }
     }
-  }/* of loop on ia (colour) */
+  }  // of loop on ia (colour) 
 
-#ifdef MPI
-  retime = MPI_Wtime();
-#else
-  retime = (double)clock() / CLOCKS_PER_SEC;
-#endif
-  if(g_cart_id==0) fprintf(stdout, "contractions in %e seconds\n", retime-ratime);
+  retime = CLOCK;
+  if(g_cart_id==0) fprintf(stdout, "# [cvc_lvc_conn] contractions in %e seconds\n", retime-ratime);
 
   /* save results */
-#ifdef MPI
-  ratime = MPI_Wtime();
-#else
-  ratime = (double)clock() / CLOCKS_PER_SEC;
-#endif
+  ratime = CLOCK;
   sprintf(filename, "cvc_lvc_x.%.4d", Nconf);
   write_contraction(conn, (int*)NULL, filename, 16, 0, 0);
-#ifdef MPI
-  retime = MPI_Wtime();
-#else
-  retime = (double)clock() / CLOCKS_PER_SEC;
-#endif
+  retime = CLOCK;
   if(g_cart_id==0) fprintf(stdout, "saved position space results in %e seconds\n", retime-ratime);
 
 #ifndef MPI
   /* check the Ward identity in position space */
   w.re = 0.; w.im = 0.;
-  ofs = fopen("cvc_lvc_WI_x", "w");
+  sprintf(filename, "cvc_lvc_WI_x.%.4d", Nconf);
+  ofs = fopen(filename, "w");
   for(x0=0; x0<T;  x0++) {
   for(x1=0; x1<LX; x1++) {
   for(x2=0; x2<LY; x2++) {
@@ -350,11 +308,7 @@ int main(int argc, char **argv) {
 #endif
 
   /* Fourier transformation */
-#ifdef MPI
-  ratime = MPI_Wtime();
-#else
-  ratime = (double)clock() / CLOCKS_PER_SEC;
-#endif
+  ratime = CLOCK;
   for(mu=0; mu<16; mu++) {
     memcpy((void*)in, (void*)&conn[_GWI(mu,0,VOLUME)], 2*VOLUME*sizeof(double));
 #ifdef MPI
@@ -386,15 +340,12 @@ int main(int argc, char **argv) {
     }  /* of nu */
     }  /* of mu */
   }}}} 
-#ifdef MPI
-  retime = MPI_Wtime();
-#else
-  retime = (double)clock() / CLOCKS_PER_SEC;
-#endif
+  retime = CLOCK;
   if(g_cart_id==0) fprintf(stdout, "Fourier transform in %e seconds\n", retime-ratime);
 
 #ifndef MPI
-  ofs = fopen("cvc_lvc_WI_p", "w");
+  sprintf(filename, "cvc_lvc_WI_p.%.4d", Nconf);
+  ofs = fopen(filename, "w");
   for(x0=0; x0<T; x0++) {
     q[0] = 2. * sin( M_PI * (double)x0 / (double)T );
   for(x1=0; x1<LX; x1++) {
@@ -417,20 +368,12 @@ int main(int argc, char **argv) {
 #endif
 
   /* save momentum space results */
-#ifdef MPI
-  ratime = MPI_Wtime();
-#else
-  ratime = (double)clock() / CLOCKS_PER_SEC;
-#endif
+  ratime = CLOCK;
   sprintf(filename, "cvc_lvc_p.%.4d", Nconf);
   write_contraction(conn, (int*)NULL, filename, 16, 0, 0);
   sprintf(filename, "cvc_lvc_p.%.4d.ascii", Nconf);
   write_contraction(conn, (int*)NULL, filename, 16, 2, 0);
-#ifdef MPI
-  retime = MPI_Wtime();
-#else
-  retime = (double)clock() / CLOCKS_PER_SEC;
-#endif
+  retime = CLOCK;
   if(g_cart_id==0) fprintf(stdout, "saved momentum space results in %e seconds\n", retime-ratime);
 
   /* free the allocated memory, finalize */
@@ -440,12 +383,21 @@ int main(int argc, char **argv) {
   free_geometry();
   fftw_free(in);
   free(conn);
+
 #ifdef MPI
   fftwnd_mpi_destroy_plan(plan_p);
   free(status);
-  MPI_Finalize();
 #else
   fftwnd_destroy_plan(plan_p);
 #endif
+
+  fprintf(stdout, "# [cvc_lvc_conn] %s# [cvc_lvc_conn] end of run\n", ctime(&g_the_time));
+  fflush(stdout);
+  fprintf(stderr, "[cvc_lvc_conn] %s[cvc_lvc_conn] end of run\n", ctime(&g_the_time));
+  fflush(stderr);
+
+#ifdef MPI
+  MPI_Finalize();
+#else
   return(0);
 }
