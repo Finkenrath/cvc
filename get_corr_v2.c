@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 
   for(gid=g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
     memset(conn, 0, 32*VOLUME*sizeof(double));
-    memset(conn2, 0, 2*T*sizeof(double));
+    memset(conn2, 0, 8*T*sizeof(double));
     /***********************
      * read contractions   *
      ***********************/
