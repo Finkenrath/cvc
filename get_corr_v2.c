@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
   int source_location, have_source_flag = 0;
   int x0, x1, x2, x3, ix;
   int sx0, sx1, sx2, sx3;
+  int tsize = 0;
   double *conn  = NULL;
   double *conn2 = (double*)NULL;
   int verbose = 0;
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
 
   /* initialize fftw, create plan with FFTW_FORWARD ---  in contrast to
    * FFTW_BACKWARD in e.g. avc_exact */
-  plan_m_T = fftw_create_plan(T, FFTW_FORWARD, FFTW_MEASURE);
+  plan_m_T = fftw_create_plan(T_global, FFTW_FORWARD, FFTW_MEASURE);
   plan_m_L = fftw_create_plan(LX, FFTW_FORWARD, FFTW_MEASURE);
   T            = T_global;
   Tstart       = 0;
@@ -185,7 +186,7 @@ int main(int argc, char **argv) {
     fprintf(stdout, "# [get_corr_v2] time to read contractions %e seconds\n", retime-ratime);
   
     // TEST Pi_mm
-  /*
+/*
     fprintf(stdout, "# [get_corr_v2] Pi_mm\n");
     for(x0=0; x0<T; x0++) {
     for(x1=0; x1<LX; x1++) {
@@ -198,9 +199,9 @@ int main(int argc, char **argv) {
         fprintf(stdout, "\t%3d%3d%3d%3d%3d%16.7e%16.7e\n", nu, x0, x1, x2, x3, wre, wim);
       }
     }}}}
-  */
+*/
     // TEST Ward Identity
-  /*
+/*
     fprintf(stdout, "# [get_corr_v2] Ward identity\n");
     for(x0=0; x0<T; x0++) {
       q[0] = 2. * sin(M_PI * (double)x0 / (double)T);
@@ -219,7 +220,7 @@ int main(int argc, char **argv) {
         fprintf(stdout, "\t%3d%3d%3d%3d%3d%16.7e%16.7e\n", nu, x0, x1, x2, x3, wre, wim);
       }
     }}}}
-  */
+*/
   
     /***********************
      * fill the correlator *
@@ -233,7 +234,8 @@ int main(int argc, char **argv) {
       idx[ivec[1]] = 0;
       idx[ivec[2]] = 0;
       idx[ivec[3]] = 0;
-      for(x0=0; x0<T; x0++) {
+      tsize = (mu==0) ? T : LX;
+      for(x0=0; x0<tsize; x0++) {
         idx[ivec[0]] = x0;
         for(nu=1; nu<4; nu++) {
           imu = (mu+nu) % 4;
@@ -250,12 +252,13 @@ int main(int argc, char **argv) {
     fprintf(stdout, "# [get_corr_v2] time to fill correlator %e seconds\n", retime-ratime);
    
     // TEST
-    //fprintf(stdout, "# [get_corr_v2] correlators\n");
-    //for(mu=0;mu<4;mu++) {
-    //for(x0=0; x0<T; x0++) {
-    //  fprintf(stdout, "\t%3d%3d%25.16e%25.16e\n", mu, x0, conn2[2*(mu*T+x0)], conn[2*(mu*T+x0)+1]);
-    //}}
-  
+/*
+    fprintf(stdout, "# [get_corr_v2] correlators\n");
+    for(mu=0;mu<4;mu++) {
+    for(x0=0; x0<T; x0++) {
+      fprintf(stdout, "\t%3d%3d%25.16e%25.16e\n", mu, x0, conn2[2*(mu*T+x0)], conn2[2*(mu*T+x0)+1]);
+    }}
+*/  
     /*****************************************
      * reverse Fourier transformation
      *****************************************/
@@ -269,7 +272,7 @@ int main(int argc, char **argv) {
     for(mu=1; mu<4; mu++) {
       memcpy((void*)inL, (void*)(conn2+2*mu*T), 2*LX*sizeof(double));
       fftw_one(plan_m_L, inL, outL);
-      for(ix=0; ix<L; ix++) {
+      for(ix=0; ix<LX; ix++) {
         conn2[2*(mu*T+ix)  ] = outL[ix].re / (double)LX;
         conn2[2*(mu*T+ix)+1] = outL[ix].im / (double)LX;
       }
