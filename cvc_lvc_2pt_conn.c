@@ -11,6 +11,8 @@
  *
  * DONE:
  * TODO:
+ * - check, whether only the real part can be used
+ * - check, whether second contribution from cvc has to be included 
  ****************************************************/
 
 #include <stdlib.h>

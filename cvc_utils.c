@@ -644,7 +644,7 @@ int write_contraction (double *s, int *nsource, char *filename, int Nmu,
     if(append==1) ofs = fopen(filename, "a");
     else ofs = fopen(filename, "w");
     if(ofs == (FILE*)NULL) {
-      fprintf(stderr, "could not open file %s for writing\n", filename);
+      fprintf(stderr, "[write_contraction] Error, could not open file %s for writing\n", filename);
 #ifdef MPI
       MPI_Abort(MPI_COMM_WORLD, 1);
       MPI_Finalize();
@@ -806,11 +806,11 @@ int read_contraction(double *s, int *nsource, char *filename, int Nmu) {
 
   ofs = fopen(filename, "r");
   if(ofs==(FILE*)NULL) {
-    fprintf(stderr, "could not open file %s for reading\n", filename);
+    fprintf(stderr, "[read_contraction] Error, could not open file %s for reading\n", filename);
     return(106);
   }
   if(format==2) {
-    if(g_cart_id==0) fprintf(stdout, "# Reading contraction data in format %d\n", format);
+    if(g_cart_id==0) fprintf(stdout, "# [read_contraction] Reading contraction data in format %d\n", format);
 #ifdef MPI
 #  ifndef PARALLELTX
     shift = (unsigned long int)Tstart * (unsigned long int)LX*LY*LZ * Nmu * 2 * sizeof(double);
