@@ -53,6 +53,8 @@ int main(int argc, char **argv) {
   int filename_set = 0;
   int l_LX_at, l_LXstart_at;
   int x0, x1, x2, x3, ix, iix;
+  int use_components = 0;
+  int reduce_x_orbits=0;
   double *conn = NULL;
   double *jjx0=NULL;
   char filename[800], contype[400];
@@ -73,7 +75,7 @@ int main(int argc, char **argv) {
   /*                                         */
   /*******************************************/
 
-  while ((c = getopt(argc, argv, "wh?f:")) != -1) {
+  while ((c = getopt(argc, argv, "wh?f:u:r:")) != -1) {
     switch (c) {
     case 'f':
       strcpy(filename, optarg);
@@ -83,6 +85,13 @@ int main(int argc, char **argv) {
       check_WI = 1;
       fprintf(stdout, "# [jj_x2_v2] will check WI in momentum space\n");
       break;
+    case 'u':
+      use_components = atoi(optarg);
+      fprintf(stdout, "# [jj_x2_v2] will use %d components\n", use_components);
+      break;
+    case 'r':
+      reduce_x_orbits = atoi(optarg);
+      fprintf(stdout, "# [jj_x2_v2] will use x-orbits reduction %d\n", reduce_x_orbits);
     case 'h':
     case '?':
     default:
@@ -139,6 +148,15 @@ int main(int argc, char **argv) {
     fprintf(stderr, "[jj_x2_v2] Error while creating orbit-lists, status was %d\n", status);
     EXIT(2);
   }
+
+  if(reduce_x_orbits==1) {
+    status = reduce_x_orbits_4d(h4_id, h4_count, h4_val, h4_nc, h4_rep);
+    if(status != 0) {
+      fprintf(stderr, "[jj_x2_v2] Error while creating orbit-lists, status was %d\n", status);
+      EXIT(7);
+    }
+  }
+
 
   in = (fftw_complex*)malloc(VOLUME*sizeof(fftw_complex));
 
@@ -208,10 +226,21 @@ int main(int argc, char **argv) {
      * backward Fourier transform
      ******************************/
     ratime = CLOCK;
-    // construct Pi_mu_mu
-    for(ix=0;ix<VOLUME;ix++) {
-      conn[_GWI(0, ix,VOLUME)  ] += conn[_GWI(5,ix,VOLUME)  ] + conn[_GWI(10,ix,VOLUME)  ] + conn[_GWI(15,ix,VOLUME)  ];
-      conn[_GWI(0, ix,VOLUME)+1] += conn[_GWI(5,ix,VOLUME)+1] + conn[_GWI(10,ix,VOLUME)+1] + conn[_GWI(15,ix,VOLUME)+1];
+    if( use_components == 4 ) {
+      // construct Pi_mu_mu
+      for(ix=0;ix<VOLUME;ix++) {
+        conn[_GWI(0, ix,VOLUME)  ] += conn[_GWI(5,ix,VOLUME)  ] + conn[_GWI(10,ix,VOLUME)  ] + conn[_GWI(15,ix,VOLUME)  ];
+        conn[_GWI(0, ix,VOLUME)+1] += conn[_GWI(5,ix,VOLUME)+1] + conn[_GWI(10,ix,VOLUME)+1] + conn[_GWI(15,ix,VOLUME)+1];
+      }
+    } else if(use_components == 3) {
+      // construct Pi_i_i
+      for(ix=0;ix<VOLUME;ix++) {
+        conn[_GWI(0, ix,VOLUME)  ] = conn[_GWI(5,ix,VOLUME)  ] + conn[_GWI(10,ix,VOLUME)  ] + conn[_GWI(15,ix,VOLUME)  ];
+        conn[_GWI(0, ix,VOLUME)+1] = conn[_GWI(5,ix,VOLUME)+1] + conn[_GWI(10,ix,VOLUME)+1] + conn[_GWI(15,ix,VOLUME)+1];
+      }
+    } else {
+      fprintf(stderr, "[] Error, unrecognized number of components");
+      exit(1);
     }
     memcpy((void*)in, (void*)conn, 2*VOLUME*sizeof(double));
     fftwnd_one(plan_m, in, NULL);
@@ -238,12 +267,19 @@ int main(int argc, char **argv) {
     memset(jjx0, 0, 2*h4_nc*sizeof(double));
   
     for(ix=0; ix<VOLUME; ix++) {
-      jjx0[2*h4_id[ix]  ] += conn[2*ix  ];
-      jjx0[2*h4_id[ix]+1] += conn[2*ix+1];
+      if(h4_id[ix] != -1) {
+        jjx0[2*h4_id[ix]  ] += conn[2*ix  ];
+        jjx0[2*h4_id[ix]+1] += conn[2*ix+1];
+      }
     }
     for(i=0; i<h4_nc; i++) {
-      jjx0[2*i  ] /= (double)h4_count[i] * (double)VOLUME;
-      jjx0[2*i+1] /= (double)h4_count[i] * (double)VOLUME;
+      if(h4_count[i]>0) {
+        jjx0[2*i  ] /= (double)h4_count[i] * (double)VOLUME;
+        jjx0[2*i+1] /= (double)h4_count[i] * (double)VOLUME;
+      } else {
+        jjx0[2*i  ] = 0,;
+        jjx0[2*i+1] = 0.;
+      }
     }
     retime = CLOCK;
     fprintf(stdout, "# [jj_x2_v2] time to fill correlator: %e seconds\n", retime-ratime);

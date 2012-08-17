@@ -179,8 +179,10 @@ int main(int argc, char **argv) {
     sprintf(filename, "%s.%.4d", filename_prefix, gid);
     status = read_contraction(conn, NULL, filename, 16);
     if(status != 0) {
-      fprintf(stderr, "[get_corr_v2] Error from read_contractions, status was %d\n", status);
-      EXIT(5);
+      // fprintf(stderr, "[get_corr_v2] Error from read_contractions, status was %d\n", status);
+      // EXIT(5);
+      fprintf(stderr, "[get_corr_v2] Warning, could not read contractions for gid %d, status was %d\n", gid, status);
+      continue;
     }
     retime = (double)clock() / CLOCKS_PER_SEC;
     fprintf(stdout, "# [get_corr_v2] time to read contractions %e seconds\n", retime-ratime);
