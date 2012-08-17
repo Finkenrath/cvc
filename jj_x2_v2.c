@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   int c, mu, nu, status, dims[4], i, gid;
   int filename_set = 0;
   int l_LX_at, l_LXstart_at;
-  int x0, x1, x2, x3, ix, iix;
+  int x0, x1, x2, x3, ix;
   int use_components = 0;
   int reduce_x_orbits=0;
   double *conn = NULL;
@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
   /*******************************************/
   /*                                         */
   int *h4_count=NULL, *h4_id=NULL, h4_nc, **h4_rep=NULL;
+  int ***h4_member=NULL;
   double **h4_val = NULL;
   /*                                         */
   /*******************************************/
@@ -143,14 +144,14 @@ int main(int argc, char **argv) {
    * allocate memory for the contractions *
    ****************************************/
   // make the H4 orbits
-  status = make_x_orbits_4d(&h4_id, &h4_count, &h4_val, &h4_nc, &h4_rep);
+  status = make_x_orbits_4d(&h4_id, &h4_count, &h4_val, &h4_nc, &h4_rep, &h4_member);
   if(status != 0) {
     fprintf(stderr, "[jj_x2_v2] Error while creating orbit-lists, status was %d\n", status);
     EXIT(2);
   }
 
   if(reduce_x_orbits==1) {
-    status = reduce_x_orbits_4d(h4_id, h4_count, h4_val, h4_nc, h4_rep);
+    status = reduce_x_orbits_4d(h4_id, h4_count, h4_val, h4_nc, h4_rep, h4_member);
     if(status != 0) {
       fprintf(stderr, "[jj_x2_v2] Error while creating orbit-lists, status was %d\n", status);
       EXIT(7);
@@ -277,7 +278,7 @@ int main(int argc, char **argv) {
         jjx0[2*i  ] /= (double)h4_count[i] * (double)VOLUME;
         jjx0[2*i+1] /= (double)h4_count[i] * (double)VOLUME;
       } else {
-        jjx0[2*i  ] = 0,;
+        jjx0[2*i  ] = 0.;
         jjx0[2*i+1] = 0.;
       }
     }

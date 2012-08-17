@@ -445,6 +445,36 @@ int make_x_orbits_3d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
  * deallocate memory for the fields used in H4 method analysis
  ***********************************************************************/
 void finalize_x_orbits(int **xid, int **xid_count, double ***xid_val, int***xid_rep) {
+    finalize_x_orbits2(xid, xid_count, xid_val, xid_rep, NULL);
+}
+//void finalize_x_orbits(int **xid, int **xid_count, double ***xid_val, int***xid_rep) {
+//
+//  if( *xid != NULL ) {
+//    free(*xid);
+//    *xid = NULL;
+//  }
+//  if(*xid_count != NULL) {
+//    free(*xid_count); *xid_count = NULL;
+//  }
+//  if(*xid_val != NULL) {
+//    if(**xid_val != NULL) {
+//      free(**xid_val);
+//      **xid_val = NULL;
+//    }
+//    free(*xid_val);
+//    *xid_val = NULL;
+//  }
+//  if(*xid_rep != NULL) {
+//    if(**xid_rep != NULL) {
+//      free(**xid_rep);
+//      **xid_rep = NULL;
+//    }
+//    free(*xid_rep);
+//    *xid_rep = NULL;
+//  }
+//}
+
+void finalize_x_orbits2(int **xid, int **xid_count, double ***xid_val, int***xid_rep, int****xid_member) {
 
   if( *xid != NULL ) {
     free(*xid);
@@ -461,6 +491,7 @@ void finalize_x_orbits(int **xid, int **xid_count, double ***xid_val, int***xid_
     free(*xid_val);
     *xid_val = NULL;
   }
+
   if(*xid_rep != NULL) {
     if(**xid_rep != NULL) {
       free(**xid_rep);
@@ -469,7 +500,16 @@ void finalize_x_orbits(int **xid, int **xid_count, double ***xid_val, int***xid_
     free(*xid_rep);
     *xid_rep = NULL;
   }
-}
+
+  if(*xid_member != NULL) {
+    if(**xid_member != NULL) {
+      if(***xid_member != NULL) free(***xid_member);
+      free(**xid_member);
+    }
+    free(*xid_member);
+    *xid_member = NULL;
+  }
+}  // end of finalize_x_orbits2
 
 /*************************************************************************************
  *
@@ -527,19 +567,19 @@ int init_x_orbits(int**xid, int**xid_count, double ***xid_val, int***xid_rep, in
 /********************************************************************************
  * 4d x^2 orbits
  ********************************************************************************/
-int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc, int ***xid_rep) {
+int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc, int ***xid_rep, int ****xid_member) {
 
   size_t ix;
   int x[4], y[4], z[4];
   int s0, s1, s2, s3;
   int L     = LX;
   int Lhalf = L/2;
+  int Thalf = T/2;
   int Lhp1  = L/2+1;
   int Lhm1  = L/2-1;
   size_t Nclasses, iclass;
-  int i, status, ip;
+  int i, j, status, ip, *iaux=NULL;
 
-  
   /***************************************
    * number of classes 
    ***************************************/
@@ -889,6 +929,49 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
   }
   *xid_nc = Nclasses;
 
+   *xid_member     = (int***)malloc(Nclasses*sizeof(int*));
+  (*xid_member)[0] = (int** )malloc(VOLUME*sizeof(int*));
+  for(i=1; i<Nclasses; i++) {
+    (*xid_member)[i] = (*xid_member)[i-1] + (*xid_count)[i-1];
+  }
+  (*xid_member)[0][0] = (int*)malloc(4*VOLUME*sizeof(int));
+  ip = 0;
+  for(i=0; i<Nclasses; i++) {
+    for(j=0; j<(*xid_count)[i]; j++) {
+      if(i==0 && j==0) {
+        ip++;
+        continue;
+      }
+      (*xid_member)[i][j] = (*xid_member)[0][0] + ip*4;
+      ip++;
+    }
+  }
+  if( (iaux = (int*)malloc(Nclasses*sizeof(int))) == NULL ) {
+    fprintf(stderr, "[make_x_orbits_4d] Error, could not alloc iaux\n");
+    return(1);
+  }
+  memset(iaux, 0, Nclasses*sizeof(int));
+
+  for(x[0]=0; x[0]<T; x[0]++) {
+    y[0] = (x[0]>Thalf) ? x[0] - T : x[0];
+  for(x[1]=0; x[1]<L; x[1]++) {
+    y[1] = (x[1]>Lhalf) ? x[1] - L : x[1];
+  for(x[2]=0; x[2]<L; x[2]++) {
+    y[2] = (x[2]>Lhalf) ? x[2] - L : x[2];
+  for(x[3]=0; x[3]<L; x[3]++) {
+    y[3] = (x[3]>Lhalf) ? x[3] - L : x[3];
+    ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+    iclass = (*xid)[ix];
+    (*xid_member)[iclass][iaux[iclass]][0] = y[0];
+    (*xid_member)[iclass][iaux[iclass]][1] = y[1];
+    (*xid_member)[iclass][iaux[iclass]][2] = y[2];
+    (*xid_member)[iclass][iaux[iclass]][3] = y[3];
+    //fprintf(stdout, "\t%6d%6d%4d%3d%3d%3d%3d\n", ix, iclass, iaux[iclass], y[0], y[1], y[2], y[3]);
+    iaux[iclass]++;
+  }}}}
+  // TEST:
+  // for(i=0; i<Nclasses; i++) { fprintf(stdout, "\t%3d%6d%6d\n", i, (*xid_count)[i], iaux[i]); }
+  free(iaux);
    // TEST: print the lists 
 /*
   fprintf(stdout, "# t\tx\ty\tz\txid\n");
@@ -922,4 +1005,149 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
 */
 
   return(0);
-}
+}  // end of make_x_orbits_4d
+
+/**********************************************************************
+ * reduce_x_orbits_4d
+ * - take out the orbits that contain at least one 0 or L_mu / 2
+ **********************************************************************/
+int reduce_x_orbits_4d(int *xid, int *xid_count, double **xid_val, int xid_nc, int **xid_rep, int ***xid_member) {
+
+  int LL = LX;
+  int Lhalf = LL / 2;
+  int Thalf = T / 2;
+  size_t iclass;
+  int i, j, ix, x[4];
+  int count_lhalf, count_thalf, count_zero;
+  //int status;
+  int reduce_flag;
+  int member_count, *member_list=NULL;
+
+  if(xid==NULL || xid_count==NULL || xid_val==NULL || xid_nc==0 || xid_rep==NULL || xid_member==NULL) {
+    fprintf(stderr, "[] Error input field / number NULL / zero\n");
+    return(1);
+  }
+  //fprintf(stdout, "# [reduce_x_orbits_4d] reduction class id --- representative --- number of members\n");
+  for(iclass=0; iclass<xid_nc; iclass++) {
+    count_zero  = 0;
+    count_lhalf = 0;
+    count_thalf = 0;
+    reduce_flag = 0;
+    // reduction cases
+    count_zero = (xid_rep[iclass][0]==0) + (xid_rep[iclass][1]==0) + (xid_rep[iclass][2]==0) + (xid_rep[iclass][3]==0);
+    count_lhalf = (xid_rep[iclass][0]==Lhalf) + (xid_rep[iclass][1]==Lhalf) 
+                + (xid_rep[iclass][2]==Lhalf) + (xid_rep[iclass][3]==Lhalf);
+    count_thalf = (xid_rep[iclass][0]==Thalf);
+
+    if( (count_zero == 4) || (count_thalf > 0) ) {
+      reduce_flag = 1;
+    } else if (count_lhalf > 1) {
+      reduce_flag = 1;
+    } else if(count_lhalf == 1) {
+      if(xid_rep[iclass][0]<=Lhalf) {
+        reduce_flag = 2;
+      } else {
+        reduce_flag = 1;
+      }
+    }
+
+    if(reduce_flag==1) {  // remove the class
+      // TEST
+      //fprintf(stdout, "\t%6lu\t%3d%3d%3d%3d\t%6d remove\n", iclass,
+      //    xid_rep[iclass][0], xid_rep[iclass][1], xid_rep[iclass][2], xid_rep[iclass][3], xid_count[iclass]);
+      for(j=0; j<xid_count[iclass]; j++) {
+        x[0] = ( xid_member[iclass][j][0] + T ) % T;
+        x[1] = ( xid_member[iclass][j][1] + LL ) % LL;
+        x[2] = ( xid_member[iclass][j][2] + LL ) % LL;
+        x[3] = ( xid_member[iclass][j][3] + LL ) % LL;
+        ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+        // TEST
+        //fprintf(stdout, "# [reduce_x_orbits_4d] xid[%d = (%d, %d, %d, %d)] -> -1\n", ix,
+        //    xid_member[iclass][j][0], xid_member[iclass][j][1], xid_member[iclass][j][2], xid_member[iclass][j][3]);
+        xid[ix] = -1;
+        xid_member[iclass][j][0] = -1;
+        xid_member[iclass][j][1] = -1;
+        xid_member[iclass][j][2] = -1;
+        xid_member[iclass][j][3] = -1;
+      }
+      xid_val[iclass][0] = -1.;
+      xid_val[iclass][1] = -1.;
+      xid_val[iclass][2] = -1.;
+      xid_val[iclass][3] = -1.;
+      xid_rep[iclass][0] = T;
+      xid_rep[iclass][1] = LL;
+      xid_rep[iclass][2] = LL;
+      xid_rep[iclass][3] = LL;
+      //fprintf(stdout, "# [reduce_x_orbits_4d] points removed  %d %d %d\n", xid_count[iclass], xid_count[iclass], reduce_flag);
+      xid_count[iclass] = 0;
+    } else if (reduce_flag==2) {  // keep the class, reduce it
+      // TEST
+      //fprintf(stdout, "\t%6lu\t%3d%3d%3d%3d\t%6d reduce\n", iclass,
+      //    xid_rep[iclass][0], xid_rep[iclass][1], xid_rep[iclass][2], xid_rep[iclass][3], xid_count[iclass]);
+      member_count=0;
+      member_list=(int*)malloc(4*xid_count[iclass]*sizeof(int));
+      for(j=0; j<xid_count[iclass]; j++) {
+        x[0] = ( xid_member[iclass][j][0] + T ) % T;
+        x[1] = ( xid_member[iclass][j][1] + LL ) % LL;
+        x[2] = ( xid_member[iclass][j][2] + LL ) % LL;
+        x[3] = ( xid_member[iclass][j][3] + LL ) % LL;
+        ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+        if( (xid_member[iclass][j][0] == Lhalf) || (xid_member[iclass][j][0] == -Lhalf) ) {  // keep member
+          // TEST
+          //fprintf(stdout, "# [reduce_x_orbits_4d] keep xid[%d = (%d, %d, %d, %d)] -> -1\n", ix,
+          //    xid_member[iclass][j][0], xid_member[iclass][j][1], xid_member[iclass][j][2], xid_member[iclass][j][3]);
+          member_list[4*member_count+0] = xid_member[iclass][j][0];
+          member_list[4*member_count+1] = xid_member[iclass][j][1];
+          member_list[4*member_count+2] = xid_member[iclass][j][2];
+          member_list[4*member_count+3] = xid_member[iclass][j][3];
+          member_count++;
+        } else {  // remove member
+          // TEST
+          //fprintf(stdout, "# [reduce_x_orbits_4d] remove xid[%d = (%d, %d, %d, %d)] -> -1\n", ix,
+          //    xid_member[iclass][j][0], xid_member[iclass][j][1], xid_member[iclass][j][2], xid_member[iclass][j][3]);
+          xid[ix] = -1;
+        }
+      }
+      // reset global member list and number and representative
+      for(j=0; j<member_count; j++) {
+        memcpy( xid_member[iclass][j], member_list+4*j, 4*sizeof(int));
+      }
+      for(j=member_count; j<xid_count[iclass]; j++) {
+        xid_member[iclass][j][0] = -1;
+        xid_member[iclass][j][1] = -1;
+        xid_member[iclass][j][2] = -1;
+        xid_member[iclass][j][3] = -1;
+      }
+      // TEST
+      //fprintf(stdout, "# [reduce_x_orbits_4d] points removed  %d %d %d\n", xid_count[iclass]-member_count, xid_count[iclass], reduce_flag);
+      xid_count[iclass] = member_count;
+      memcpy( xid_rep[iclass], member_list, 4*sizeof(int));
+      free(member_list); member_list=NULL; member_count = 0;
+    }  // of if reduce_flag == 2
+  }    // of loop on classes
+  // TEST print the lists 
+/*
+  fprintf(stdout, "# [reduce_x_orbits_4d] t\tx\ty\tz\txid\n");
+  for(x[0]=0; x[0]<T; x[0]++) {
+  for(x[1]=0; x[1]<LL; x[1]++) {
+  for(x[2]=0; x[2]<LL; x[2]++) {
+  for(x[3]=0; x[3]<LL; x[3]++) {
+    ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+    fprintf(stdout, "%3d%3d%3d%3d%6d\n", x[0], x[1], x[2], x[3], xid[ix]);
+  }}}}
+  fprintf(stdout, "# [reduce_x_orbits_4d] n\tt\tx\ty\tz\tx^[2]\tx^[4]\tx^[6]\tx^[8]\tmembers\n");
+  for(i=0; i<xid_nc; i++) {
+    fprintf(stdout, "%5d%5d%5d%5d%5d%16.7e%16.7e%16.7e%16.7e%4d\n",
+      i, xid_rep[i][0], xid_rep[i][1], xid_rep[i][2], xid_rep[i][3],
+      xid_val[i][0], xid_val[i][1], xid_val[i][2],xid_val[i][3], xid_count[i]);
+  }
+  for(i=0; i<xid_nc; i++) {
+    fprintf(stdout, "# class number %d; members: %d\n", i, xid_count[i]);
+    for(ix=0; ix<xid_count[i]; ix++ ) {
+      fprintf(stdout, "\t%4d%5d%4d%4d%4d%4d\n", i, ix, xid_member[i][ix][0], xid_member[i][ix][1],
+          xid_member[i][ix][2], xid_member[i][ix][3]);
+    }
+  }
+*/
+  return(0);
+}  // end of reduce_x_orbits_4d
