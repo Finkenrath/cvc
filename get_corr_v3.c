@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
 
   geometry();
 
-  Lhp1 = L / 2 + 1;
+  Lhp1 = LX / 2 + 1;
 
   /****************************************
    * allocate memory for the contractions *
@@ -240,21 +240,21 @@ int main(int argc, char **argv) {
         ix = _GWI( 5, g_ipt[x0][ip][0][0], VOLUME);
         conn2[ip][2*x0  ] += conn[ix  ];
         conn2[ip][2*x0+1] += conn[ix+1];
-        ix = _GWI( 5, g_ipt[x0][L-ip][0][0], VOLUME);
+        ix = _GWI( 5, g_ipt[x0][LX-ip][0][0], VOLUME);
         conn2[ip][2*x0  ] += conn[ix  ];
         conn2[ip][2*x0+1] += conn[ix+1];
         //
         ix = _GWI(10, g_ipt[x0][0][ip][0], VOLUME);
         conn2[ip][2*x0  ] += conn[ix  ];
         conn2[ip][2*x0+1] += conn[ix+1];
-        ix = _GWI(10, g_ipt[x0][0][L-ip][0], VOLUME);
+        ix = _GWI(10, g_ipt[x0][0][LY-ip][0], VOLUME);
         conn2[ip][2*x0  ] += conn[ix  ];
         conn2[ip][2*x0+1] += conn[ix+1];
         //
         ix = _GWI(15, g_ipt[x0][0][0][ip], VOLUME);
         conn2[ip][2*x0  ] += conn[ix  ];
         conn2[ip][2*x0+1] += conn[ix+1];
-        ix = _GWI(15, g_ipt[x0][0][0][L-ip], VOLUME);
+        ix = _GWI(15, g_ipt[x0][0][0][LZ-ip], VOLUME);
         conn2[ip][2*x0  ] += conn[ix  ];
         conn2[ip][2*x0+1] += conn[ix+1];
       }
@@ -310,12 +310,12 @@ int main(int argc, char **argv) {
         EXIT(6);
       }
       x0 = 0;
-      fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%6d\n", 5, 1, x0, conn2[2*x0], 0., gid);
+      fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%6d\n", 5, 1, x0, conn2[ip][2*x0], 0., gid);
       for(x0=1; x0<T/2; x0++) {
-        fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%6d\n", 5, 1, x0, conn2[2*x0], conn2[2*(T-x0)], gid);
+        fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%6d\n", 5, 1, x0, conn2[ip][2*x0], conn2[ip][2*(T-x0)], gid);
       }
       x0 = T / 2;
-      fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%6d\n", 5, 1, x0, conn2[2*x0], 0., gid);
+      fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%6d\n", 5, 1, x0, conn2[ip][2*x0], 0., gid);
       fclose(ofs);
     }
     retime = (double)clock() / CLOCKS_PER_SEC;
