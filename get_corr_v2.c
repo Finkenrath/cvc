@@ -177,7 +177,11 @@ int main(int argc, char **argv) {
      ***********************/
     ratime = (double)clock() / CLOCKS_PER_SEC;
     sprintf(filename, "%s.%.4d", filename_prefix, gid);
-    status = read_contraction(conn, NULL, filename, 16);
+    if(format==2 || format==3) {
+      status = read_contraction(conn, NULL, filename, 16);
+    } else if( format==0) {
+      status = read_lime_contraction(conn, filename, 16, 0);
+    }
     if(status != 0) {
       // fprintf(stderr, "[get_corr_v2] Error from read_contractions, status was %d\n", status);
       // EXIT(5);

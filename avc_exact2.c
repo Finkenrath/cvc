@@ -41,11 +41,7 @@ void usage() {
   fprintf(stdout, "Options: -v verbose\n");
   fprintf(stdout, "         -g apply a random gauge transformation\n");
   fprintf(stdout, "         -f input filename [default cvc.input]\n");
-#ifdef MPI
-  MPI_Abort(MPI_COMM_WORLD, 1);
-  MPI_Finalize();
-#endif
-  exit(0);
+  EXIT(0);
 }
 
 
@@ -66,6 +62,7 @@ int main(int argc, char **argv) {
   int write_ascii=0;
   int mms = 0, mass_id = -1;
   int outfile_prefix_set = 0;
+  int up_dn_onefile = 0;
   double gperm_sign[5][4], gperm2_sign[4][4];
   double *conn = (double*)NULL;
   double contact_term[8];
@@ -96,7 +93,7 @@ int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
 #endif
 
-  while ((c = getopt(argc, argv, "wWah?vgf:t:m:o:")) != -1) {
+  while ((c = getopt(argc, argv, "uwWah?vgf:t:m:o:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -133,6 +130,10 @@ int main(int argc, char **argv) {
       strcpy(outfile_prefix, optarg);
       fprintf(stdout, "\n# [] will use prefix $s for output filenames\n", outfile_prefix);
       outfile_prefix_set = 1;
+      break;
+    case 'u':
+      up_dn_onefile = 1;
+      fprintf(stdout, "# [] will read up / dn from one file at pos 0 / 1\n");
       break;
     case 'h':
     case '?':
@@ -171,9 +172,7 @@ int main(int argc, char **argv) {
   mpi_init(argc, argv);
 #ifdef MPI
   if((status = (int*)calloc(g_nproc, sizeof(int))) == (int*)NULL) {
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-    exit(7);
+    EXIT(7);
   }
 #endif
 
@@ -184,7 +183,7 @@ int main(int argc, char **argv) {
   exitstatus = fftw_threads_init();
   if(exitstatus != 0) {
     fprintf(stderr, "\n[] Error from fftw_init_threads; status was %d\n", exitstatus);
-    exit(120);
+    EXIT(120);
   }
 #endif
 
@@ -213,19 +212,13 @@ int main(int argc, char **argv) {
 #ifdef MPI
   if(T==0) {
     fprintf(stderr, "[%2d] local T is zero; exit\n", g_cart_id);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-    exit(2);
+    EXIT(2);
   }
 #endif
 
   if(init_geometry() != 0) {
     fprintf(stderr, "ERROR from init_geometry\n");
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-#endif
-    exit(1);
+    EXIT(1);
   }
 
   geometry();
@@ -267,11 +260,7 @@ int main(int argc, char **argv) {
   conn = (double*)calloc(2 * 16 * VOLUME, sizeof(double));
   if( conn==(double*)NULL ) {
     fprintf(stderr, "could not allocate memory for contr. fields\n");
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-#endif
-    exit(3);
+    EXIT(3);
   }
 #ifdef OPENMP
 #pragma omp parallel for
@@ -283,11 +272,7 @@ int main(int argc, char **argv) {
    ***********************************************************/
   in  = (fftw_complex*)malloc(FFTW_LOC_VOLUME*sizeof(fftw_complex));
   if(in==(fftw_complex*)NULL) {    
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-#endif
-    exit(4);
+    EXIT(4);
   }
 
   /***********************************************************
@@ -389,8 +374,13 @@ int main(int argc, char **argv) {
    **********************************************************/
   for(ia=0; ia<12; ia++) {
     if(!mms) {
-      get_filename(filename, 4, ia, 1);
-      read_lime_spinor(g_spinor_field[ia], filename, 0);
+      if(!up_dn_onefile) {
+        get_filename(filename, 4, ia, 1);
+        read_lime_spinor(g_spinor_field[ia], filename, 0);
+      } else {
+        get_filename(filename, 4, ia, 0);
+        read_lime_spinor(g_spinor_field[ia], filename, 0);
+      }
       xchange_field(g_spinor_field[ia]);
     } else {
       sprintf(filename, "%s.%.4d.04.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, ia, mass_id);
@@ -411,8 +401,13 @@ int main(int argc, char **argv) {
     /* read 12 dn-type propagators */
     for(ia=0; ia<12; ia++) {
       if(!mms) {
-        get_filename(filename, nu, ia, -1);
-        read_lime_spinor(g_spinor_field[12+ia], filename, 0);
+        if(!up_dn_onefile) {
+          get_filename(filename, nu, ia, -1);
+          read_lime_spinor(g_spinor_field[12+ia], filename, 0);
+        } else {
+          get_filename(filename, nu, ia, 0);
+          read_lime_spinor(g_spinor_field[12+ia], filename, 1);
+        }
         xchange_field(g_spinor_field[12+ia]);
       } else {
         sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, nu, ia, mass_id);
@@ -568,8 +563,13 @@ int main(int argc, char **argv) {
    **********************************************************/
   for(ia=0; ia<12; ia++) {
     if(!mms) {
-      get_filename(filename, 4, ia, -1);
-      read_lime_spinor(g_spinor_field[12+ia], filename, 0);
+      if(!up_dn_onefile) {
+        get_filename(filename, 4, ia, -1);
+        read_lime_spinor(g_spinor_field[12+ia], filename, 0);
+      } else {
+        get_filename(filename, 4, ia, 0);
+        read_lime_spinor(g_spinor_field[12+ia], filename, 1);
+      }
       xchange_field(g_spinor_field[12+ia]);
     } else {
       sprintf(filename, "%s.%.4d.04.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, ia, mass_id);
@@ -590,8 +590,13 @@ int main(int argc, char **argv) {
     /* read 12 up-type propagators */
     for(ia=0; ia<12; ia++) {
       if(!mms) {
-        get_filename(filename, nu, ia, 1);
-        read_lime_spinor(g_spinor_field[ia], filename, 0);
+      if(!up_dn_onefile) {
+          get_filename(filename, nu, ia, 1);
+          read_lime_spinor(g_spinor_field[ia], filename, 0);
+      } else {
+          get_filename(filename, nu, ia, 0);
+          read_lime_spinor(g_spinor_field[ia], filename, 0);
+      }
         xchange_field(g_spinor_field[ia]);
       } else {
         sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, nu, ia, mass_id);

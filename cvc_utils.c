@@ -2284,7 +2284,7 @@ void get_filename(char *filename, const int nu, const int sc, const int sign) {
 
   int isx[4], Lsize[4];
 
-  if(format==2 || format==3) {
+//  if(format==2 || format==3) {
     isx[0] =  g_source_location/(LX_global * LY_global * LZ_global);
     isx[1] = (g_source_location%(LX_global * LY_global * LZ_global)) / (LY_global * LZ_global);
     isx[2] = (g_source_location%(LY_global * LZ_global)) / LZ_global;
@@ -2293,19 +2293,18 @@ void get_filename(char *filename, const int nu, const int sc, const int sign) {
     Lsize[1] = LX_global;
     Lsize[2] = LY_global;
     Lsize[3] = LZ_global;
-  }
+//  }
 
-  if(format==0) {
-    /* format from invert */
-    if(sign==1) {
-      sprintf(filename, "%s.%.4d.%.2d.%.2d.inverted", filename_prefix, Nconf, nu, sc);
-    }
-    else {
-      sprintf(filename, "%s.%.4d.%.2d.%.2d.inverted", filename_prefix2, Nconf, nu, sc);
+  if(format==0) {  // format from invert
+    if(sign==1) { sprintf(filename, "%s.%.4d.%.2d.%.2d.inverted", filename_prefix,  Nconf, nu, sc); }
+    else if(sign==-1) { sprintf(filename, "%s.%.4d.%.2d.%.2d.inverted", filename_prefix2, Nconf, nu, sc); }
+    else if(sign == 0) {
+      if(nu!=4) isx[nu] = (isx[nu]+1)%Lsize[nu];
+      sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.inverted", 
+          filename_prefix, Nconf, isx[0], isx[1], isx[2], isx[3], sc);
     }
   }
-  else if(format==2) {
-    /* Dru/Xu format */
+  else if(format==2) {  // Dru/Xu format
     if(nu!=4) isx[nu] = (isx[nu]+1)%Lsize[nu];
     if(sign==1) {
       sprintf(filename, "conf.%.4d.t%.2dx%.2dy%.2dz%.2ds%.2dc%.2d.pmass.%s.inverted", 
@@ -2316,8 +2315,7 @@ void get_filename(char *filename, const int nu, const int sc, const int sign) {
         Nconf, isx[0], isx[1], isx[2], isx[3], sc/3, sc%3, filename_prefix);
     }
   }
-  else if(format==3) {
-    /* Dru/Xu format */
+  else if(format==3) {  // Dru/Xu format
     if(nu!=4) isx[nu] = (isx[nu]+1)%Lsize[nu];
     if(sign==1) {
       sprintf(filename, "conf.%.4d.t%.2dx%.2dy%.2dz%.2d.pmass.%s.%.2d.inverted", 
@@ -2328,8 +2326,7 @@ void get_filename(char *filename, const int nu, const int sc, const int sign) {
         Nconf, isx[0], isx[1], isx[2], isx[3], filename_prefix, sc);
     }
   }
-  else if(format==4) {
-    /* my format for lvc */
+  else if(format==4) {  // my format for lvc
     if(sign==1) {
       sprintf(filename, "%s.%.4d.%.2d.inverted", filename_prefix, Nconf, sc);
     }
@@ -2337,9 +2334,7 @@ void get_filename(char *filename, const int nu, const int sc, const int sign) {
       sprintf(filename, "%s.%.4d.%.2d.inverted", filename_prefix2, Nconf, sc);
     }
   }
-  else if(format==1) {
-    /* GWC format */
-  }
+  // else if(format==1) {  // GWC format }
 }
 
 int wilson_loop(complex *w, const int xstart, const int dir, const int Ldir) {
