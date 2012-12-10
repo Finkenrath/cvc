@@ -1,5 +1,5 @@
 /****************************************************
- * cvc_2pt_disc_vector.c
+ * cvc_2pt_disc.c
  *
  * Mo 10. Dez 09:48:15 CET 2012
  *
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
 		  g_cart_id, l_LXstart_at, g_cart_id, FFTW_LOC_VOLUME);
 
   if(init_geometry() != 0) {
-    fprintf(stderr, "ERROR from init_geometry\n");
+    fprintf(stderr, "[cvc_2pt_disc] Error from init_geometry\n");
     EXIT(1);
   }
 
@@ -149,13 +149,13 @@ int main(int argc, char **argv) {
   // read the gauge field
   alloc_gauge_field(&g_gauge_field, VOLUMEPLUSRAND);
   sprintf(filename, "%s.%.4d", gaugefilename_prefix, Nconf);
-  if(g_cart_id==0) fprintf(stdout, "reading gauge field from file %s\n", filename);
+  if(g_cart_id==0) fprintf(stdout, "# [cvc_2pt_disc] reading gauge field from file %s\n", filename);
   read_lime_gauge_field_doubleprec(filename);
   xchange_gauge();
 
   // measure the plaquette
   plaquette(&plaq);
-  if(g_cart_id==0) fprintf(stdout, "# measured plaquette value: %25.16e\n", plaq);
+  if(g_cart_id==0) fprintf(stdout, "# [cvc_2pt_disc] measured plaquette value: %25.16e\n", plaq);
 
   // allocate memory for the spinor fields
   no_fields = 2;
@@ -165,13 +165,13 @@ int main(int argc, char **argv) {
   // allocate memory for the contractions
   disc = (double*)calloc(K*T*2, sizeof(double));
   if( disc==(double*)NULL ) {
-    fprintf(stderr, "could not allocate memory for disc\n");
+    fprintf(stderr, "[cvc_2pt_disc] Error, could not allocate memory for disc\n");
     EXIT(3);
   }
   memset(disc, 0, K*T*2*sizeof(double));
 
   if(g_cart_id==0) {
-    sprintf(filename, "cvc_2pt_disc_vector.%.4d", Nconf);
+    sprintf(filename, "cvc_2pt_disc.%.4d", Nconf);
     ofs1 = fopen(filename, "w");
     if(ofs1==NULL) {
       EXIT(5);
@@ -186,9 +186,9 @@ int main(int argc, char **argv) {
     // sprintf(filename, "%s.%.4d.%.5d.inverted", filename_prefix, Nconf, sid); 
     // sprintf(filename, "%s.%.4d.%.2d.inverted", filename_prefix, Nconf, sid);
     sprintf(filename, "%s.%.4d.0000.%.2d.inverted", filename_prefix, Nconf, sid);
-    fprintf(stdout, "# [cvc_2pt] reading spinor field from file %s\n", filename);
+    fprintf(stdout, "# [cvc_2pt_disc] reading spinor field from file %s\n", filename);
     if(read_lime_spinor(g_spinor_field[1], filename, 0) != 0) {
-      fprintf(stderr, "[cvc_2pt] proc%.2d Error, could not read from file %s\n", g_cart_id, filename);
+      fprintf(stderr, "[cvc_2pt_disc] proc%.2d Error, could not read from file %s\n", g_cart_id, filename);
       EXIT(4);
     }
     count++;
@@ -201,7 +201,7 @@ int main(int argc, char **argv) {
     xchange_field(g_spinor_field[0]); 
 
     retime = CLOCK;
-    if(g_cart_id==0) fprintf(stdout, "# [cvc_2pt] time to apply Q_tm %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [cvc_2pt_disc] time to apply Q_tm %e seconds\n", retime-ratime);
 
     // add new contractions to disc
     ratime = CLOCK;
@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
     }      // of loop on timeslices
 
     retime = CLOCK;
-    if(g_cart_id==0) fprintf(stdout, "# contractions in %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [cvc_2pt_disc] contractions in %e seconds\n", retime-ratime);
 
     // write current disc to file
 
@@ -290,8 +290,8 @@ int main(int argc, char **argv) {
 
   if(g_cart_id==0) {
     g_the_time = time(NULL);
-    fprintf(stdout, "\n# [cvc_2pt_disc_vector] %s# [cvc_2pt_disc_vector] end of run\n", ctime(&g_the_time));
-    fprintf(stderr, "\n# [cvc_2pt_disc_vector] %s# [cvc_2pt_disc_vector] end of run\n", ctime(&g_the_time));
+    fprintf(stdout, "\n# [cvc_2pt_disc] %s# [cvc_2pt_disc] end of run\n", ctime(&g_the_time));
+    fprintf(stderr, "\n# [cvc_2pt_disc] %s# [cvc_2pt_disc] end of run\n", ctime(&g_the_time));
   }
 
 #ifdef MPI
