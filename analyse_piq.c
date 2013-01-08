@@ -30,6 +30,7 @@
 #include "cvc_utils.h"
 #include "mpi_init.h"
 #include "io.h"
+#include "io_utils.h"
 #include "propagator_io.h"
 #include "Q_phi.h"
 #include "make_H3orbits.h"
@@ -39,6 +40,10 @@
 #include "read_input_parser.h"
 #include "contractions_io.h"
 
+#define _POW2(_a) ((_a)*(_a))
+#define _POW4(_a) ((_a)*(_a)*(_a)*(_a))
+#define _POW6(_a) ((_a)*(_a)*(_a)*(_a)*(_a)*(_a))
+#define _POW8(_a) ((_a)*(_a)*(_a)*(_a)*(_a)*(_a)*(_a)*(_a))
 
 void usage(void) {
   fprintf(stdout, "Program analyse_piq\n");
@@ -75,9 +80,13 @@ int main(int argc, char **argv) {
   double **h4_val=(double**)NULL, **h3_val=(double**)NULL;
   char filename[800], qhat2id_filename[400];
   complex w;
+  double qval[4];
   FILE *ofs;
+  int read_pimn0 = 0;
+  char pimn0_filename[200];
+  double pimn0_value[32];
 
-  while ((c = getopt(argc, argv, "bh?vawWf:m:n:t:s:r:")) != -1) {
+  while ((c = getopt(argc, argv, "bh?vawWf:m:n:t:s:r:z:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -120,6 +129,11 @@ int main(int argc, char **argv) {
       sscanf(optarg, "%s %d", qhat2id_filename, &qhat2count );
       fprintf(stdout, "\n# [analyse_piq] will read qhat2 id from file %s, number of orbits is %d\n",
           qhat2id_filename, qhat2count);
+      break;
+    case 'z':
+      read_pimn0 = 1;
+      strcpy(pimn0_filename, optarg);
+      fprintf(stdout, "# [] will read Pi_mn(0) from file %s\n", pimn0_filename);
       break;
     case 'h':
     case '?':
@@ -278,9 +292,21 @@ int main(int argc, char **argv) {
 /*******************************************
  * loop on the configurations
  *******************************************/
-for(iconf=g_gaugeid; iconf<=g_gaugeid2; iconf+=g_gauge_step) {
+// for(iconf=g_gaugeid; iconf<=g_gaugeid2; iconf+=g_gauge_step) {
 
   for(ix=0;ix<32*VOLUME;ix++) pimn[ix] = 0.;
+
+  if(read_pimn0) {
+    ofs = fopen(pimn0_filename, "r");
+    for(i=0; i<16;i++) {
+      fscanf(ofs, "%lf%lf", pimn0_value+2*i, pimn0_value+2*i+1);
+    }
+    fclose(ofs);
+    fprintf(stdout, "# [] Pi_mn(0)\n");
+    for(i=0; i<16;i++) {
+      fprintf(stdout, "\t%3d%3d%16.7e%16.7e\n", i/4, i%4, pimn0_value[2*i], pimn0_value[2*i+1]);
+    }
+  }
 
   Nconf = iconf;
   fprintf(stdout, "\n# [analyse_piq] iconf = %d\n", iconf);
@@ -294,23 +320,23 @@ for(iconf=g_gaugeid; iconf<=g_gaugeid2; iconf+=g_gauge_step) {
     continue;
   }
 */
-  if(format != 2) {
-    //sprintf(filename, "%s.%.4d.%.4d", filename_prefix, iconf, Nsave);
-    sprintf(filename, "%s.%.4d", filename_prefix, iconf);
-  } else {
+  //if(format != 2) {
+  //  //sprintf(filename, "%s.%.4d.%.4d", filename_prefix, iconf, Nsave);
+  //  sprintf(filename, "%s.%.4d", filename_prefix, iconf);
+  //} else {
     sprintf(filename, "%s", filename_prefix);
-  }
+  //}
   fprintf(stdout, "# [analyse_piq] Reading data from file %s\n", filename);
   status = read_lime_contraction(pimn, filename, 16, 0);
   if(status != 0) {
     fprintf(stderr, "\n[analyse_piq] Error on reading of pimn, status was %d\n", status);
-    continue;
-    //exit(123);
+    // continue;
+    exit(123);
   }
 
   if(force_byte_swap) {
     fprintf(stdout, "\n# [analyse_piq] starting byte swap ...");
-    byte_swap64((void*)pimn, 32*VOLUME);
+    byte_swap64_v2(pimn, 32*VOLUME);
     fprintf(stdout, " done\n");
   }
 
@@ -325,10 +351,7 @@ for(iconf=g_gaugeid; iconf<=g_gaugeid2; iconf+=g_gauge_step) {
     for(mu=0; mu<16; mu++) {
       fprintf(stdout, "%3d%25.16e%25.16e\n", mu, pimn[_GWI(mu,ix,VOLUME)], pimn[_GWI(mu,ix,VOLUME)+1]);
     }
-  }
-  }
-  }
-  }
+  }}}}
 */
   /**********************************************
    * test the Ward identity in position space
@@ -355,7 +378,7 @@ for(iconf=g_gaugeid; iconf<=g_gaugeid2; iconf+=g_gauge_step) {
       }
     }}}}
     fclose(ofs);
-    continue; 
+    // continue; 
   }
 
   /**********************************************
@@ -366,11 +389,11 @@ for(iconf=g_gaugeid; iconf<=g_gaugeid2; iconf+=g_gauge_step) {
     for(x0=0; x0<T; x0++) {
       q[0] = 2. * sin( M_PI * (double)x0 / (double)T );
     for(x1=0; x1<LX; x1++) {
-      q[1] = 2. * sin( M_PI * (double)x1 / (double)LX );
+      q[1] = 2. * sin( M_PI * ((double)x1 + BCangle[1]*0.5)/ (double)LX );
     for(x2=0; x2<LY; x2++) {
-      q[2] = 2. * sin( M_PI * (double)x2 / (double)LY );
+      q[2] = 2. * sin( M_PI * ((double)x2 + BCangle[2]*0.5)/ (double)LY );
     for(x3=0; x3<LZ; x3++) {
-      q[3] = 2. * sin( M_PI * (double)x3 / (double)LZ );
+      q[3] = 2. * sin( M_PI * ((double)x3 + BCangle[3]*0.5)/ (double)LZ );
       ix = g_ipt[x0][x1][x2][x3];
       fprintf(ofs, "# qt=%.2d, qx=%.2d, qy=%.2d, qz=%.2d\n", x0, x1, x2, x3);
       for(mu=0; mu<4; mu++) {
@@ -391,24 +414,35 @@ for(iconf=g_gaugeid; iconf<=g_gaugeid2; iconf+=g_gauge_step) {
   for(x0=0; x0<T; x0++) {
     q[0]    = 2. * sin( M_PI / (double)T_global * (double)(x0+Tstart) );
   for(x1=0; x1<LX; x1++) {
-    q[1]    = 2. * sin( M_PI / (double)LX       * (double)(x1) );
+    q[1]    = 2. * sin( M_PI / (double)LX       * ((double)(x1)+BCangle[1]*0.5) );
   for(x2=0; x2<LY; x2++) {
-    q[2]    = 2. * sin( M_PI / (double)LY       * (double)(x2) );
+    q[2]    = 2. * sin( M_PI / (double)LY       * ((double)(x2)+BCangle[2]*0.5) );
   for(x3=0; x3<LZ; x3++) {
-    q[3]    = 2. * sin( M_PI / (double)LZ       * (double)(x3) );
+    q[3]    = 2. * sin( M_PI / (double)LZ       * ((double)(x3)+BCangle[3]*0.5) );
     ix = g_ipt[x0][x1][x2][x3];
     q2    = q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3];
+    qval[0] = q2;
+    qval[1] = _POW4(q[0]) + _POW4(q[1]) + _POW4(q[2]) + _POW4(q[3]);
+    qval[2] = _POW6(q[0]) + _POW6(q[1]) + _POW6(q[2]) + _POW6(q[3]);
+    qval[3] = _POW8(q[0]) + _POW8(q[1]) + _POW8(q[2]) + _POW8(q[3]);
 
     pi[2*ix  ] = 0.;
     pi[2*ix+1] = 0.;
 
     if(proj_type==0) {
 /*      fprintf(stdout, "# using all 4x4 mu-nu-combinations\n"); */
-      for(mu=0; mu<4; mu++) {
-      for(nu=0; nu<4; nu++) {
-        pi[2*ix  ] += ( q[mu]*q[nu] - q2*(double)(mu==nu) ) * pimn[_GWI(4*mu+nu,ix,VOLUME)  ];
-        pi[2*ix+1] += ( q[mu]*q[nu] - q2*(double)(mu==nu) ) * pimn[_GWI(4*mu+nu,ix,VOLUME)+1];
-      }
+      if(read_pimn0) {
+        for(mu=0; mu<4; mu++) {
+        for(nu=0; nu<4; nu++) {
+          pi[2*ix  ] += ( q[mu]*q[nu] - q2*(double)(mu==nu) ) * (pimn[_GWI(4*mu+nu,ix,VOLUME)  ] - pimn0_value[2*(4*mu+nu)  ]);
+          pi[2*ix+1] += ( q[mu]*q[nu] - q2*(double)(mu==nu) ) * (pimn[_GWI(4*mu+nu,ix,VOLUME)+1] - pimn0_value[2*(4*mu+nu)+1]);
+        }}
+      } else {
+        for(mu=0; mu<4; mu++) {
+        for(nu=0; nu<4; nu++) {
+          pi[2*ix  ] += ( q[mu]*q[nu] - q2*(double)(mu==nu) ) * pimn[_GWI(4*mu+nu,ix,VOLUME)  ];
+          pi[2*ix+1] += ( q[mu]*q[nu] - q2*(double)(mu==nu) ) * pimn[_GWI(4*mu+nu,ix,VOLUME)+1];
+        }}
       }
       if(q2==0.) {
         pi[2*ix  ] = 0.;
@@ -420,17 +454,42 @@ for(iconf=g_gaugeid; iconf<=g_gaugeid2; iconf+=g_gauge_step) {
       }
 
     } else if(proj_type==1) {
-/*      fprintf(stdout, "# using only 4 mu==nu-combinations\n"); */
-//      for(mu=0; mu<4; mu++)
-      for(mu=1; mu<4; mu++)
-      {
-        pi[2*ix  ] += pimn[_GWI(5*mu,ix,VOLUME)  ];
-        pi[2*ix+1] += pimn[_GWI(5*mu,ix,VOLUME)+1];
+      fprintf(stdout, "# using only 4 mu==nu-combinations\n");
+      if(read_pimn0) {
+        for(mu=0; mu<4; mu++) {
+          pi[2*ix  ] += (pimn[_GWI(5*mu,ix,VOLUME)  ] - pimn0_value[10*mu  ]);
+          pi[2*ix+1] += (pimn[_GWI(5*mu,ix,VOLUME)+1] - pimn0_value[10*mu+1]);
+        }
+      } else {
+        for(mu=0; mu<4; mu++) {
+          pi[2*ix  ] += pimn[_GWI(5*mu,ix,VOLUME)  ];
+          pi[2*ix+1] += pimn[_GWI(5*mu,ix,VOLUME)+1];
+        }
       }
-    
-      fprintf(stdout, "\n# [analyse_piq] Warning: using ii only\n");
-  
-      q2 = 3.*q[0]*q[0] + 2.*( q[1]*q[1] + q[2]*q[2] + q[3]*q[3] );
+      q2 = 3. * (q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3] );
+
+      if(q2==0.) {
+        pi[2*ix  ] = 0.;
+        pi[2*ix+1] = 0.;
+      }
+      else {
+        pi[2*ix  ] /= -q2; 
+        pi[2*ix+1] /= -q2;
+      }
+    } else if(proj_type==2) {
+      fprintf(stdout, "# using only 3 mu==nu-combinations\n");
+      if(read_pimn0) {
+        for(mu=1; mu<4; mu++) {
+          pi[2*ix  ] += (pimn[_GWI(5*mu,ix,VOLUME)  ] - pimn0_value[10*mu  ]);
+          pi[2*ix+1] += (pimn[_GWI(5*mu,ix,VOLUME)+1] - pimn0_value[10*mu+1]);
+        }
+      } else {
+        for(mu=1; mu<4; mu++) {
+          pi[2*ix  ] += pimn[_GWI(5*mu,ix,VOLUME)  ];
+          pi[2*ix+1] += pimn[_GWI(5*mu,ix,VOLUME)+1];
+        }
+      }
+      q2 = 3. * q[0]*q[0] + 2. * (q[1]*q[1] + q[2]*q[2] + q[3]*q[3] );
 
       if(q2==0.) {
         pi[2*ix  ] = 0.;
@@ -441,19 +500,19 @@ for(iconf=g_gaugeid; iconf<=g_gaugeid2; iconf+=g_gauge_step) {
         pi[2*ix+1] /= -q2;
       }
     }
-  }
-  }
-  }
-  }
-/*
-  for(x0=0; x0<T; x0++) {
-  for(x1=0; x1<LX; x1++) {
-  for(x2=0; x2<LY; x2++) {
-  for(x3=0; x3<LZ; x3++) {
-    ix = g_ipt[x0][x1][x2][x3];
-    fprintf(stdout, "%3d%3d%3d%3d\t(%25.16e + %25.16e*1.i)\n", x0, x1, x2, x3, pi[2*ix], pi[2*ix+1]);
+
+    fprintf(stdout, "%3d%3d%3d%3d%16.7e%16.7e%16.7e%16.7e%16.7e%16.7e\n", x0, x1, x2, x3,
+        qval[0], qval[1], qval[2], qval[3], pi[2*ix], pi[2*ix+1]);
   }}}}
-*/
+
+  //for(x0=0; x0<T; x0++) {
+  //for(x1=0; x1<LX; x1++) {
+  //for(x2=0; x2<LY; x2++) {
+  //for(x3=0; x3<LZ; x3++) {
+  //  ix = g_ipt[x0][x1][x2][x3];
+  //  fprintf(stdout, "%3d%3d%3d%3d\t(%25.16e + %25.16e*1.i)\n", x0, x1, x2, x3, pi[2*ix], pi[2*ix+1]);
+  //}}}}
+
 
   fprintf(stdout, "\n# [analyse_piq] finished calculating pi\n");
 
@@ -714,7 +773,7 @@ if(mode==0 || mode==3) {
  
 }  // of mode == 0/3
 
-} // of loop on iconf
+// } // of loop on iconf
 
 
   /**************************

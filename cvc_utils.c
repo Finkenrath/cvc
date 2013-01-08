@@ -1718,6 +1718,15 @@ int printf_gauge_field(double *gauge, FILE *ofs) {
   return(0);
 }
 
+int printf_SU3_link (double *u, FILE*ofs) {
+  int i;
+  fprintf(ofs, "# [printf_SU3_link] SU(3) link\n");
+  for(i=0; i<9; i++) {
+    fprintf(ofs, "\t%3d%3d%25.16e%25.16e\n", i/3, i%3, u[2*i], u[2*i+1]);
+  }
+  return(0);
+}  // end of printf_SU3_link
+
 int printf_spinor_field(double *s, FILE *ofs) {
 
   int i, start_valuet=0, start_valuex=0;
@@ -4104,3 +4113,26 @@ if(dir==0) {
 #endif
 }
 #endif  // of if 0
+
+int shift_spinor_field (double *s, double *r, int *d) {
+#ifndef MPI
+  int x0, x1, x2, x3, y0, y1, y2, y3;
+  unsigned int ix, iy;
+  for(x0=0; x0<T; x0++) {
+    y0 = (x0 + d[0] + T) % T ;
+  for(x1=0; x1<LX; x1++) {
+    y1 = (x1 + d[1] + LX) % LX;
+  for(x2=0; x2<LY; x2++) {
+    y2 = (x2 + d[2] + LY) % LY;
+  for(x3=0; x3<LZ; x3++) {
+    y3 = (x3 + d[3] + LZ) % LZ;
+    ix = g_ipt[x0][x1][x2][x3];
+    iy = g_ipt[y0][y1][y2][y3];
+    _fv_eq_fv(s+_GSI(iy), r+_GSI(ix));
+  }}}}
+  return(0);
+#else
+  fprintf(stderr, "[shift_spinor_field] Error, MPI version not implemented\n");
+  EXIT(1);
+#endif
+}  // end of shift_spinor_field

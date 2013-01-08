@@ -53,6 +53,10 @@
   (A_)[3] = _oct((double)(B_)[0]-(double)(C_)[0]) + _oct((double)(B_)[1]-(double)(C_)[1])  \
           + _oct((double)(B_)[2]-(double)(C_)[2]) + _oct((double)(B_)[3]-(double)(C_)[3]);}
 
+#define _POW2(_a) ((_a)*(_a))
+#define _POW3(_a) ((_a)*(_a)*(_a))
+#define _POW4(_a) ((_a)*(_a)*(_a)*(_a))
+
 /********************************************************************************
  *
  ********************************************************************************/
@@ -501,13 +505,15 @@ void finalize_x_orbits2(int **xid, int **xid_count, double ***xid_val, int***xid
     *xid_rep = NULL;
   }
 
-  if(*xid_member != NULL) {
-    if(**xid_member != NULL) {
-      if(***xid_member != NULL) free(***xid_member);
-      free(**xid_member);
+  if(xid_member != NULL) {
+    if(*xid_member != NULL) {
+      if(**xid_member != NULL) {
+        if(***xid_member != NULL) free(***xid_member);
+        free(**xid_member);
+      }
+      free(*xid_member);
+      *xid_member = NULL;
     }
-    free(*xid_member);
-    *xid_member = NULL;
   }
 }  // end of finalize_x_orbits2
 
@@ -595,7 +601,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
             + (Lhalf+1)*Lhalf               /* 12  */ \
             + (Lhalf+1) )                   /* 3   */;
 
-  fprintf(stdout, "# [make_x_orbits_4d] Nclasses = %u\n", Nclasses);
+  fprintf(stdout, "# [make_x_orbits_4d] Nclasses = %lu\n", Nclasses);
   
   status = init_x_orbits(xid, xid_count, xid_val, xid_rep, Nclasses);
   if(status != 0) {
@@ -645,7 +651,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
         } else if ((*xid)[ix] != iclass) {
-          fprintf(stderr, "[make_x_orbits_4d] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          fprintf(stderr, "[make_x_orbits_4d] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
           return(2);
         }
       }}}}
@@ -686,7 +692,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
         } else if ((*xid)[ix] != iclass) {
-          fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
           return(3);
         }
       }}}}
@@ -723,7 +729,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
         } else if ((*xid)[ix] != iclass) {
-          fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
           return(3);
         }
       }}}}
@@ -763,7 +769,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
         } else if ((*xid)[ix] != iclass) {
-          fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
           return(4);
         }
       }}}}
@@ -798,7 +804,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
         (*xid)[ix] = iclass;
         (*xid_count)[iclass]++;
       } else if ((*xid)[ix] != iclass) {
-        fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+        fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
         return(5);
       }
     }}}}
@@ -840,7 +846,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
             (*xid)[ix] = iclass;
             (*xid_count)[iclass]++;
           } else if ((*xid)[ix] != iclass) {
-            fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+            fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
             return(3);
           }
         }}}}
@@ -878,7 +884,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
             (*xid)[ix] = iclass;
             (*xid_count)[iclass]++;
           } else if ((*xid)[ix] != iclass) {
-            fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+            fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
             return(3);
           }
         }}}}
@@ -912,7 +918,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
           (*xid)[ix] = iclass;
           (*xid_count)[iclass]++;
         } else if ((*xid)[ix] != iclass) {
-          fprintf(stderr, "[] Error, class id of site %u != current class id %u\n", (*xid)[ix], iclass);
+          fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
           return(5);
         }
       }}}}
@@ -924,7 +930,7 @@ int make_x_orbits_4d(int **xid, int **xid_count, double ***xid_val, int *xid_nc,
 
 
   if(Nclasses != iclass) {
-    fprintf(stderr, "[] Error, counted number of classes %u differs from calculated number %u\n", iclass, Nclasses);
+    fprintf(stderr, "[] Error, counted number of classes %lu differs from calculated number %lu\n", iclass, Nclasses);
     return(6);
   }
   *xid_nc = Nclasses;
@@ -1151,3 +1157,608 @@ int reduce_x_orbits_4d(int *xid, int *xid_count, double **xid_val, int xid_nc, i
 */
   return(0);
 }  // end of reduce_x_orbits_4d
+
+
+/********************************************************************************
+ * 4d orbits for symmetric lattice
+ ********************************************************************************/
+int make_x_orbits_4d_symmetric(int **xid, int **xid_count, double ***xid_val, int *xid_nc, int ***xid_rep, int ****xid_member) {
+
+  size_t ix;
+  int x[4], y[4], z[4];
+  int s0, s1, s2, s3;
+  int L     = LX;
+  int Lhalf = L/2;
+  int Thalf = T/2;
+  int Lhp1  = L/2+1;
+  int Lhm1  = L/2-1;
+  size_t Nclasses, iclass;
+  int i, j, status, ip, *iaux=NULL;
+
+  /***************************************
+   * number of classes 
+   ***************************************/
+  Nclasses = (_POW4(Lhalf) + 10*_POW3(Lhalf) + 35*_POW2(Lhalf) + 50*Lhalf ) / 24 + 1;
+  fprintf(stdout, "# [make_x_orbits_4d] Nclasses = %lu\n", Nclasses);
+  
+  status = init_x_orbits(xid, xid_count, xid_val, xid_rep, Nclasses);
+  if(status != 0) {
+    fprintf(stderr, "Error, could not intialise fields\n");
+    return(1);
+  }
+
+  /***************************************
+   * initialize the permutation tables
+   **************************************/
+  init_perm_tabs();
+
+  /***************************************
+   * characterize the classes
+   ***************************************/
+  iclass = 0;
+  /******************************************************
+   * (1) t = 0,...,L/2
+   ******************************************************/
+  // 1111
+  for(x[0]=0;    x[0]<Lhp1-3; x[0]++) {
+  for(x[1]=x[0]+1; x[1]<Lhp1-2; x[1]++) {
+  for(x[2]=x[1]+1; x[2]<Lhp1-1; x[2]++) {
+  for(x[3]=x[2]+1; x[3]<Lhp1;   x[3]++) {
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[1]; 
+    (*xid_rep)[iclass][2] = x[2]; 
+    (*xid_rep)[iclass][3] = x[3];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip< 24;ip++) {
+      y[perm_tab_4[ip][0]] = x[0];
+      y[perm_tab_4[ip][1]] = x[1];
+      y[perm_tab_4[ip][2]] = x[2];
+      y[perm_tab_4[ip][3]] = x[3];
+
+      for(s0=-1; s0<2; s0+=2) {
+        z[0] = ((1+s0) * y[0] + (1-s0) * ((T-y[0])%T) ) / 2;
+      for(s1=-1; s1<2; s1+=2) {
+        z[1] = ((1+s1) * y[1] + (1-s1) * ((L-y[1])%L) ) / 2;
+      for(s2=-1; s2<2; s2+=2) {
+        z[2] = ((1+s2) * y[2] + (1-s2) * ((L-y[2])%L) ) / 2;
+      for(s3=-1; s3<2; s3+=2) {
+        z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
+        ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+        //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+        if( (*xid)[ix] == -1 ) {
+          (*xid)[ix] = iclass;
+          (*xid_count)[iclass]++;
+        } else if ((*xid)[ix] != iclass) {
+          fprintf(stderr, "[make_x_orbits_4d] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+          return(2);
+        }
+      }}}}
+    }
+    iclass++;
+  }}}}
+
+  // fprintf(stdout, "# [make_x_orbits_4d] finished classes 1111\n");
+
+  // 112
+  for(x[0]=0;    x[0]<Lhp1-2; x[0]++) {
+  for(x[1]=x[0]+1; x[1]<Lhp1-1; x[1]++) {
+  for(x[2]=x[1]+1; x[2]<Lhp1  ; x[2]++) {
+  for(i=0;i<3;i++) {
+    x[3] = x[i];
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[1]; 
+    (*xid_rep)[iclass][2] = x[2]; 
+    (*xid_rep)[iclass][3] = x[3];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip< 24;ip++) {
+      y[perm_tab_4[ip][0]] = x[0];
+      y[perm_tab_4[ip][1]] = x[1];
+      y[perm_tab_4[ip][2]] = x[2];
+      y[perm_tab_4[ip][3]] = x[3];
+
+      for(s0=-1; s0<2; s0+=2) {
+        z[0] = ((1+s0) * y[0] + (1-s0) * ((T-y[0])%T) ) / 2;
+      for(s1=-1; s1<2; s1+=2) {
+        z[1] = ((1+s1) * y[1] + (1-s1) * ((L-y[1])%L) ) / 2;
+      for(s2=-1; s2<2; s2+=2) {
+        z[2] = ((1+s2) * y[2] + (1-s2) * ((L-y[2])%L) ) / 2;
+      for(s3=-1; s3<2; s3+=2) {
+        z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
+        ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+        //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+        if( (*xid)[ix] == -1 ) {
+          (*xid)[ix] = iclass;
+          (*xid_count)[iclass]++;
+        } else if ((*xid)[ix] != iclass) {
+          fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+          return(3);
+        }
+      }}}}
+    }
+    iclass++;
+  }}}}
+  //fprintf(stdout, "# [make_x_orbits_4d] finished classes 112\n");
+
+  // 22
+  for(x[0]=0;      x[0]<Lhp1-1; x[0]++) {
+  for(x[2]=x[0]+1; x[2]<Lhp1  ; x[2]++) {
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[0]; 
+    (*xid_rep)[iclass][2] = x[2]; 
+    (*xid_rep)[iclass][3] = x[2];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip< 24;ip++) {
+      y[perm_tab_4[ip][0]] = x[0];
+      y[perm_tab_4[ip][1]] = x[0];
+      y[perm_tab_4[ip][2]] = x[2];
+      y[perm_tab_4[ip][3]] = x[2];
+
+      for(s0=-1; s0<2; s0+=2) {
+        z[0] = ((1+s0) * y[0] + (1-s0) * ((T-y[0])%T) ) / 2;
+      for(s1=-1; s1<2; s1+=2) {
+        z[1] = ((1+s1) * y[1] + (1-s1) * ((L-y[1])%L) ) / 2;
+      for(s2=-1; s2<2; s2+=2) {
+        z[2] = ((1+s2) * y[2] + (1-s2) * ((L-y[2])%L) ) / 2;
+      for(s3=-1; s3<2; s3+=2) {
+        z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
+        ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+        //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+        if( (*xid)[ix] == -1 ) {
+          (*xid)[ix] = iclass;
+          (*xid_count)[iclass]++;
+        } else if ((*xid)[ix] != iclass) {
+          fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+          return(3);
+        }
+      }}}}
+    }
+    iclass++;
+  }}
+  //fprintf(stdout, "# [make_x_orbits_4d] finished classes 22\n");
+
+  // 13
+  for(x[0]=0;      x[0]<Lhp1-1; x[0]++) {
+  for(x[1]=x[0]+1; x[1]<Lhp1  ; x[1]++) {
+  for(i=0; i<2; i++) {
+    x[2] = x[i];
+    x[3] = x[i];
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[1];
+    (*xid_rep)[iclass][2] = x[2]; 
+    (*xid_rep)[iclass][3] = x[3];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip<4;ip++) {
+      y[ip      ] = x[2] != x[0] ? x[0] : x[1];
+      y[(ip+1)%4] = x[2];
+      y[(ip+2)%4] = x[2];
+      y[(ip+3)%4] = x[2]; 
+
+      for(s0=-1; s0<2; s0+=2) {
+        z[0] = ((1+s0) * y[0] + (1-s0) * ((T-y[0])%T) ) / 2;
+      for(s1=-1; s1<2; s1+=2) {
+        z[1] = ((1+s1) * y[1] + (1-s1) * ((L-y[1])%L) ) / 2;
+      for(s2=-1; s2<2; s2+=2) {
+        z[2] = ((1+s2) * y[2] + (1-s2) * ((L-y[2])%L) ) / 2;
+      for(s3=-1; s3<2; s3+=2) {
+        z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
+        ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+        //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+        if( (*xid)[ix] == -1 ) {
+          (*xid)[ix] = iclass;
+          (*xid_count)[iclass]++;
+        } else if ((*xid)[ix] != iclass) {
+          fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+          return(4);
+        }
+      }}}}
+    }
+    iclass++;
+  }}}
+  //fprintf(stdout, "# [make_x_orbits_4d] finished classes 13\n");
+
+  // 4
+  for(x[0]=0;    x[0]<Lhp1; x[0]++) {
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[0]; 
+    (*xid_rep)[iclass][2] = x[0]; 
+    (*xid_rep)[iclass][3] = x[0];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    y[0] = x[0];
+    y[1] = x[0];
+    y[2] = x[0];
+    y[3] = x[0];
+
+    for(s0=-1; s0<2; s0+=2) {
+      z[0] = ((1+s0) * y[0] + (1-s0) * ((T-y[0])%T) ) / 2;
+    for(s1=-1; s1<2; s1+=2) {
+      z[1] = ((1+s1) * y[1] + (1-s1) * ((L-y[1])%L) ) / 2;
+    for(s2=-1; s2<2; s2+=2) {
+      z[2] = ((1+s2) * y[2] + (1-s2) * ((L-y[2])%L) ) / 2;
+    for(s3=-1; s3<2; s3+=2) {
+      z[3] = ((1+s3) * y[3] + (1-s3) * ((L-y[3])%L) ) / 2;
+      ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+      //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+      if( (*xid)[ix] == -1 ) {
+        (*xid)[ix] = iclass;
+        (*xid_count)[iclass]++;
+      } else if ((*xid)[ix] != iclass) {
+        fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+        return(5);
+      }
+    }}}}
+    iclass++;
+  }
+  //fprintf(stdout, "# [make_x_orbits_4d] finished classes 4\n");
+
+  if(Nclasses != iclass) {
+    fprintf(stderr, "[] Error, counted number of classes %lu differs from calculated number %lu\n", iclass, Nclasses);
+    return(6);
+  }
+  *xid_nc = Nclasses;
+
+   *xid_member     = (int***)malloc(Nclasses*sizeof(int*));
+  (*xid_member)[0] = (int** )malloc(VOLUME*sizeof(int*));
+  for(i=1; i<Nclasses; i++) {
+    (*xid_member)[i] = (*xid_member)[i-1] + (*xid_count)[i-1];
+  }
+  (*xid_member)[0][0] = (int*)malloc(4*VOLUME*sizeof(int));
+  ip = 0;
+  for(i=0; i<Nclasses; i++) {
+    for(j=0; j<(*xid_count)[i]; j++) {
+      if(i==0 && j==0) {
+        ip++;
+        continue;
+      }
+      (*xid_member)[i][j] = (*xid_member)[0][0] + ip*4;
+      ip++;
+    }
+  }
+  if( (iaux = (int*)malloc(Nclasses*sizeof(int))) == NULL ) {
+    fprintf(stderr, "[make_x_orbits_4d] Error, could not alloc iaux\n");
+    return(1);
+  }
+  memset(iaux, 0, Nclasses*sizeof(int));
+
+  for(x[0]=0; x[0]<T; x[0]++) {
+    y[0] = (x[0]>Thalf) ? x[0] - T : x[0];
+  for(x[1]=0; x[1]<L; x[1]++) {
+    y[1] = (x[1]>Lhalf) ? x[1] - L : x[1];
+  for(x[2]=0; x[2]<L; x[2]++) {
+    y[2] = (x[2]>Lhalf) ? x[2] - L : x[2];
+  for(x[3]=0; x[3]<L; x[3]++) {
+    y[3] = (x[3]>Lhalf) ? x[3] - L : x[3];
+    ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+    iclass = (*xid)[ix];
+    (*xid_member)[iclass][iaux[iclass]][0] = y[0];
+    (*xid_member)[iclass][iaux[iclass]][1] = y[1];
+    (*xid_member)[iclass][iaux[iclass]][2] = y[2];
+    (*xid_member)[iclass][iaux[iclass]][3] = y[3];
+    if(g_verbose>2) fprintf(stdout, "\t%6lu%6lu%4d%3d%3d%3d%3d\n", ix, iclass, iaux[iclass], y[0], y[1], y[2], y[3]);
+    iaux[iclass]++;
+  }}}}
+  // TEST:
+  //for(i=0; i<Nclasses; i++) { fprintf(stdout, "\t%3d%6d%6d\n", i, (*xid_count)[i], iaux[i]); }
+  free(iaux);
+   // TEST: print the lists
+  fprintf(stdout, "# [make_x_orbits_4d_symmetric] verbose level %d\n", g_verbose);
+  if(g_verbose>1) {
+    fprintf(stdout, "# t\tx\ty\tz\txid\n");
+    for(x[0]=0; x[0]<T; x[0]++) {
+    for(x[1]=0; x[1]<L; x[1]++) {
+    for(x[2]=0; x[2]<L; x[2]++) {
+    for(x[3]=0; x[3]<L; x[3]++) {
+      ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+      fprintf(stdout, "%3d%3d%3d%3d%6d\n", x[0], x[1], x[2], x[3], (*xid)[ix]);
+    }}}}
+  
+    fprintf(stdout, "# n\tt\tx\ty\tz\tx^[2]\tx^[4]\tx^[6]\tx^[8]\tmembers\n");
+    for(i=0; i<Nclasses; i++) {
+      fprintf(stdout, "%5d%5d%5d%5d%5d%16.7e%16.7e%16.7e%16.7e%4d\n",
+        i, (*xid_rep)[i][0], (*xid_rep)[i][1], (*xid_rep)[i][2], (*xid_rep)[i][3],
+        (*xid_val)[i][0], (*xid_val)[i][1], (*xid_val)[i][2],(*xid_val)[i][3], (*xid_count)[i]);
+    }
+  
+    for(i=0; i<Nclasses; i++) {
+      fprintf(stdout, "# class number %d; members: %d\n", i, (*xid_count)[i]);
+      for(x[0]=0; x[0]<T; x[0]++) {
+      for(x[1]=0; x[1]<L; x[1]++) {
+      for(x[2]=0; x[2]<L; x[2]++) {
+      for(x[3]=0; x[3]<L; x[3]++) {
+        ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+        if(i == (*xid)[ix])  {
+          fprintf(stdout, "%4d%5lu%3d%3d%3d%3d\n", i, ix, x[0], x[1], x[2], x[3]);
+        }
+      }}}}
+    }
+  }  // end of if g_verbose
+
+  return(0);
+}  // end of make_x_orbits_4d_symmetric
+
+/********************************************************************************
+ * 4-dim. permutation orbits
+ ********************************************************************************/
+int make_x_orbits_4d_symmetric_perm(int **xid, int **xid_count, double ***xid_val, int *xid_nc, int ***xid_rep, int ****xid_member) {
+
+  size_t ix;
+  int x[4], y[4], z[4];
+  int s0, s1, s2, s3;
+  int L     = LX;
+  int Lp1  = L+1;
+  int Lm1  = L-1;
+  size_t Nclasses, iclass;
+  int i, j, status, ip, *iaux=NULL;
+
+  /***************************************
+   * number of classes 
+   ***************************************/
+  Nclasses = (_POW4(Lm1) + 10*_POW3(Lm1) + 35*_POW2(Lm1) + 50*Lm1 ) / 24 + 1;
+  fprintf(stdout, "# [make_x_orbits_4d] Nclasses = %lu\n", Nclasses);
+  
+  status = init_x_orbits(xid, xid_count, xid_val, xid_rep, Nclasses);
+  if(status != 0) {
+    fprintf(stderr, "Error, could not intialise fields\n");
+    return(1);
+  }
+
+  /***************************************
+   * initialize the permutation tables
+   **************************************/
+  init_perm_tabs();
+
+  /***************************************
+   * characterize the classes
+   ***************************************/
+  iclass = 0;
+  /******************************************************
+   * (1) t = 0,...,L/2
+   ******************************************************/
+  // 1111
+  for(x[0]=0;      x[0]<L-3; x[0]++) {
+  for(x[1]=x[0]+1; x[1]<L-2; x[1]++) {
+  for(x[2]=x[1]+1; x[2]<L-1; x[2]++) {
+  for(x[3]=x[2]+1; x[3]<L;   x[3]++) {
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[1]; 
+    (*xid_rep)[iclass][2] = x[2]; 
+    (*xid_rep)[iclass][3] = x[3];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip< 24;ip++) {
+      y[perm_tab_4[ip][0]] = x[0];
+      y[perm_tab_4[ip][1]] = x[1];
+      y[perm_tab_4[ip][2]] = x[2];
+      y[perm_tab_4[ip][3]] = x[3];
+
+      z[0] = y[0];
+      z[1] = y[1];
+      z[2] = y[2];
+      z[3] = y[3];
+      ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+      //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+      if( (*xid)[ix] == -1 ) {
+        (*xid)[ix] = iclass;
+        (*xid_count)[iclass]++;
+      } else if ((*xid)[ix] != iclass) {
+        fprintf(stderr, "[make_x_orbits_4d] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+        return(2);
+      }
+    }
+    iclass++;
+  }}}}
+
+  // fprintf(stdout, "# [make_x_orbits_4d] finished classes 1111\n");
+
+  // 112
+  for(x[0]=0;      x[0]<L-2; x[0]++) {
+  for(x[1]=x[0]+1; x[1]<L-1; x[1]++) {
+  for(x[2]=x[1]+1; x[2]<L  ; x[2]++) {
+  for(i=0;i<3;i++) {
+    x[3] = x[i];
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[1]; 
+    (*xid_rep)[iclass][2] = x[2]; 
+    (*xid_rep)[iclass][3] = x[3];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip< 24;ip++) {
+      y[perm_tab_4[ip][0]] = x[0];
+      y[perm_tab_4[ip][1]] = x[1];
+      y[perm_tab_4[ip][2]] = x[2];
+      y[perm_tab_4[ip][3]] = x[3];
+
+      z[0] = y[0];
+      z[1] = y[1];
+      z[2] = y[2];
+      z[3] = y[3];
+      ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+      //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+      if( (*xid)[ix] == -1 ) {
+        (*xid)[ix] = iclass;
+        (*xid_count)[iclass]++;
+      } else if ((*xid)[ix] != iclass) {
+        fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+        return(3);
+      }
+    }
+    iclass++;
+  }}}}
+  //fprintf(stdout, "# [make_x_orbits_4d] finished classes 112\n");
+
+  // 22
+  for(x[0]=0;      x[0]<L-1; x[0]++) {
+  for(x[2]=x[0]+1; x[2]<L  ; x[2]++) {
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[0]; 
+    (*xid_rep)[iclass][2] = x[2]; 
+    (*xid_rep)[iclass][3] = x[2];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip< 24;ip++) {
+      y[perm_tab_4[ip][0]] = x[0];
+      y[perm_tab_4[ip][1]] = x[0];
+      y[perm_tab_4[ip][2]] = x[2];
+      y[perm_tab_4[ip][3]] = x[2];
+
+      z[0] = y[0];
+      z[1] = y[1];
+      z[2] = y[2];
+      z[3] = y[3];
+      ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+      //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+      if( (*xid)[ix] == -1 ) {
+        (*xid)[ix] = iclass;
+        (*xid_count)[iclass]++;
+      } else if ((*xid)[ix] != iclass) {
+        fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+        return(3);
+      }
+    }
+    iclass++;
+  }}
+  //fprintf(stdout, "# [make_x_orbits_4d] finished classes 22\n");
+
+  // 13
+  for(x[0]=0;      x[0]<L-1; x[0]++) {
+  for(x[1]=x[0]+1; x[1]<L  ; x[1]++) {
+  for(i=0; i<2; i++) {
+    x[2] = x[i];
+    x[3] = x[i];
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[1];
+    (*xid_rep)[iclass][2] = x[2]; 
+    (*xid_rep)[iclass][3] = x[3];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    for(ip = 0; ip<4;ip++) {
+      y[ip      ] = x[2] != x[0] ? x[0] : x[1];
+      y[(ip+1)%4] = x[2];
+      y[(ip+2)%4] = x[2];
+      y[(ip+3)%4] = x[2]; 
+
+      z[0] = y[0];
+      z[1] = y[1];
+      z[2] = y[2];
+      z[3] = y[3];
+      ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+      //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+      if( (*xid)[ix] == -1 ) {
+        (*xid)[ix] = iclass;
+        (*xid_count)[iclass]++;
+      } else if ((*xid)[ix] != iclass) {
+        fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+        return(4);
+      }
+    }
+    iclass++;
+  }}}
+  //fprintf(stdout, "# [make_x_orbits_4d] finished classes 13\n");
+
+  // 4
+  for(x[0]=0;    x[0]<L; x[0]++) {
+    (*xid_rep)[iclass][0] = x[0];
+    (*xid_rep)[iclass][1] = x[0]; 
+    (*xid_rep)[iclass][2] = x[0]; 
+    (*xid_rep)[iclass][3] = x[0];
+    _Dist4d( (*xid_val)[iclass], (*xid_rep)[iclass]);
+    y[0] = x[0];
+    y[1] = x[0];
+    y[2] = x[0];
+    y[3] = x[0];
+
+    z[0] = y[0];
+    z[1] = y[1];
+    z[2] = y[2];
+    z[3] = y[3];
+    ix = g_ipt[z[0]][z[1]][z[2]][z[3]];
+    //fprintf(stdout, "# [make_x_orbits_4d] z=(%2d,%2d,%2d,%2d); ix=%6u; id=%4d; class=%4d\n", z[0], z[1], z[2], z[3], ix, (*xid)[ix], iclass);
+    if( (*xid)[ix] == -1 ) {
+      (*xid)[ix] = iclass;
+      (*xid_count)[iclass]++;
+    } else if ((*xid)[ix] != iclass) {
+      fprintf(stderr, "[] Error, class id of site %d != current class id %lu\n", (*xid)[ix], iclass);
+      return(5);
+    }
+    iclass++;
+  }
+  //fprintf(stdout, "# [make_x_orbits_4d] finished classes 4\n");
+
+  if(Nclasses != iclass) {
+    fprintf(stderr, "[] Error, counted number of classes %lu differs from calculated number %lu\n", iclass, Nclasses);
+    return(6);
+  }
+  *xid_nc = Nclasses;
+
+   *xid_member     = (int***)malloc(Nclasses*sizeof(int*));
+  (*xid_member)[0] = (int** )malloc(VOLUME*sizeof(int*));
+  for(i=1; i<Nclasses; i++) {
+    (*xid_member)[i] = (*xid_member)[i-1] + (*xid_count)[i-1];
+  }
+  (*xid_member)[0][0] = (int*)malloc(4*VOLUME*sizeof(int));
+  ip = 0;
+  for(i=0; i<Nclasses; i++) {
+    for(j=0; j<(*xid_count)[i]; j++) {
+      if(i==0 && j==0) {
+        ip++;
+        continue;
+      }
+      (*xid_member)[i][j] = (*xid_member)[0][0] + ip*4;
+      ip++;
+    }
+  }
+  if( (iaux = (int*)malloc(Nclasses*sizeof(int))) == NULL ) {
+    fprintf(stderr, "[make_x_orbits_4d] Error, could not alloc iaux\n");
+    return(1);
+  }
+  memset(iaux, 0, Nclasses*sizeof(int));
+
+  for(x[0]=0; x[0]<T; x[0]++) {
+    y[0] = (x[0]>T/2) ? x[0] - T : x[0];
+  for(x[1]=0; x[1]<L; x[1]++) {
+    y[1] = (x[1]>L/2) ? x[1] - L : x[1];
+  for(x[2]=0; x[2]<L; x[2]++) {
+    y[2] = (x[2]>L/2) ? x[2] - L : x[2];
+  for(x[3]=0; x[3]<L; x[3]++) {
+    y[3] = (x[3]>L/2) ? x[3] - L : x[3];
+    ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+    iclass = (*xid)[ix];
+    (*xid_member)[iclass][iaux[iclass]][0] = y[0];
+    (*xid_member)[iclass][iaux[iclass]][1] = y[1];
+    (*xid_member)[iclass][iaux[iclass]][2] = y[2];
+    (*xid_member)[iclass][iaux[iclass]][3] = y[3];
+    if(g_verbose>2) fprintf(stdout, "\t%6lu%6lu%4d%3d%3d%3d%3d\n", ix, iclass, iaux[iclass], y[0], y[1], y[2], y[3]);
+    iaux[iclass]++;
+  }}}}
+  // TEST:
+  //for(i=0; i<Nclasses; i++) { fprintf(stdout, "\t%3d%6d%6d\n", i, (*xid_count)[i], iaux[i]); }
+  free(iaux);
+   // TEST: print the lists
+  fprintf(stdout, "# [make_x_orbits_4d_symmetric] verbose level %d\n", g_verbose);
+  if(g_verbose>1) {
+    fprintf(stdout, "# t\tx\ty\tz\txid\n");
+    for(x[0]=0; x[0]<T; x[0]++) {
+    for(x[1]=0; x[1]<L; x[1]++) {
+    for(x[2]=0; x[2]<L; x[2]++) {
+    for(x[3]=0; x[3]<L; x[3]++) {
+      ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+      fprintf(stdout, "%3d%3d%3d%3d%6d\n", x[0], x[1], x[2], x[3], (*xid)[ix]);
+    }}}}
+  
+    fprintf(stdout, "# n\tt\tx\ty\tz\tx^[2]\tx^[4]\tx^[6]\tx^[8]\tmembers\n");
+    for(i=0; i<Nclasses; i++) {
+      fprintf(stdout, "%5d%5d%5d%5d%5d%16.7e%16.7e%16.7e%16.7e%4d\n",
+        i, (*xid_rep)[i][0], (*xid_rep)[i][1], (*xid_rep)[i][2], (*xid_rep)[i][3],
+        (*xid_val)[i][0], (*xid_val)[i][1], (*xid_val)[i][2],(*xid_val)[i][3], (*xid_count)[i]);
+    }
+  
+    for(i=0; i<Nclasses; i++) {
+      fprintf(stdout, "# class number %d; members: %d\n", i, (*xid_count)[i]);
+      for(x[0]=0; x[0]<T; x[0]++) {
+      for(x[1]=0; x[1]<L; x[1]++) {
+      for(x[2]=0; x[2]<L; x[2]++) {
+      for(x[3]=0; x[3]<L; x[3]++) {
+        ix = g_ipt[x[0]][x[1]][x[2]][x[3]];
+        if(i == (*xid)[ix])  {
+          fprintf(stdout, "%4d%5lu%3d%3d%3d%3d\n", i, ix, x[0], x[1], x[2], x[3]);
+        }
+      }}}}
+    }
+  }  // end of if g_verbose
+  return(0);
+}  // end of make_x_orbits_4d_symmetric_perm

@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
   FILE *ofs=NULL;
   int check_WI = 0;
   complex w;
+  int verbose = -1;
 
   fftw_complex *in=NULL;
 
@@ -76,8 +77,12 @@ int main(int argc, char **argv) {
   /*                                         */
   /*******************************************/
 
-  while ((c = getopt(argc, argv, "wh?f:u:r:")) != -1) {
+  while ((c = getopt(argc, argv, "wh?f:u:r:v:")) != -1) {
     switch (c) {
+    case 'v':
+      verbose = atoi(optarg);
+      fprintf(stdout, "# [jj_x2_v2] verbose level %d\n", g_verbose);
+      break;
     case 'f':
       strcpy(filename, optarg);
       filename_set=1;
@@ -93,6 +98,7 @@ int main(int argc, char **argv) {
     case 'r':
       reduce_x_orbits = atoi(optarg);
       fprintf(stdout, "# [jj_x2_v2] will use x-orbits reduction %d\n", reduce_x_orbits);
+      break;
     case 'h':
     case '?':
     default:
@@ -108,6 +114,9 @@ int main(int argc, char **argv) {
   if(filename_set==0) strcpy(filename, "cvc.input");
   fprintf(stdout, "# Reading input from file %s\n", filename);
   read_input_parser(filename);
+
+  // set verbose
+  if(verbose>0) { g_verbose = verbose; }
 
   // some checks on the input data
   if((T_global == 0) || (LX==0) || (LY==0) || (LZ==0)) {
@@ -144,12 +153,16 @@ int main(int argc, char **argv) {
    * allocate memory for the contractions *
    ****************************************/
   // make the H4 orbits
-  status = make_x_orbits_4d(&h4_id, &h4_count, &h4_val, &h4_nc, &h4_rep, &h4_member);
+  if(LX != T) {
+    status = make_x_orbits_4d(&h4_id, &h4_count, &h4_val, &h4_nc, &h4_rep, &h4_member);
+  } else {
+    fprintf(stdout, "# [jj_x2_v2] calling make_x_orbits_4d_symmetric\n");
+    status = make_x_orbits_4d_symmetric(&h4_id, &h4_count, &h4_val, &h4_nc, &h4_rep, &h4_member);
+  }
   if(status != 0) {
     fprintf(stderr, "[jj_x2_v2] Error while creating orbit-lists, status was %d\n", status);
     EXIT(2);
   }
-
   if(reduce_x_orbits==1) {
     status = reduce_x_orbits_4d(h4_id, h4_count, h4_val, h4_nc, h4_rep, h4_member);
     if(status != 0) {
@@ -157,7 +170,6 @@ int main(int argc, char **argv) {
       EXIT(7);
     }
   }
-
 
   in = (fftw_complex*)malloc(VOLUME*sizeof(fftw_complex));
 
@@ -174,15 +186,16 @@ int main(int argc, char **argv) {
   }
 
   for(gid = g_gaugeid; gid<=g_gaugeid2; gid+=g_gauge_step) {
-
+    memset(conn, 0, 32*VOLUME*sizeof(double));
     /***********************
      * read contractions   *
      ***********************/
     ratime = CLOCK;
     sprintf(filename, "%s.%.4d", filename_prefix, gid);
     fprintf(stdout, "# [jj_x2_v2] Reading data from file %s\n", filename);
-    status = read_contraction(conn, NULL, filename, 16);
-    if(status == 106) {
+    // status = read_contraction(conn, NULL, filename, 16);
+    status = read_lime_contraction(conn, filename, 16, 0);
+    if(status != 0) {
       fprintf(stderr, "[jj_x2_v2] Error: could not read from file %s; status was %d\n", filename, status);
       EXIT(5);
     }
@@ -194,7 +207,7 @@ int main(int argc, char **argv) {
        * WI check in momentum space
        ******************************/
       ratime = CLOCK;
-      fprintf(stdout, "# check WI in position space\n");
+      fprintf(stdout, "# check WI in momentum space\n");
       for(x0=0; x0<T; x0++) {
         q[0] = 2. * sin( M_PI * (double)(x0+Tstart) / (double)T_global );
       for(x1=0; x1<LX; x1++) {
@@ -307,14 +320,12 @@ int main(int argc, char **argv) {
     fclose(ofs);
     retime = CLOCK;
     fprintf(stdout, "# [jj_x2_v2] time to write correlator %e seconds\n", retime-ratime);
-#if 0
-#endif  // of if 0
   }  // of loop on gauge id
 
   /***************************************
    * free the allocated memory, finalize *
    ***************************************/
-  finalize_x_orbits(&h4_id, &h4_count, &h4_val, &h4_rep);
+  finalize_x_orbits2(&h4_id, &h4_count, &h4_val, &h4_rep, &h4_member);
   free_geometry();
   if(conn != NULL) free(conn);
   if(jjx0 != NULL) free(jjx0);

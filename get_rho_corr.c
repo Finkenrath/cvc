@@ -1,5 +1,4 @@
 /****************************************************
-  
  * get_rho_corr.c
  *
  * Wed Sep 23 17:58:30 CEST 2009
@@ -34,6 +33,7 @@
 #include "propagator_io.h"
 #include "Q_phi.h"
 #include "get_index.h"
+#include "read_input_parser.h"
 
 void usage() {
   fprintf(stdout, "Code to recover rho-rho correl.\n");
@@ -52,18 +52,24 @@ int main(int argc, char **argv) {
   int source_location, have_source_flag = 0;
   int x0, ix;
   int sx0, sx1, sx2, sx3;
+  int check_WI=0;
   double *conn  = (double*)NULL;
   double *conn2 = (double*)NULL;
   int verbose = 0;
   char filename[800];
   double ratime, retime;
   FILE *ofs;
+/**************************
+ * variables for WI check */
+  int x1, x2, x3, nu;
+  double wre, wim, q[4];
+/**************************/
 
   fftw_complex *in=(fftw_complex*)NULL, *out=(fftw_complex*)NULL;
 
   fftw_plan plan_m;
 
-  while ((c = getopt(argc, argv, "h?vf:")) != -1) {
+  while ((c = getopt(argc, argv, "wh?vf:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -71,6 +77,10 @@ int main(int argc, char **argv) {
     case 'f':
       strcpy(filename, optarg);
       filename_set=1;
+      break;
+    case 'w':
+      check_WI = 1;
+      fprintf(stdout, "# [get_rho_corr] check WI in momentum space\n");
       break;
     case 'h':
     case '?':
@@ -84,8 +94,11 @@ int main(int argc, char **argv) {
   set_default_input_values();
   if(filename_set==0) strcpy(filename, "cvc.input");
 
-  /* read the input file */
-  read_input(filename);
+  // set the default values
+  set_default_input_values();
+  if(filename_set==0) strcpy(filename, "cvc.input");
+  fprintf(stdout, "# [get_rho_corr] reading input parameters from file %s\n", filename);
+  read_input_parser(filename);
 
   /* some checks on the input data */
   if((T_global == 0) || (LX==0) || (LY==0) || (LZ==0)) {
@@ -167,9 +180,37 @@ int main(int argc, char **argv) {
    * read contractions   *
    ***********************/
   ratime = (double)clock() / CLOCKS_PER_SEC;
-  read_contraction(conn, (int*)NULL, filename_prefix, 16);
+  // read_contraction(conn, (int*)NULL, filename_prefix, 16);
+  read_lime_contraction(conn, filename_prefix, 16, 0);
+
   retime = (double)clock() / CLOCKS_PER_SEC;
   fprintf(stdout, "time to read contractions %e seconds\n", retime-ratime);
+
+  // TEST Ward Identity
+  if(check_WI) {
+    fprintf(stdout, "# [get_corr_v5] Ward identity\n");
+    sprintf(filename, "WI.%.4d", Nconf);
+    ofs = fopen(filename, "w");
+    if(ofs == NULL) exit(32);
+    for(x0=0; x0<T; x0++) {
+      q[0] = 2. * sin(M_PI * (double)x0 / (double)T);
+    for(x1=0; x1<LX; x1++) {
+      q[1] = 2. * sin(M_PI * (double)x1 / (double)LX);
+    for(x2=0; x2<LY; x2++) {
+      q[2] = 2. * sin(M_PI * (double)x2 / (double)LY);
+    for(x3=0; x3<LZ; x3++) {
+      q[3] = 2. * sin(M_PI * (double)x3 / (double)LZ);
+      ix = g_ipt[x0][x1][x2][x3];
+      for(nu=0;nu<4;nu++) {
+        wre =   q[0] * conn[_GWI(4*0+nu,ix,VOLUME)] + q[1] * conn[_GWI(4*1+nu,ix,VOLUME)] \
+              + q[2] * conn[_GWI(4*2+nu,ix,VOLUME)] + q[3] * conn[_GWI(4*3+nu,ix,VOLUME)];
+        wim =   q[0] * conn[_GWI(4*0+nu,ix,VOLUME)+1] + q[1] * conn[_GWI(4*1+nu,ix,VOLUME)+1] \
+              + q[2] * conn[_GWI(4*2+nu,ix,VOLUME)+1] + q[3] * conn[_GWI(4*3+nu,ix,VOLUME)+1];
+        fprintf(ofs, "\t%3d%3d%3d%3d%3d%16.7e%16.7e\n", nu, x0, x1, x2, x3, wre, wim);
+      }
+    }}}}
+    fclose(ofs);
+  }
 
   /***********************
    * fill the correlator *
@@ -213,9 +254,18 @@ int main(int argc, char **argv) {
     fprintf(stderr, "could not open file %s for writing\n", filename);
     exit(5);
   }
-  for(x0=0; x0<T; x0++) {
-    fprintf(ofs, "%3d%25.16e%25.16e\n", x0, conn2[2*x0], conn2[2*x0+1]);
+  //for(x0=0; x0<T; x0++) {
+  //  fprintf(ofs, "%3d%25.16e%25.16e\n", x0, conn2[2*x0], conn2[2*x0+1]);
+  //}
+
+  x0 = 0;
+  fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%6d\n", 5, 1, x0, conn2[2*x0], 0., Nconf);
+  for(x0=1; x0<T/2; x0++) {
+    fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%6d\n", 5, 1, x0, conn2[2*x0], conn2[2*(T-x0)], Nconf);
   }
+  x0 = T/2;
+  fprintf(ofs, "%3d%3d%3d%25.16e%25.16e%6d\n", 5, 1, x0, conn2[2*x0], 0., Nconf);
+
   fclose(ofs);
   retime = (double)clock() / CLOCKS_PER_SEC;
   fprintf(stdout, "time to write correlator %e seconds\n", retime-ratime);

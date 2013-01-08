@@ -141,17 +141,26 @@ int main(int argc, char **argv) {
 
   // read the gauge field
   alloc_gauge_field(&g_gauge_field, VOLUMEPLUSRAND);
-  switch(g_gauge_file_format) {
-    case 0:
-      sprintf(filename, "%s.%.4d", gaugefilename_prefix, Nconf);
-      if(g_cart_id==0) fprintf(stdout, "reading gauge field from file %s\n", filename);
-      status = read_lime_gauge_field_doubleprec(filename);
-      break;
-    case 1:
-      sprintf(filename, "%s.%.5d", gaugefilename_prefix, Nconf);
-      if(g_cart_id==0) fprintf(stdout, "\n# [] reading gauge field from file %s\n", filename);
-      status = read_nersc_gauge_field(g_gauge_field, filename, &plaq);
-      break;
+  if(strcmp(gaugefilename_prefix, "identity")==0) {
+    if(g_cart_id==0) fprintf(stdout, "# [invert] initializing unit matrices\n");
+    for(ix=0;ix<VOLUME;ix++) {
+      _cm_eq_id( g_gauge_field + _GGI(ix, 0) );
+      _cm_eq_id( g_gauge_field + _GGI(ix, 1) );
+      _cm_eq_id( g_gauge_field + _GGI(ix, 2) );
+      _cm_eq_id( g_gauge_field + _GGI(ix, 3) );
+    }
+  } else {
+    switch(g_gauge_file_format) {
+      case 0:
+        sprintf(filename, "%s.%.4d", gaugefilename_prefix, Nconf);
+        if(g_cart_id==0) fprintf(stdout, "reading gauge field from file %s\n", filename);
+        status = read_lime_gauge_field_doubleprec(filename);
+        break;
+      case 1:
+        sprintf(filename, "%s.%.5d", gaugefilename_prefix, Nconf);
+        if(g_cart_id==0) fprintf(stdout, "\n# [] reading gauge field from file %s\n", filename);
+        status = read_nersc_gauge_field(g_gauge_field, filename, &plaq);
+        break;
     }
     if(status != 0) {
       fprintf(stderr, "[] Error, could not read gauge field\n");
@@ -161,6 +170,7 @@ int main(int argc, char **argv) {
 #endif
       exit(21);
     }
+  }
 #ifdef MPI
   xchange_gauge();
 #endif
@@ -199,7 +209,7 @@ int main(int argc, char **argv) {
   /***********************************************
    * (1) check the Dirac operator against HMC
    ***********************************************/
-  for(i=0; i<1; i++) {
+  for(i=g_sourceid; i<=g_sourceid2; i+=g_sourceid_step) {
 /*
     sprintf(filename, "source.%.4d.%.2d.inverted", Nconf, i);
     if(g_cart_id==0) fprintf(stdout, "\n\n# Source number %d from file %s\n", i, filename);
@@ -225,7 +235,9 @@ int main(int argc, char **argv) {
 */
 
     // point source
-    for(ix=0; ix<VOLUME; ix++) { _fv_eq_zero(g_spinor_field[0]+_GSI(ix)); }
+    //for(ix=0; ix<VOLUME; ix++) { _fv_eq_zero(g_spinor_field[0]+_GSI(ix)); }
+    memset(g_spinor_field[0], 0, VOLUMEPLUSRAND*24*sizeof(double));
+
     if(have_source_flag) {
       ix = g_ipt[sl0][sl1][sl2][sl3];
       g_spinor_field[0][_GSI( ix )+2*i  ] = 1.;
@@ -237,12 +249,13 @@ int main(int argc, char **argv) {
     xchange_field(g_spinor_field[0]);
  
 
-    for(ix=0; ix<VOLUME; ix++) { _fv_eq_zero(g_spinor_field[1]+_GSI(ix)); }
+    //for(ix=0; ix<VOLUME; ix++) { _fv_eq_zero(g_spinor_field[1]+_GSI(ix)); }
+    memset(g_spinor_field[1], 0, VOLUMEPLUSRAND*24*sizeof(double));
     g_spinor_field[1][_GSI(g_ipt[sl0][sl1][sl2][sl3])+2*i  ] = 1.;
     xchange_field(g_spinor_field[1]);
 
-
-    invert_Q_Wilson(g_spinor_field[1], g_spinor_field[0], 2);
+    // status = invert_Qtm(g_spinor_field[1], g_spinor_field[0], 2);
+    status = invert_Qtm_her(g_spinor_field[1], g_spinor_field[0], 2);
     xchange_field(g_spinor_field[1]);
 
 //    sprintf(filename, "source.%.4d.%.2d.inverted", Nconf, i);
@@ -252,7 +265,7 @@ int main(int argc, char **argv) {
 //      break;
 //    }
 
-    Q_Wilson_phi(g_spinor_field[2], g_spinor_field[1]);
+    Q_phi_tbc(g_spinor_field[2], g_spinor_field[1]);
     for(ix=0; ix<VOLUME; ix++) {
       _fv_eq_fv_mi_fv(g_spinor_field[3]+_GSI(ix), g_spinor_field[2]+_GSI(ix), g_spinor_field[0]+_GSI(ix));
     }
@@ -275,7 +288,7 @@ int main(int argc, char **argv) {
 */
 
     //sprintf(filename, "source_DR.%.4d.%.2d.inverted", Nconf, i);
-    sprintf(filename, "source.%.4d.%.2d.inverted", Nconf, i);
+    sprintf(filename, "%s.%.4d.%.2d.inverted", filename_prefix, Nconf, i);
     status = write_propagator(g_spinor_field[1], filename, 0, g_propagator_precision);
     //status = read_lime_spinor(g_spinor_field[1], filename, 0);
     if(status != 0) {
@@ -290,7 +303,8 @@ int main(int argc, char **argv) {
 #ifndef MPI
 
     //sprintf(filename, "source_DR_tzyx.%.4d.%.2d.inverted.ascii", Nconf, i);
-    sprintf(filename, "source.%.4d.%.2d.inverted.ascii", Nconf, i);
+/*
+    sprintf(filename, "%s.%.4d.%.2d.inverted.ascii", filename_prefix, Nconf, i);
     if( (ofs = fopen(filename, "w")) == NULL ) {
       fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
     } else {
@@ -298,7 +312,7 @@ int main(int argc, char **argv) {
       printf_spinor_field(g_spinor_field[1], ofs);
       fclose(ofs);
     }
-
+*/
 /*
     for(x0=0; x0<T; x0++) {
     for(x1=0; x1<LX; x1++) {

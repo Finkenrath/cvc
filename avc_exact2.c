@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
   complex w, w1;
   double Usourcebuff[72], *Usource[4];
   FILE *ofs;
+  int use_shifted_spinor = 0, shift_vector[4];
 
   fftw_complex *in=(fftw_complex*)NULL;
 
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
 #endif
 
-  while ((c = getopt(argc, argv, "uwWah?vgf:t:m:o:")) != -1) {
+  while ((c = getopt(argc, argv, "cuwWah?vgf:t:m:o:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -107,33 +108,37 @@ int main(int argc, char **argv) {
       break;
     case 'w':
       check_position_space_WI = 1;
-      fprintf(stdout, "\n# [] will check Ward identity in position space\n");
+      fprintf(stdout, "\n# [avc_exact2] will check Ward identity in position space\n");
       break;
     case 'W':
       check_momentum_space_WI = 1;
-      fprintf(stdout, "\n# [] will check Ward identity in momentum space\n");
+      fprintf(stdout, "\n# [avc_exact2] will check Ward identity in momentum space\n");
       break;
     case 't':
       num_threads = atoi(optarg);
-      fprintf(stdout, "\n# [] will use %d threads in spacetime loops\n", num_threads);
+      fprintf(stdout, "\n# [avc_exact2] will use %d threads in spacetime loops\n", num_threads);
       break;
     case 'a':
       write_ascii = 1;
-      fprintf(stdout, "\n# [] will write data in ASCII format too\n");
+      fprintf(stdout, "\n# [avc_exact2] will write data in ASCII format too\n");
       break;
     case 'm':
       mms = 1;
       mass_id = atoi(optarg);
-      fprintf(stdout, "\n# [] will read propagators in MMS format with mass id $d\n", mass_id);
+      fprintf(stdout, "\n# [avc_exact2] will read propagators in MMS format with mass id %d\n", mass_id);
       break;
     case 'o':
       strcpy(outfile_prefix, optarg);
-      fprintf(stdout, "\n# [] will use prefix $s for output filenames\n", outfile_prefix);
+      fprintf(stdout, "\n# [avc_exact2] will use prefix %s for output filenames\n", outfile_prefix);
       outfile_prefix_set = 1;
       break;
     case 'u':
       up_dn_onefile = 1;
-      fprintf(stdout, "# [] will read up / dn from one file at pos 0 / 1\n");
+      fprintf(stdout, "# [avc_exact2] will read up / dn from one file at pos 0 / 1\n");
+      break;
+    case 'c':
+      use_shifted_spinor = 1;
+      fprintf(stdout, "# [avc_exact2] will use shifted free spinor fields\n");
       break;
     case 'h':
     case '?':
@@ -182,7 +187,7 @@ int main(int argc, char **argv) {
 #ifdef OPENMP
   exitstatus = fftw_threads_init();
   if(exitstatus != 0) {
-    fprintf(stderr, "\n[] Error from fftw_init_threads; status was %d\n", exitstatus);
+    fprintf(stderr, "\n[avc_exact2] Error from fftw_init_threads; status was %d\n", exitstatus);
     EXIT(120);
   }
 #endif
@@ -249,10 +254,10 @@ int main(int argc, char **argv) {
 
   /* allocate memory for the spinor fields */
   no_fields = 24;
-  if(mms) no_fields++;
+  if(mms || use_shifted_spinor) no_fields++;
   g_spinor_field = (double**)calloc(no_fields, sizeof(double*));
   for(i=0; i<no_fields; i++) alloc_spinor_field(&g_spinor_field[i], VOLUMEPLUSRAND);
-  if(mms) {
+  if(mms | use_shifted_spinor) {
     work = g_spinor_field[no_fields-1];
   }
 
@@ -274,6 +279,10 @@ int main(int argc, char **argv) {
   if(in==(fftw_complex*)NULL) {    
     EXIT(4);
   }
+
+  // TEST
+  fprintf(stdout, "# [avc_exact2] co_phase_up\n");
+  for(i=0;i<4;i++) fprintf(stdout, "\t%2d%16.7e%16.7e\n", i, co_phase_up[i].re, co_phase_up[i].im);
 
   /***********************************************************
    * determine source coordinates, find out, if source_location is in this process
@@ -376,46 +385,67 @@ int main(int argc, char **argv) {
     if(!mms) {
       if(!up_dn_onefile) {
         get_filename(filename, 4, ia, 1);
-        read_lime_spinor(g_spinor_field[ia], filename, 0);
+        exitstatus = read_lime_spinor(g_spinor_field[ia], filename, 0);
       } else {
-        get_filename(filename, 4, ia, 0);
-        read_lime_spinor(g_spinor_field[ia], filename, 0);
+        get_filename(filename, 4, ia, 1);
+        exitstatus = read_lime_spinor(g_spinor_field[ia], filename, 0);
       }
       xchange_field(g_spinor_field[ia]);
     } else {
       sprintf(filename, "%s.%.4d.04.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, ia, mass_id);
-      read_lime_spinor(work, filename, 0);
+      exitstatus = read_lime_spinor(work, filename, 0);
       xchange_field(work);
       Qf5(g_spinor_field[ia], work, -g_mu);
       xchange_field(g_spinor_field[ia]);
     }
+    if(exitstatus!=0) EXIT_WITH_MSG(110, "Error, could not read up-type propagators I\n");
   }
+
 
   /**********************************************
    * loop on the Lorentz index nu at source 
    **********************************************/
-  for(nu=0; nu<4; nu++) {
-  //for(nu=0; nu<4; nu++) {
+  for(nu=0; nu<4; nu++)
+  //for(nu=0; nu<4; nu++)
+  {
 
+    memset(shift_vector, 0, 4*sizeof(int));
+    shift_vector[nu] = 1;
+    // TEST
+    fprintf(stdout, "# [] shift_vector(%d) = (%d, %d, %d, %d)\n", nu,
+        shift_vector[0], shift_vector[1], shift_vector[2], shift_vector[3]);
 
     /* read 12 dn-type propagators */
     for(ia=0; ia<12; ia++) {
       if(!mms) {
         if(!up_dn_onefile) {
-          get_filename(filename, nu, ia, -1);
-          read_lime_spinor(g_spinor_field[12+ia], filename, 0);
+          if(!use_shifted_spinor) {
+            get_filename(filename, nu, ia, -1);
+            exitstatus = read_lime_spinor(g_spinor_field[12+ia], filename, 0);
+          } else {
+            get_filename(filename, 4, ia, -1);
+            exitstatus = read_lime_spinor(work, filename, 0);
+            shift_spinor_field(g_spinor_field[12+ia], work, shift_vector);
+          }
         } else {
-          get_filename(filename, nu, ia, 0);
-          read_lime_spinor(g_spinor_field[12+ia], filename, 1);
+          if(!use_shifted_spinor) {
+            get_filename(filename, nu, ia, 1);
+            exitstatus = read_lime_spinor(g_spinor_field[12+ia], filename, 1);
+          } else {
+            get_filename(filename, 4, ia, 1);
+            exitstatus = read_lime_spinor(work, filename, 1);
+            shift_spinor_field(g_spinor_field[12+ia], work, shift_vector);
+          }
         }
         xchange_field(g_spinor_field[12+ia]);
       } else {
         sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, nu, ia, mass_id);
-        read_lime_spinor(work, filename, 0);
+        exitstatus = read_lime_spinor(work, filename, 0);
         xchange_field(work);
         Qf5(g_spinor_field[12+ia], work, g_mu);
         xchange_field(g_spinor_field[12+ia]);
       }
+      if(exitstatus!=0) EXIT_WITH_MSG(111, "Error, could not read dn-type propagators I\n");
     }
 
     for(ir=0; ir<4; ir++) {
@@ -556,7 +586,6 @@ int main(int argc, char **argv) {
   fprintf(stdout, "\t%d\t%25.16e%25.16e\n", 2, contact_term[4], contact_term[5]);
   fprintf(stdout, "\t%d\t%25.16e%25.16e\n", 3, contact_term[6], contact_term[7]);
 
-
   /**********************************************************
    * read 12 dn-type propagators with source source_location
    * - can get contributions 2 and 4 from that
@@ -565,19 +594,20 @@ int main(int argc, char **argv) {
     if(!mms) {
       if(!up_dn_onefile) {
         get_filename(filename, 4, ia, -1);
-        read_lime_spinor(g_spinor_field[12+ia], filename, 0);
+        exitstatus = read_lime_spinor(g_spinor_field[12+ia], filename, 0);
       } else {
-        get_filename(filename, 4, ia, 0);
-        read_lime_spinor(g_spinor_field[12+ia], filename, 1);
+        get_filename(filename, 4, ia, 1);
+        exitstatus = read_lime_spinor(g_spinor_field[12+ia], filename, 1);
       }
       xchange_field(g_spinor_field[12+ia]);
     } else {
       sprintf(filename, "%s.%.4d.04.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, ia, mass_id);
-      read_lime_spinor(work, filename, 0);
+      exitstatus = read_lime_spinor(work, filename, 0);
       xchange_field(work);
       Qf5(g_spinor_field[12+ia], work, g_mu);
       xchange_field(g_spinor_field[12+ia]);
     }
+    if(exitstatus!=0) EXIT_WITH_MSG(112, "Error, could not read dn-type propagators II\n");
   }
 
   /**********************************************
@@ -586,26 +616,44 @@ int main(int argc, char **argv) {
   for(nu=0; nu<4; nu++) {
   //for(nu=0; nu<4; nu++) {
 
+    memset(shift_vector, 0, 4*sizeof(int));
+    shift_vector[nu] = +1;
+    // TEST
+    fprintf(stdout, "# [] shift_vector(%d) = (%d, %d, %d, %d)\n", nu,
+        shift_vector[0], shift_vector[1], shift_vector[2], shift_vector[3]);
 
     /* read 12 up-type propagators */
     for(ia=0; ia<12; ia++) {
       if(!mms) {
       if(!up_dn_onefile) {
+        if(!use_shifted_spinor) {
           get_filename(filename, nu, ia, 1);
-          read_lime_spinor(g_spinor_field[ia], filename, 0);
+          exitstatus = read_lime_spinor(g_spinor_field[ia], filename, 0);
+        } else {
+          get_filename(filename, 4, ia, 1);
+          exitstatus = read_lime_spinor(work, filename, 0);
+          shift_spinor_field(g_spinor_field[ia], work, shift_vector);
+        }
       } else {
-          get_filename(filename, nu, ia, 0);
-          read_lime_spinor(g_spinor_field[ia], filename, 0);
+        if(!use_shifted_spinor) {
+          get_filename(filename, nu, ia, 1);
+          exitstatus = read_lime_spinor(g_spinor_field[ia], filename, 0);
+        } else {
+          get_filename(filename, 4, ia, 1);
+          exitstatus = read_lime_spinor(work, filename, 0);
+          shift_spinor_field(g_spinor_field[ia], work, shift_vector);
+        }
       }
         xchange_field(g_spinor_field[ia]);
       } else {
         sprintf(filename, "%s.%.4d.%.2d.%.2d.cgmms.%.2d.inverted", filename_prefix, Nconf, nu, ia, mass_id);
-        read_lime_spinor(work, filename, 0);
+        exitstatus = read_lime_spinor(work, filename, 0);
         xchange_field(work);
         Qf5(g_spinor_field[ia], work, -g_mu);
         xchange_field(g_spinor_field[ia]);
       }
     }
+    if(exitstatus!=0) EXIT_WITH_MSG(113, "Error, could not read up-type propagators II\n");
 
     for(ir=0; ir<4; ir++) {
       for(ia=0; ia<3; ia++) {
@@ -733,7 +781,9 @@ int main(int argc, char **argv) {
       }  // of ia 
     }  // of ir
   }  // of nu
-  
+
+
+
   // print contact term
   if(g_cart_id==0) {
     fprintf(stdout, "\n# [avc_exact2] contact term\n");
@@ -838,7 +888,7 @@ int main(int argc, char **argv) {
   }
 
 #ifdef MPI
-  if(g_cart_id==0) fprintf(stdout, "\n# [] broadcasing contact term ...\n");
+  if(g_cart_id==0) fprintf(stdout, "\n# [avc_exact2] broadcasing contact term ...\n");
   MPI_Bcast(contact_term, 8, MPI_DOUBLE, have_source_flag, g_cart_grid);
   fprintf(stdout, "[%2d] contact term = "\
       "(%12.5e+%12.5eI,%12.5e+%12.5eI,%12.5e+%12.5eI,%12.5e+%12.5eI)\n",
