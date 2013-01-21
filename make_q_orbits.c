@@ -73,6 +73,7 @@
  *************************************************************************************/
 int init_q_orbits(int**xid, int**xid_count, double ***xid_val, int***xid_rep, int Nclasses) {
   int i;
+  int L = LX;
 
   if( (*xid_count = (int *)calloc(Nclasses, sizeof(int)))==NULL ) {
     fprintf(stderr, "# Error, could not allocate mem for xid_count\n");
@@ -116,6 +117,7 @@ int init_q_orbits(int**xid, int**xid_count, double ***xid_val, int***xid_rep, in
     return(7);
   }
   for(i=0; i<VOLUME; i++) (*xid)[i] = -1;
+  // memset( (*xid), 0, VOLUME*sizeof(int));
 
   return(0);
 }
@@ -943,7 +945,7 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
   init_perm_tabs();
 
   iclass = -1;
-//  for(it=0; it<T_global; it++) {
+
   it = 0;
   x0 = 0;
     iclass++;
@@ -960,11 +962,14 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
       new_flag = 1;
     }
     else {
-      if((*xid)[iix] != iclass) fprintf(stderr, "(i) Warning: xid %d <---> %d\n", (*xid)[iix], iclass);
+      if((*xid)[iix] != iclass) {
+        fprintf(stderr, "(i) Error, xid %d <---> %d\n", (*xid)[iix], iclass);
+        return(1);
+      }
     }
-/*    fprintf(stdout, "(i) representative: %3d%3d%3d%3d%6d\t%2d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3], iix, new_flag);  */
-/*    fprintf(stdout, "(i) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], 
-      (*xid_val)[iclass][2], (*xid_val)[iclass][3]); */
+    //fprintf(stdout, "(i) representative: %3d%3d%3d%3d%6d\t%2d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3], iix, new_flag);
+    //fprintf(stdout, "(i) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], \
+      (*xid_val)[iclass][2], (*xid_val)[iclass][3]);
 
 /*
     iclass++;
@@ -987,10 +992,10 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
       (*xid_rep)[iclass][1] = ix;
       (*xid_rep)[iclass][2] = 0;
       (*xid_rep)[iclass][3] = 0;
-/*      fprintf(stdout, "(ii) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]);  */
+      //fprintf(stdout, "(ii) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]);
       _QN_3D( (*xid_val)[iclass], (*xid_rep)[iclass]);
-/*      fprintf(stdout, "(ii) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], 
-        (*xid_val)[iclass][2], (*xid_val)[iclass][3]); */
+      //fprintf(stdout, "(ii) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], \
+        (*xid_val)[iclass][2], (*xid_val)[iclass][3]);
       for(i=1; i<4; i++) {
       for(isign=0; isign<=1; isign++) {
         xcoords[0] = it;
@@ -1005,9 +1010,12 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
           new_flag = 1;
         }
         else {
-          if((*xid)[iix] != iclass) fprintf(stderr, "(ii) Warning: xid %d <---> %d\n", (*xid)[iix], iclass);
+          if((*xid)[iix] != iclass) {
+            fprintf(stderr, "(ii) Error, xid %d <---> %d\n", (*xid)[iix], iclass);
+            return(1);
+          }
         }
-/*        fprintf(stdout, "( ii)\tmember: %3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag); */
+        //fprintf(stdout, "( ii)\tmember: %3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag);
       }}
     }
 
@@ -1018,11 +1026,10 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
       (*xid_rep)[iclass][1] = ix;
       (*xid_rep)[iclass][2] = iy;
       (*xid_rep)[iclass][3] = 0;
-/*      fprintf(stdout, "(iii) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], 
-        (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]); */
+      //fprintf(stdout, "(iii) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]);
       _QN_3D( (*xid_val)[iclass], (*xid_rep)[iclass]);
-/*      fprintf(stdout, "(iii) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], 
-        (*xid_val)[iclass][2], (*xid_val)[iclass][3]); */
+      //fprintf(stdout, "(iii) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], \
+        (*xid_val)[iclass][2], (*xid_val)[iclass][3]);
       for(i=0; i<6; i++) {
         for(isign=0; isign<2; isign++) {
         for(isign2=0; isign2<2; isign2++) {
@@ -1038,9 +1045,12 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
             new_flag = 1;
           }
           else {
-            if((*xid)[iix] != iclass) fprintf(stderr, "(iii) Warning: xid %d <---> %d\n", (*xid)[iix], iclass);
+            if((*xid)[iix] != iclass) {
+              fprintf(stderr, "(iii) Error, xid %d <---> %d\n", (*xid)[iix], iclass);
+              return(1);
+            }
           }
-/*          fprintf(stdout, "(iii)\tmember: %3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag); */
+          //fprintf(stdout, "(iii)\tmember: %3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag);
         }}
       }
     }}
@@ -1053,10 +1063,10 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
       (*xid_rep)[iclass][1] = ix;
       (*xid_rep)[iclass][2] = iy;
       (*xid_rep)[iclass][3] = iz;
-/*      fprintf(stdout, "(iv) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]); */
+      //fprintf(stdout, "(iv) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]);
       _QN_3D( (*xid_val)[iclass], (*xid_rep)[iclass]);
-/*      fprintf(stdout, "(iv) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], 
-        (*xid_val)[iclass][2], (*xid_val)[iclass][3]); */
+      //fprintf(stdout, "(iv) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], \
+        (*xid_val)[iclass][2], (*xid_val)[iclass][3]);
       for(i=0; i<6; i++) {
         for(isign=0; isign<2; isign++) {
         for(isign2=0; isign2<2; isign2++) {
@@ -1072,9 +1082,12 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
             new_flag = 1;
           }
           else {
-            if((*xid)[iix] != iclass) fprintf(stderr, "(iv) Warning: xid %d <---> %d\n", (*xid)[iix], iclass);
+            if((*xid)[iix] != iclass) {
+              fprintf(stderr, "(iv) Error, xid %d <---> %d\n", (*xid)[iix], iclass);
+              return(1);
+            }
           }
-/*          fprintf(stdout, "( iv) \tmember: %3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag); */
+          //fprintf(stdout, "( iv) \tmember: %3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag);
         }}
       }
     }}
@@ -1087,10 +1100,9 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
       (*xid_rep)[iclass][1] = ix;
       (*xid_rep)[iclass][2] = iy;
       (*xid_rep)[iclass][3] = iz;
-/*      fprintf(stdout, "(v) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]); */
+      //fprintf(stdout, "(v) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]);
       _QN_3D( (*xid_val)[iclass], (*xid_rep)[iclass]);
-/*      fprintf(stdout, "(v) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], 
-        (*xid_val)[iclass][2], (*xid_val)[iclass][3]); */
+      //fprintf(stdout, "(v) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], (*xid_val)[iclass][2], (*xid_val)[iclass][3]);
       for(i=0; i<6; i++) {
         for(isign =0; isign <2; isign++) {
         for(isign2=0; isign2<2; isign2++) {
@@ -1107,9 +1119,12 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
             new_flag = 1;
           }
           else {
-            if((*xid)[iix] != iclass) fprintf(stderr, "(v) Warning: xid %d <---> %d\n", (*xid)[iix], iclass);
+            if((*xid)[iix] != iclass) {
+              fprintf(stderr, "(v) Error, xid %d <---> %d\n", (*xid)[iix], iclass);
+              return(1);
+            }
           }
-/*          fprintf(stdout, "(  v)\tmember%3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag); */
+          //fprintf(stdout, "(  v)\tmember%3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag);
         }}}
       }
 
@@ -1124,10 +1139,10 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
       (*xid_rep)[iclass][1] = ix;
       (*xid_rep)[iclass][2] = iy;
       (*xid_rep)[iclass][3] = iz;
-/*      fprintf(stdout, "(vii) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]); */
+      //fprintf(stdout, "(vii) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]);
       _QN_3D( (*xid_val)[iclass], (*xid_rep)[iclass]);
-/*      fprintf(stdout, "(vii) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], 
-        (*xid_val)[iclass][2], (*xid_val)[iclass][3]); */
+      //fprintf(stdout, "(vii) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], \
+        (*xid_val)[iclass][2], (*xid_val)[iclass][3]);
       for(i=1; i<4; i++) {
         for(isign=0; isign<=1; isign++) {
         for(isign2=0; isign2<=1; isign2++) {
@@ -1144,9 +1159,12 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
             new_flag = 1;
           }
           else {
-            if((*xid)[iix] != iclass) fprintf(stderr, "(vii) Warning: xid %d <---> %d\n", (*xid)[iix], iclass);
+            if((*xid)[iix] != iclass) {
+              fprintf(stderr, "(vii) Error, xid %d <---> %d\n", (*xid)[iix], iclass);
+              return(1);
+            }
           }
-/*          fprintf(stdout, "(vii)\tmember%3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag); */
+          //fprintf(stdout, "(vii)\tmember%3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag);
         }}}
       }
 
@@ -1158,9 +1176,9 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
       (*xid_rep)[iclass][2] = iz;
       (*xid_rep)[iclass][3] = iy;
       _QN_3D( (*xid_val)[iclass], (*xid_rep)[iclass]);
-/*      fprintf(stdout, "(viii) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]); */
-/*      fprintf(stdout, "(viii) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], 
-        (*xid_val)[iclass][2], (*xid_val)[iclass][3]); */
+      //fprintf(stdout, "(viii) representative: %3d%3d%3d%3d\n", (*xid_rep)[iclass][0], (*xid_rep)[iclass][1], (*xid_rep)[iclass][2], (*xid_rep)[iclass][3]);
+      //fprintf(stdout, "(viii) dist: %16.7e%16.7e%16.7e%16.7e\n", (*xid_val)[iclass][0], (*xid_val)[iclass][1], \
+        (*xid_val)[iclass][2], (*xid_val)[iclass][3]);
       for(i=1; i<4; i++) {
         for(isign=0; isign<=1; isign++) {
         for(isign2=0; isign2<=1; isign2++) {
@@ -1177,15 +1195,17 @@ int make_qcont_orbits_3d_parity_avg(int **xid, int **xid_count, double ***xid_va
             new_flag = 1;
           }
           else {
-            if((*xid)[iix] != iclass) fprintf(stderr, "(viii) Warning: xid %d <---> %d\n", (*xid)[iix], iclass);
+            if((*xid)[iix] != iclass) {
+              fprintf(stderr, "(viii) Error, xid %d <---> %d\n", (*xid)[iix], iclass);
+              return(1);
+            }
           }
-/*          fprintf(stdout, "(viii)\tmember%3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag); */
+          //fprintf(stdout, "(viii)\tmember%3d%3d%3d%3d%6d\t%2d\n", xcoords[0], xcoords[1], xcoords[2], xcoords[3], iix, new_flag);
         }}}
       }
 
-    }}  /* ix and iy */
+    }}  // ix and iy
 
-//  }  /* of loop on times */
   Nclasses = iclass+1;
   *xid_nc  = iclass+1;
   fprintf(stdout, "# number of orbits:%3d\n", *xid_nc);
