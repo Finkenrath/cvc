@@ -64,11 +64,12 @@ int main(int argc, char **argv) {
   int ivec[4], idx[4], imu;
   double q[4], wre, wim;
   int append = 0;
+  int byte_swap=0;
   fftw_complex *inT=NULL, *outT=NULL;
 
   fftw_plan plan_m_T;
 
-  while ((c = getopt(argc, argv, "ah?vf:")) != -1) {
+  while ((c = getopt(argc, argv, "bah?vf:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -80,6 +81,10 @@ int main(int argc, char **argv) {
     case 'a':
       append = 1;
       fprintf(stdout, "# [] will append to output file\n");
+      break;
+    case 'b':
+      byte_swap = 1;
+      fprintf(stdout, "# [] will carry out byte swap\n");
       break;
     case 'h':
     case '?':
@@ -177,6 +182,12 @@ int main(int argc, char **argv) {
       fprintf(stderr, "[get_corr_v3] Warning, could not read contractions for gid %d, status was %d\n", gid, status);
       continue;
     }
+
+    // byte swap
+    if(byte_swap) {
+      byte_swap64_v2(conn, 32*VOLUME);
+    }
+
     retime = (double)clock() / CLOCKS_PER_SEC;
     fprintf(stdout, "# [get_corr_v3] time to read contractions %e seconds\n", retime-ratime);
   
