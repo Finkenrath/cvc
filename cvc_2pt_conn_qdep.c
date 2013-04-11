@@ -21,7 +21,7 @@
 #ifdef OPENMP
 #  include <omp.h>
 #endif
-
+#include "ifftw.h"
 #include <getopt.h>
 
 #define MAIN_PROGRAM
@@ -269,10 +269,21 @@ int main(int argc, char **argv) {
     if(g_proc_id==0) fprintf(stdout, "T and L's must be set\n");
     usage();
   }
-  if(g_kappa == 0.) {
-    if(g_proc_id==0) fprintf(stdout, "kappa should be > 0.n");
-    usage();
+
+#ifdef OPENMP
+  omp_set_num_threads(g_num_threads);
+
+  status = fftw_threads_init();
+  if(status != 0) {
+    fprintf(stderr, "[cvc_2pt_conn_qdep] Error from fftw_init_threads; status was %d\n", status);
+    EXIT(120);
   }
+#else
+  fprintf(stdout, "[cvc_2pt_conn_qdep] Warning, resetting global thread number to 1\n");
+  g_num_threads = 1;
+#endif
+
+
 
   // set g_sink_momentum_set
   //if(momentum_filename_set) { g_sink_momentum_set = 1; }
@@ -508,7 +519,11 @@ int main(int argc, char **argv) {
     EXIT(155);
   }
   dims[0]=LX; dims[1]=LY; dims[2]=LZ;
+#ifdef MPI
+  EXIT(129);
+#else
   plan_p = fftwnd_create_plan_specific(3, dims, FFTW_BACKWARD, FFTW_MEASURE, in, 1, (fftw_complex*)cconnx, 1);
+#endif
 
 
   // prepare the gauge filed
