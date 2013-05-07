@@ -78,6 +78,7 @@ SDIGIT {SIGN}?[[:digit:]]
 %x BCZ
 %x PREFIX
 %x PREFIX2
+%x PREFIX3
 %x GAUGEPREFIX
 %x OUTPREFIX
 %x RESUME
@@ -193,6 +194,7 @@ SDIGIT {SIGN}?[[:digit:]]
 ^BCangleZ{SPC}*={SPC}*                     BEGIN(BCZ);
 ^filename_prefix{SPC}*={SPC}*              BEGIN(PREFIX);
 ^filename_prefix2{SPC}*={SPC}*             BEGIN(PREFIX2);
+^filename_prefix3{SPC}*={SPC}*             BEGIN(PREFIX3);
 ^gaugefilename_prefix{SPC}*={SPC}*         BEGIN(GAUGEPREFIX);
 ^outfile_prefix{SPC}*={SPC}*               BEGIN(OUTPREFIX);
 ^resume{SPC}*={SPC}*                       BEGIN(RESUME);
@@ -387,6 +389,10 @@ SDIGIT {SIGN}?[[:digit:]]
 <PREFIX2>{FILENAME} {
   strcpy(filename_prefix2,yytext);
   if(myverbose!=0) printf("prop. 2 filename prefix set to %s\n",yytext);
+}
+<PREFIX3>{FILENAME} {
+  strcpy(filename_prefix3,yytext);
+  if(myverbose!=0) printf("prop. 3 filename prefix set to %s\n",yytext);
 }
 <GAUGEPREFIX>{FILENAME} {
   strcpy(gaugefilename_prefix,yytext);

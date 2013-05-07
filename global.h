@@ -115,7 +115,7 @@ EXTERN int g_nproc_t, g_nproc_x, g_nproc_y, g_nproc_z;
 EXTERN int g_sourceid, g_sourceid2, g_sourceid_step, Nsave;
 EXTERN int g_gaugeid, g_gaugeid2, g_gauge_step;
 
-EXTERN char filename_prefix[200], filename_prefix2[200], gaugefilename_prefix[200], g_outfile_prefix[200];
+EXTERN char filename_prefix[200], filename_prefix2[200], filename_prefix3[200], gaugefilename_prefix[200], g_outfile_prefix[200];
 EXTERN int format, rotate;
 EXTERN double BCangle[4];
 
