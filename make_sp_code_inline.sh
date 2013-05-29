@@ -86,6 +86,17 @@ for((beta=0;beta<$N_SPINOR_DIM;beta++)); do
 done
 echo -e "}\n\n"
 
+# ----------------------------------------------------------------------------------------------------------------
+
+echo "static inline void _sp_pl_eq_sp_ti_re(spinor_propagator_type _r, spinor_propagator_type _s, double _c) {"
+for((beta=0;beta<$N_SPINOR_DIM;beta++)); do
+  for((alpha=0;alpha<$N_SPINOR_DIM;alpha++)); do
+    echo "(_r)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha)))] += (_s)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha)))] * (_c);"
+    echo "(_r)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha+1)))] += (_s)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha+1)))] * (_c);"
+  done
+done
+echo -e "}\n\n"
+
 
 # ----------------------------------------------------------------------------------------------------------------
 
@@ -94,6 +105,17 @@ for((beta=0;beta<$N_SPINOR_DIM;beta++)); do
   for((alpha=0;alpha<$N_SPINOR_DIM;alpha++)); do
     echo "(_r)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha)))] = -(_s)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha+1)))] * (_c);"
     echo "(_r)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha+1)))] = +(_s)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha)))] * (_c);"
+  done
+done
+echo -e "}\n\n"
+
+# ----------------------------------------------------------------------------------------------------------------
+
+echo "static inline void _sp_pl_eq_sp_ti_im(spinor_propagator_type _r, spinor_propagator_type _s, double _c) {"
+for((beta=0;beta<$N_SPINOR_DIM;beta++)); do
+  for((alpha=0;alpha<$N_SPINOR_DIM;alpha++)); do
+    echo "(_r)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha)))] += -(_s)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha+1)))] * (_c);"
+    echo "(_r)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha+1)))] += +(_s)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha)))] * (_c);"
   done
 done
 echo -e "}\n\n"
@@ -125,6 +147,21 @@ for((beta=0;beta<$N_SPINOR_DIM;beta++)); do
   done
 done
 echo -e "}\n\n"
+
+#echo "static inline void _sp_eq_gamma_ti_sp(spinor_propagator_type _r, int _mu, spinor_propagator_type _s) {"
+#echo "int __perm[$N_SPINOR_DIM], __isimag;"
+#for((beta=0;beta<$N_SPINOR_DIM;beta++)); do
+#  echo "__perm[$(printf "%2d" $beta)] = gamma_permutation[(_mu)][$(printf "%2d" $((2*$N_COLOR_DIM*$beta)))]/$((2*N_COLOR_DIM));"
+#done
+#echo "__isimag = gamma_permutation[(_mu)][0]%2;"
+#echo "__one_mi_isimag = gamma_permutation[(_mu)][0]%2;"
+#for((beta=0;beta<$N_SPINOR_DIM;beta++)); do
+#  for((alpha=0;alpha<$N_SPINOR_DIM;alpha++)); do
+#    echo "(_r)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha)))] = (_s)[$(printf "%2d" $beta)][2*__perm[$(printf "%2d" $alpha)]  +__isimag] * gamma_sign[(_mu)][$(printf "%2d" $((2*$N_COLOR_DIM*$alpha)))];"
+#    echo "(_r)[$(printf "%2d" $beta)][$(printf "%2d" $((2*$alpha+1)))] = (_s)[$(printf "%2d" $beta)][2*__perm[$(printf "%2d" $alpha)]+__one_mi_isimag] * gamma_sign[(_mu)][$(printf "%2d" $((2*$N_COLOR_DIM*$alpha+1)))];"
+#  done
+#done
+#echo -e "}\n\n"
 
 # ----------------------------------------------------------------------------------------------------------------
 
