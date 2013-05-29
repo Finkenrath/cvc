@@ -666,7 +666,8 @@ int main(int argc, char **argv) {
         omp_set_num_threads(g_num_threads);
 #pragma omp parallel private (ix,iix,icomp,threadid) \
         firstprivate (fermion_type,gamma_component,connq,\
-            gamma_component_sign,VOL3,g_spinor_field,fp1,fp2,fp3,fpaux,fp4,uprop,dprop,sp1,sp2,timeslice)
+            gamma_component_sign,VOL3,g_spinor_field,fp1,fp2,fp3,fpaux,fp4,fp5,uprop,dprop,sprop,\
+            sp1,sp2,sp3,sp4,sp5,sp6,sp7,sp8,sp9,sp_aux,timeslice)
   //      shared (num_component)
   {
         threadid = omp_get_thread_num();

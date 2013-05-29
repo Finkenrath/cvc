@@ -41,18 +41,19 @@
 #include "smearing_techniques.h"
 #include "make_H3orbits.h"
 #include "contractions_io.h"
+#include "spin_projection.h"
 
 void usage() {
-  fprintf(stdout, "Code to perform contractions for proton 2-pt. function\n");
-  fprintf(stdout, "Usage:    [options]\n");
-  fprintf(stdout, "Options: -v verbose [no effect, lots of stdout output]\n");
-  fprintf(stdout, "         -f input filename [default proton.input]\n");
-  fprintf(stdout, "         -p number of colors [default 1]\n");
-  fprintf(stdout, "         -a write ascii output too [default no ascii output]\n");
-  fprintf(stdout, "         -F fermion type [default Wilson fermion, id 1]\n");
-  fprintf(stdout, "         -t number of threads for OPENMP [default 1]\n");
-  fprintf(stdout, "         -g do random gauge transformation [default no gauge transformation]\n");
-  fprintf(stdout, "         -h? this help\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4] Code to perform contractions for proton 2-pt. function\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4]Usage:    [options]\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4]Options: -v verbose [no effect, lots of stdout output]\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4]         -f input filename [default proton.input]\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4]         -p number of colors [default 1]\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4]         -a write ascii output too [default no ascii output]\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4]         -F fermion type [default Wilson fermion, id 1]\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4]         -t number of threads for OPENMP [default 1]\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4]         -g do random gauge transformation [default no gauge transformation]\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4]         -h? this help\n");
 #ifdef MPI
   MPI_Abort(MPI_COMM_WORLD, 1);
   MPI_Finalize();
@@ -65,7 +66,7 @@ int main(int argc, char **argv) {
   
   const int n_c=3;
   const int n_s=4;
-  const char outfile_prefix[] = "delta_pp_2pt_v4";
+  const char outfile_prefix[] = "sigma_ps_2pt_v4";
 
   int c, i, icomp;
   int filename_set = 0;
@@ -101,10 +102,10 @@ int main(int argc, char **argv) {
 /*******************************************************************
  * Gamma components for the Delta:
  *                                                                 */
-  const int num_component = 4;
-  int gamma_component[2][4] = { {0, 1, 2, 3},
-                                {0, 1, 2, 3} };
-  double gamma_component_sign[4] = {+1.,+1.,-1.,+1.};
+  const int num_component = 16;
+  int gamma_component[2][16] = { {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3},
+                                 {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3} };
+  double gamma_component_sign[16] = {+1.,+1.,-1.,+1.,+1.,+1.,-1.,+1.,+1.,+1.,-1.,+1.,+1.,+1.,-1.,+1.};
 /*
  *******************************************************************/
   fftw_complex *in=NULL;
@@ -133,7 +134,7 @@ int main(int argc, char **argv) {
       break;
     case 'a':
       write_ascii = 1;
-      fprintf(stdout, "# [] will write in ascii format\n");
+      fprintf(stdout, "# [sigma_ps_2pt_v4] will write in ascii format\n");
       break;
     case 'F':
       if(strcmp(optarg, "Wilson") == 0) {
@@ -141,14 +142,14 @@ int main(int argc, char **argv) {
       } else if(strcmp(optarg, "tm") == 0) {
         fermion_type = _TM_FERMION;
       } else {
-        fprintf(stderr, "[] Error, unrecognized fermion type\n");
+        fprintf(stderr, "[sigma_ps_2pt_v4] Error, unrecognized fermion type\n");
         exit(145);
       }
-      fprintf(stdout, "# [] will use fermion type %s ---> no. %d\n", optarg, fermion_type);
+      fprintf(stdout, "# [sigma_ps_2pt_v4] will use fermion type %s ---> no. %d\n", optarg, fermion_type);
       break;
     case 'g':
       do_gt = 1;
-      fprintf(stdout, "# [] will perform gauge transform\n");
+      fprintf(stdout, "# [sigma_ps_2pt_v4] will perform gauge transform\n");
       break;
     case 'h':
     case '?':
@@ -158,25 +159,25 @@ int main(int argc, char **argv) {
     }
   }
 
-  /* set the default values */
+  // set the default values
   if(filename_set==0) strcpy(filename, "cvc.input");
-  fprintf(stdout, "# reading input from file %s\n", filename);
+  fprintf(stdout, "# [sigma_ps_2pt_v4] reading input from file %s\n", filename);
   read_input_parser(filename);
 
   // some checks on the input data
   if((T_global == 0) || (LX==0) || (LY==0) || (LZ==0)) {
-    if(g_proc_id==0) fprintf(stdout, "T and L's must be set\n");
+    if(g_proc_id==0) fprintf(stderr, "[sigma_ps_2pt_v4] T and L's must be set\n");
     usage();
   }
   if(g_kappa == 0.) {
-    if(g_proc_id==0) fprintf(stdout, "kappa should be > 0.n");
+    if(g_proc_id==0) fprintf(stderr, "[sigma_ps_2pt_v4] kappa should be > 0.n");
     usage();
   }
 
 #ifdef OPENMP
   omp_set_num_threads(g_num_threads);
 #else
-  fprintf(stdout, "[delta_pp_2pt_v4] Warning, resetting global thread number to 1\n");
+  fprintf(stdout, "# [sigma_ps_2pt_v4] Warning, resetting global thread number to 1\n");
   g_num_threads = 1;
 #endif
 
@@ -186,7 +187,7 @@ int main(int argc, char **argv) {
 #ifdef OPENMP
   status = fftw_threads_init();
   if(status != 0) {
-    fprintf(stderr, "\n[] Error from fftw_init_threads; status was %d\n", status);
+    fprintf(stderr, "\n[sigma_ps_2pt_v4] Error from fftw_init_threads; status was %d\n", status);
     exit(120);
   }
 #endif
@@ -240,7 +241,7 @@ int main(int argc, char **argv) {
   sx2 = (g_source_location%(LY*LZ)) / LZ;
   sx3 = (g_source_location%LZ);
 //  g_source_time_slice = sx0;
-  fprintf(stdout, "# [] source location %d = (%d,%d,%d,%d)\n", g_source_location, sx0, sx1, sx2, sx3);
+  fprintf(stdout, "# [sigma_ps_2pt_v4] source location %d = (%d,%d,%d,%d)\n", g_source_location, sx0, sx1, sx2, sx3);
 
   // allocate memory for the spinor fields
   g_spinor_field = NULL;
@@ -256,7 +257,7 @@ int main(int argc, char **argv) {
 
   spinor_field_checksum = (DML_Checksum*)malloc(no_fields * sizeof(DML_Checksum) );
   if(spinor_field_checksum == NULL ) {
-    fprintf(stderr, "[] Error, could not alloc checksums for spinor fields\n");
+    fprintf(stderr, "[sigma_ps_2pt_v4] Error, could not alloc checksums for spinor fields\n");
     exit(73);
   }
 
@@ -265,7 +266,7 @@ int main(int argc, char **argv) {
   bytes = sizeof(double);
   connt = (double*)malloc(items*bytes);
   if(connt == NULL) {
-    fprintf(stderr, "\n[] Error, could not alloc connt\n");
+    fprintf(stderr, "\n[sigma_ps_2pt_v4] Error, could not alloc connt\n");
     exit(2);
   }
   for(ix=0; ix<items; ix++) connt[ix] = 0.;
@@ -273,7 +274,7 @@ int main(int argc, char **argv) {
   items = num_component * (size_t)VOL3;
   connq = create_sp_field( items );
   if(connq == NULL) {
-    fprintf(stderr, "\n[] Error, could not alloc connq\n");
+    fprintf(stderr, "\n[sigma_ps_2pt_v4] Error, could not alloc connq\n");
     exit(2);
   }
 
@@ -285,7 +286,7 @@ int main(int argc, char **argv) {
   bytes = sizeof(double);
   in  = (fftw_complex*)malloc(num_component*g_sv_dim*g_sv_dim*VOL3*sizeof(fftw_complex));
   if(in == NULL) {
-    fprintf(stderr, "[] Error, could not malloc in for FFTW\n");
+    fprintf(stderr, "[sigma_ps_2pt_v4] Error, could not malloc in for FFTW\n");
     exit(155);
   }
   dims[0]=LX; dims[1]=LY; dims[2]=LZ;
@@ -299,8 +300,8 @@ int main(int argc, char **argv) {
   fp3   = (fermion_propagator_type*)malloc(g_num_threads * sizeof(fermion_propagator_type) );
   fp4   = (fermion_propagator_type*)malloc(g_num_threads * sizeof(fermion_propagator_type) );
   fpaux = (fermion_propagator_type*)malloc(g_num_threads * sizeof(fermion_propagator_type) );
-  if(uprop==NULL || sprop=NULL || fp1==NULL || fp2==NULL || fp3==NULL || fp4==NULL || fpaux==NULL ) {
-    fprintf(stderr, "[] Error, could not alloc fermion propagator points\n");
+  if(uprop==NULL || sprop==NULL || fp1==NULL || fp2==NULL || fp3==NULL || fp4==NULL || fpaux==NULL ) {
+    fprintf(stderr, "[sigma_ps_2pt_v4] Error, could not alloc fermion propagator points\n");
     exit(57);
   }
   sp1 = (spinor_propagator_type*)malloc(g_num_threads * sizeof(spinor_propagator_type) ); 
@@ -310,7 +311,7 @@ int main(int argc, char **argv) {
   sp5 = (spinor_propagator_type*)malloc(g_num_threads * sizeof(spinor_propagator_type) ); 
   sp_aux = (spinor_propagator_type*)malloc(g_num_threads * sizeof(spinor_propagator_type) ); 
   if(sp1==NULL || sp2==NULL || sp3==NULL || sp4==NULL || sp5==NULL || sp_aux==NULL ) {
-    fprintf(stderr, "[] Error, could not alloc spinor propagator points\n");
+    fprintf(stderr, "[sigma_ps_2pt_v4] Error, could not alloc spinor propagator points\n");
     exit(59);
   }
   for(i=0;i<g_num_threads;i++) { create_fp(uprop+i); }
@@ -344,7 +345,7 @@ int main(int argc, char **argv) {
           break;
       }
       if(status != 0) {
-        fprintf(stderr, "[] Error, could not read gauge field\n");
+        fprintf(stderr, "[sigma_ps_2pt_v4] Error, could not read gauge field\n");
         exit(21);
       }
 
@@ -361,11 +362,11 @@ int main(int argc, char **argv) {
       sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.inverted", filename_prefix, Nconf, sx0, sx1, sx2, sx3, is);
       status = read_lime_spinor_timeslice(g_spinor_field[is], timeslice, filename, 0, spinor_field_checksum+is);
       if(status != 0) {
-        fprintf(stderr, "[] Error, could not read propagator from file %s\n", filename);
+        fprintf(stderr, "[sigma_ps_2pt_v4] Error, could not read propagator from file %s\n", filename);
         exit(102);
       }
       if(N_Jacobi > 0) {
-        fprintf(stdout, "# [] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
+        fprintf(stdout, "# [sigma_ps_2pt_v4] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
             is, N_Jacobi, kappa_Jacobi);
 #ifdef OPENMP
         Jacobi_Smearing_Step_one_Timeslice_threads(g_gauge_field, g_spinor_field[is], work, N_Jacobi, kappa_Jacobi);
@@ -382,11 +383,11 @@ int main(int argc, char **argv) {
       sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.inverted", filename_prefix3, Nconf, sx0, sx1, sx2, sx3, is);
       status = read_lime_spinor_timeslice(g_spinor_field[is+n_s*n_c], timeslice, filename, 0, spinor_field_checksum+is);
       if(status != 0) {
-        fprintf(stderr, "[] Error, could not read propagator from file %s\n", filename);
+        fprintf(stderr, "[sigma_ps_2pt_v4] Error, could not read propagator from file %s\n", filename);
         exit(102);
       }
       if(N_Jacobi > 0) {
-        fprintf(stdout, "# [] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
+        fprintf(stdout, "# [sigma_ps_2pt_v4] Jacobi smearing propagator no. %d with paramters N_Jacobi=%d, kappa_Jacobi=%f\n",
             is, N_Jacobi, kappa_Jacobi);
 #ifdef OPENMP
         Jacobi_Smearing_Step_one_Timeslice_threads(g_gauge_field, g_spinor_field[is+n_s*n_c], work, N_Jacobi, kappa_Jacobi);
@@ -405,7 +406,7 @@ int main(int argc, char **argv) {
   omp_set_num_threads(g_num_threads);
 #pragma omp parallel private (ix,icomp,threadid) \
     firstprivate (fermion_type,gamma_component,num_component,connq,\
-        gamma_component_sign,VOL3,g_spinor_field,fp1,fp2,fp3,fpaux,uprop,sp1,sp2)
+        gamma_component_sign,VOL3,g_spinor_field,fp1,fp2,fp3,fp4,fpaux,uprop,sprop,sp1,sp2,sp3,sp4,sp5,sp_aux)
 {
     threadid = omp_get_thread_num();
 #else
@@ -525,7 +526,7 @@ int main(int argc, char **argv) {
      ***********************************************/
     if(g_propagator_bc_type == 0) {
       // multiply with phase factor
-      fprintf(stdout, "# [] multiplying timeslice %d with boundary phase factor\n", timeslice);
+      fprintf(stdout, "# [sigma_ps_2pt_v4] multiplying timeslice %d with boundary phase factor\n", timeslice);
       ir = (timeslice - sx0 + T_global) % T_global;
       w1.re = cos( 3. * M_PI*(double)ir / (double)T_global );
       w1.im = sin( 3. * M_PI*(double)ir / (double)T_global );
@@ -536,7 +537,7 @@ int main(int argc, char **argv) {
     } else if (g_propagator_bc_type == 1) {
       // multiply with step function
       if(timeslice < sx0) {
-        fprintf(stdout, "# [] multiplying timeslice %d with boundary step function\n", timeslice);
+        fprintf(stdout, "# [sigma_ps_2pt_v4] multiplying timeslice %d with boundary step function\n", timeslice);
         for(ix=0;ix<num_component*VOL3;ix++) {
           _sp_eq_sp(sp1[0], connq[ix] );
           _sp_eq_sp_ti_re( connq[ix], sp1[0], -1.);
@@ -596,6 +597,22 @@ int main(int argc, char **argv) {
     /***********************************************
      * calculate connt
      ***********************************************/
+    // project to spin = 3/2
+    spin_projection_3_2_zero_momentum_tr (sp1, connq);
+
+    // fwd
+    _sp_eq_gamma_ti_sp(sp2[0], 0, sp1[0]);
+    _sp_pl_eq_sp(sp2[0], sp1[0]);
+    _co_eq_tr_sp(&w, sp2[0]);
+    connt[2*timeslice  ] = w.re * 0.25;
+    connt[2*timeslice+1] = w.im * 0.25;
+    // bwd
+    _sp_eq_gamma_ti_sp(sp2[0], 0, sp1[0]);
+    _sp_mi_eq_sp(sp2[0], sp1[0]);
+    _co_eq_tr_sp(&w, sp1[0]);
+    connt[2*(timeslice + T)  ] = -w.re * 0.25;
+    connt[2*(timeslice + T)+1] = -w.im * 0.25;
+/*
     for(icomp=0;icomp<num_component; icomp++) {
       // fwd
       _sp_eq_sp(sp1[0], connq[icomp]);
@@ -612,7 +629,7 @@ int main(int argc, char **argv) {
       connt[2*(icomp*T+timeslice + num_component*T)  ] = w.re * 0.25;
       connt[2*(icomp*T+timeslice + num_component*T)+1] = w.im * 0.25;
     }
-
+*/
   }  // of loop on timeslice
 
 
@@ -621,7 +638,7 @@ int main(int argc, char **argv) {
   sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.fw", outfile_prefix, Nconf, sx0, sx1, sx2, sx3);
   ofs = fopen(filename, "w");
   if(ofs == NULL) {
-    fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
+    fprintf(stderr, "[sigma_ps_2pt_v4] Error, could not open file %s for writing\n", filename);
     exit(3);
   }
   fprintf(ofs, "#%12.8f%3d%3d%3d%3d%8.4f%6d\n", g_kappa, T_global, LX, LY, LZ, g_mu, Nconf);
@@ -642,7 +659,7 @@ int main(int argc, char **argv) {
   sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.bw", outfile_prefix, Nconf, sx0, sx1, sx2, sx3);
   ofs = fopen(filename, "w");
   if(ofs == NULL) {
-    fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
+    fprintf(stderr, "[sigma_ps_2pt_v4] Error, could not open file %s for writing\n", filename);
     exit(3);
   }
   fprintf(ofs, "#%12.8f%3d%3d%3d%3d%8.4f%6d\n", g_kappa, T_global, LX, LY, LZ, g_mu, Nconf);
@@ -704,9 +721,9 @@ int main(int argc, char **argv) {
   fftwnd_destroy_plan(plan_p);
 
   g_the_time = time(NULL);
-  fprintf(stdout, "# [] %s# [] end fo run\n", ctime(&g_the_time));
+  fprintf(stdout, "# [sigma_ps_2pt_v4] %s# [sigma_ps_2pt_v4] end fo run\n", ctime(&g_the_time));
   fflush(stdout);
-  fprintf(stderr, "# [] %s# [] end fo run\n", ctime(&g_the_time));
+  fprintf(stderr, "# [sigma_ps_2pt_v4] %s# [sigma_ps_2pt_v4] end fo run\n", ctime(&g_the_time));
   fflush(stderr);
 
 #ifdef MPI

@@ -42,7 +42,7 @@
 #include "contractions_io.h"
 
 void usage() {
-  fprintf(stdout, "Code to perform contractions for proton 2-pt. function\n");
+  fprintf(stdout, "Code to perform contractions for Lambda 2-pt. function\n");
   fprintf(stdout, "Usage:    [options]\n");
   fprintf(stdout, "Options: -v verbose [no effect, lots of stdout output]\n");
   fprintf(stdout, "         -f input filename [default proton.input]\n");
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
   
   const int n_c=3;
   const int n_s=4;
-  const char outfile_prefix[] = "proton_2pt_v4";
+  const char outfile_prefix[] = "lambda_2pt_v4";
 
 
   int c, i, j, ll, sl;
@@ -277,7 +277,7 @@ int main(int argc, char **argv) {
   no_fields = n_s*n_c;
   if(fermion_type == _TM_FERMION) {
     no_fields *= 3;  // u, d and s
-  } else if (fermion_type == _WILSON) {
+  } else if (fermion_type == _WILSON_FERMION) {
     no_fields *= 2;  // u = d and s
   }
   if(N_Jacobi>0) no_fields++;
@@ -434,7 +434,7 @@ int main(int argc, char **argv) {
 #ifdef OPENMP
   omp_set_num_threads(g_num_threads);
 #pragma omp parallel private(ix,threadid) \
-  firstprivate(uprop,dprop,fp1,fp2,fp3,sp1,sp2,g_spinor_field,VOLUME,fermion_type,connq)
+  firstprivate(uprop,dprop,sprop,fp1,fp2,fp3,fp4,fp5,sp1,sp2,sp3,sp4,sp5,sp_aux,g_spinor_field,VOLUME,fermion_type,connq)
 {
   threadid = omp_get_thread_num();
 #else

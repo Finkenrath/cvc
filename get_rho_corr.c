@@ -31,6 +31,7 @@
 #include "mpi_init.h"
 #include "io.h"
 #include "propagator_io.h"
+#include "contractions_io.h"
 #include "Q_phi.h"
 #include "get_index.h"
 #include "read_input_parser.h"

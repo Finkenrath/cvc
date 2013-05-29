@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #ifdef MPI
 #  include <mpi.h>
 #endif
@@ -409,6 +410,10 @@ int init_multigrid_decompositon(int degree, int**lexic2sub, int***sub2lexic, int
   int x0, x1, x2, x3, lsize[4];
   int isodd = degree % 2;
 
+  // TEST
+  FILE *ofs=NULL;
+  char filename[200];
+
   if(*lexic2sub != NULL) {
     free(*lexic2sub);
     *lexic2sub = NULL;
@@ -506,8 +511,6 @@ int init_multigrid_decompositon(int degree, int**lexic2sub, int***sub2lexic, int
 
   // TEST
 
-  FILE *ofs=NULL;
-  char filename[200];
   sprintf(filename, "geom.%.2d.%.2d", g_nproc, g_cart_id);
   ofs = fopen(filename, "w");
 

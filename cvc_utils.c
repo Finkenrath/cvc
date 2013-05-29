@@ -3003,7 +3003,7 @@ void cm_proj(double *A) {
 /*  fprintf(stderr, "lambda = (%+6.3lf  , %+6.3lf , %+6.3lf).\n", lambda[0], lambda[1], lambda[2]); */
 
   if(lambda[0] <= 0.000000000001 || lambda[1] <= 0.000000000001 || lambda[2] <= 0.000000000001) {
-    fprintf(stderr, "lambda = (%+6.3lf  , %+6.3lf , %+6.3lf).\n", lambda[0], lambda[1], lambda[2]);
+    fprintf(stderr, "lambda = (%+6.3f  , %+6.3f , %+6.3f).\n", lambda[0], lambda[1], lambda[2]);
     fprintf(stderr, "Error: inline void SU3_proj(...\n");
 #ifdef MPI
     MPI_Abort(MPI_COMM_WORLD, 1);
@@ -3890,12 +3890,30 @@ void printf_sp(spinor_propagator_type f, char*name, FILE*ofs) {
   int i,j;
   FILE *my_ofs = ofs==NULL ? stdout : ofs;
   fprintf(my_ofs, "# [] spinor propagator point:\n");
+  fprintf(my_ofs, "%s <- array(0, dim=c(%d, %d))\n", name, g_sv_dim, g_sv_dim);
   for(i=0;i<g_sv_dim;i++) {
   for(j=0;j<g_sv_dim;j++) {
-    fprintf(my_ofs, "\t%s[%2d,%2d] <- %25.16e + %25.16e*1.i\n", name, i+1,j+1,f[i][2*j], f[i][2*j+1]);
+    // fprintf(my_ofs, "\t%s[%2d,%2d] <- %25.16e + %25.16e*1.i\n", name, i+1,j+1,f[i][2*j], f[i][2*j+1]);
+    fprintf(my_ofs, "\t%s[%2d,%2d] <- %25.16e + %25.16e*1.i\n", name, i+1,j+1,f[j][2*i], f[j][2*i+1]);
   }}
 }
 
+/*****************************************************
+ * norm of sp_prop
+ * - defined as tr(f * f^dagger)
+ *****************************************************/
+void norm2_sp(spinor_propagator_type f, double*res) {
+  int i,j;
+  double re, im, tres=0.;
+
+  for(j=0;j<g_sv_dim;j++) {
+  for(i=0;i<g_sv_dim;i++) {
+    re = f[j][2*i  ]; 
+    im = f[j][2*i+1];
+    tres += re*re + im*im;
+  }}
+  *res = tres;
+}
 
 /*****************************************************
  * write more general contractions to file

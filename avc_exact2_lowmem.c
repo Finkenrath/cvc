@@ -34,6 +34,7 @@
 #include "mpi_init.h"
 #include "io.h"
 #include "propagator_io.h"
+#include "contractions_io.h"
 #include "Q_phi.h"
 #include "read_input_parser.h"
 
@@ -68,6 +69,7 @@ int main(int argc, char **argv) {
   int write_ascii=0;
   int mms = 0, mass_id = -1;
   int outfile_prefix_set = 0;
+  int up_dn_onefile = 0;
   double gperm_sign[5][4], gperm2_sign[4][4];
   double *conn = (double*)NULL;
   double contact_term[8];
@@ -84,6 +86,7 @@ int main(int argc, char **argv) {
   complex w, w1;
   double Usourcebuff[72], *Usource[4];
   FILE *ofs;
+  int use_shifted_spinor = 0, shift_vector[4];
 
   fftw_complex *in=(fftw_complex*)NULL;
 
@@ -98,7 +101,7 @@ int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
 #endif
 
-  while ((c = getopt(argc, argv, "wWah?vgf:t:m:o:")) != -1) {
+  while ((c = getopt(argc, argv, "ucwWah?vgf:t:m:o:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -135,6 +138,14 @@ int main(int argc, char **argv) {
       strcpy(outfile_prefix, optarg);
       fprintf(stdout, "\n# [avc_exact2_lowmem] will use prefix $s for output filenames\n", outfile_prefix);
       outfile_prefix_set = 1;
+      break;
+    case 'c':
+      use_shifted_spinor = 1;
+      fprintf(stdout, "# [avc_exact2_lowmem] will use shifted free spinor fields\n");
+      break;
+    case 'u':
+      up_dn_onefile = 1;
+      fprintf(stdout, "# [avc_exact2_lowmem] will read up / dn from one file at pos 0 / 1\n");
       break;
     case 'h':
     case '?':
@@ -260,10 +271,10 @@ int main(int argc, char **argv) {
 
   /* allocate memory for the spinor fields */
   no_fields = 6;
-  if(mms) no_fields++;
+  if(mms || use_shifted_spinor) no_fields++;
   g_spinor_field = (double**)calloc(no_fields, sizeof(double*));
   for(i=0; i<no_fields; i++) alloc_spinor_field(&g_spinor_field[i], VOLUMEPLUSRAND);
-  if(mms) {
+  if(mms || use_shifted_spinor) {
     work = g_spinor_field[no_fields-1];
   }
 
@@ -406,6 +417,12 @@ int main(int argc, char **argv) {
   {
     // fprintf(stdout, "\n# [avc_exact2_lowmem] 1st part, processing nu = %d ...\n", nu);
 
+    memset(shift_vector, 0, 4*sizeof(int));
+    shift_vector[nu] = 1;
+    // TEST
+    fprintf(stdout, "# [] shift_vector(%d) = (%d, %d, %d, %d)\n", nu,
+    shift_vector[0], shift_vector[1], shift_vector[2], shift_vector[3]);
+               
     for(ir=0; ir<4; ir++) {
 
       // read 3 up-type propagator color components for spinor index ir
@@ -435,8 +452,25 @@ int main(int argc, char **argv) {
       // read 3 dn-type propagator color components for spinor index gamma_perm ( ir )
       for(ia=0; ia<3; ia++) {
         if(!mms) {
-          get_filename(filename, nu, 3*gperm[nu][ir]+ia, -1);
-          exitstatus = read_lime_spinor(g_spinor_field[3+ia], filename, 0);
+          if(!up_dn_onefile) {
+            if(!use_shifted_spinor) {
+              get_filename(filename, nu, 3*gperm[nu][ir]+ia, -1);
+              exitstatus = read_lime_spinor(g_spinor_field[3+ia], filename, 0);
+            } else {
+              get_filename(filename, 4, 3*gperm[nu][ir]+ia, -1);
+              exitstatus = read_lime_spinor(work, filename, 0);
+              shift_spinor_field(g_spinor_field[3+ia], work, shift_vector);
+            }
+          } else {
+            if(!use_shifted_spinor) {
+              get_filename(filename, nu, 3*gperm[nu][ir]+ia, 1);
+              exitstatus = read_lime_spinor(g_spinor_field[3+ia], filename, 1);
+            } else {
+              get_filename(filename, 4, 3*gperm[nu][ir]+ia, 1);
+              exitstatus = read_lime_spinor(work, filename, 1);
+              shift_spinor_field(g_spinor_field[3+ia], work, shift_vector);
+            }
+          }
           if(exitstatus != 0) {
             fprintf(stderr, "\n# [avc_exact2_lowmem] Error from read_lime_spinor\n");
             exit(111);
@@ -528,8 +562,25 @@ int main(int argc, char **argv) {
       // read 3 dn-type propagator color components for spinor index id( ir )
       for(ib=0; ib<3; ib++) {
         if(!mms) {
-          get_filename(filename, nu, 3*gperm[4][ir]+ib, -1);
-          exitstatus = read_lime_spinor(g_spinor_field[3+ib], filename, 0);
+          if(!up_dn_onefile) {
+            if(!use_shifted_spinor) {
+              get_filename(filename, nu, 3*gperm[4][ir]+ib, -1);
+              exitstatus = read_lime_spinor(g_spinor_field[3+ib], filename, 0);
+            } else {
+              get_filename(filename, 4, 3*gperm[4][ir]+ib, -1);
+              exitstatus = read_lime_spinor(work, filename, 0);
+              shift_spinor_field(g_spinor_field[3+ib], work, shift_vector);
+            }
+          } else {
+            if(!use_shifted_spinor) {
+              get_filename(filename, nu, 3*gperm[4][ir]+ib, 1);
+              exitstatus = read_lime_spinor(g_spinor_field[3+ib], filename, 1);
+            } else {
+              get_filename(filename, 4, 3*gperm[4][ir]+ib, 1);
+              exitstatus = read_lime_spinor(work, filename, 1);
+              shift_spinor_field(g_spinor_field[3+ib], work, shift_vector);
+            }
+          }
           if(exitstatus != 0) {
             fprintf(stderr, "\n# [avc_exact2_lowmem] Error from read_lime_spinor\n");
             exit(111);
@@ -641,14 +692,25 @@ int main(int argc, char **argv) {
 
     // fprintf(stdout, "\n# [avc_exact2_lowmem] 2nd part, processing nu = %d ...\n", nu);
 
+    memset(shift_vector, 0, 4*sizeof(int));
+    shift_vector[nu] = +1;
+    // TEST
+    fprintf(stdout, "# [] shift_vector(%d) = (%d, %d, %d, %d)\n", nu,
+    shift_vector[0], shift_vector[1], shift_vector[2], shift_vector[3]);
+                
     for(ir=0; ir<4; ir++) {
 
       // 3 dn-type propagators for spinor index ir    
       for(ia=0; ia<3; ia++) {
         if(!mms) {
-          get_filename(filename, 4, 3*gperm[nu][ir]+ia, -1);
-          exitstatus = read_lime_spinor(g_spinor_field[3+ia], filename, 0);
-          if(exitstatus != 0) {
+          if(!up_dn_onefile) {
+            get_filename(filename, 4, 3*gperm[nu][ir]+ia, -1);
+            exitstatus = read_lime_spinor(g_spinor_field[3+ia], filename, 0);
+          } else {
+            get_filename(filename, 4, 3*gperm[nu][ir]+ia, 1);
+            exitstatus = read_lime_spinor(g_spinor_field[3+ia], filename, 1);
+          }
+         if(exitstatus != 0) {
             fprintf(stderr, "\n# [avc_exact2_lowmem] Error from read_lime_spinor\n");
             exit(111);
           }
@@ -670,8 +732,14 @@ int main(int argc, char **argv) {
       /* read 3 up-type propagators for spinor index gamma_perm(ir) */
       for(ia=0; ia<3; ia++) {
         if(!mms) {
-          get_filename(filename, nu, 3*ir+ia, 1);
-          exitstatus = read_lime_spinor(g_spinor_field[ia], filename, 0);
+          if(!use_shifted_spinor) {
+            get_filename(filename, nu, 3*ir+ia, 1);
+            exitstatus = read_lime_spinor(g_spinor_field[ia], filename, 0);
+          } else {
+            get_filename(filename, 4, 3*ir+ia, 1);
+            exitstatus = read_lime_spinor(work, filename, 0);
+            shift_spinor_field(g_spinor_field[ia], work, shift_vector);
+          }
           if(exitstatus != 0) {
             fprintf(stderr, "\n# [avc_exact2_lowmem] Error from read_lime_spinor\n");
             exit(111);
@@ -761,8 +829,13 @@ int main(int argc, char **argv) {
       // read 3 dn-type propagators for spinor index id( ir )
       for(ia=0; ia<3; ia++) {
         if(!mms) {
-          get_filename(filename, 4, 3*gperm[4][ir]+ia, -1);
-          exitstatus = read_lime_spinor(g_spinor_field[3+ia], filename, 0);
+          if(!up_dn_onefile) {
+            get_filename(filename, 4, 3*gperm[4][ir]+ia, -1);
+            exitstatus = read_lime_spinor(g_spinor_field[3+ia], filename, 0);
+          } else {
+            get_filename(filename, 4, 3*gperm[4][ir]+ia, 1);
+            exitstatus = read_lime_spinor(g_spinor_field[3+ia], filename, 1);
+          }
           if(exitstatus != 0) {
             fprintf(stderr, "\n# [avc_exact2_lowmem] Error from read_lime_spinor\n");
             exit(111);

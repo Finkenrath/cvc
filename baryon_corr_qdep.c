@@ -38,7 +38,7 @@
 #include "contractions_io.h"
 #include "make_q_orbits.h"
 #include "icontract.h"
-
+#include "spin_projection.h"
 
 void usage() {
   fprintf(stdout, "Code to produce the (q_x,q_y,q_z)-dependent baryon correlator from the output of e.g. proton_2pt_v3\n");
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
   int l_LX_at, l_LXstart_at;
   int x0, it, ix, iclass, igamma, imom;
   int qlatt_nclass;
-  spinor_propagator_type *connq=NULL, sp1, sp2, sp3;
+  spinor_propagator_type *connq=NULL, sp1, sp2, sp3, connq_proj[16];
   double q[4], qsqr, fnorm;
   int verbose = 0;
   int orbit_average=0;
@@ -74,6 +74,7 @@ int main(int argc, char **argv) {
   double ***corrt=NULL;
   complex w;
   int num_component=1, icg, icomp;
+  int do_spin_projection=-1, write_spin_projection=0;
 /**************************************************************************/
   int momentum_filename_set = 0, momentum_no=0;
   char momentum_filename[200];
@@ -115,7 +116,7 @@ int main(int argc, char **argv) {
 /***********************************************************/
 
 
-  while ((c = getopt(argc, argv, "arsh?vf:p:n:P:")) != -1) {
+  while ((c = getopt(argc, argv, "arsh?vf:p:n:P:S:W:")) != -1) {
     switch (c) {
     case 'v':
       verbose = 1;
@@ -150,6 +151,14 @@ int main(int argc, char **argv) {
       read_ascii = 1;
       fprintf(stdout, "# [baryon_corr_qdep] will data in ascii format\n");
       break;
+    case 'S':
+      do_spin_projection = atoi(optarg);
+      fprintf(stdout, "# [baryon_corr_qdep] will do spin projection of type %d\n", do_spin_projection);
+      break;
+    case 'W':
+      write_spin_projection = atoi(optarg);
+      fprintf(stdout, "# [baryon_corr_qdep] will write spin projection in mode (1 binary / 2 ascii) %d\n", write_spin_projection);
+      break;
     case 'h':
     case '?':
     default:
@@ -158,22 +167,27 @@ int main(int argc, char **argv) {
     }
   }
 
-  /* set the default values */
+  // set the default values
   if(filename_set==0) strcpy(filename, "cvc.input");
-  fprintf(stdout, "# Reading input from file %s\n", filename);
+  fprintf(stdout, "# [baryon_corr_qdep] Reading input from file %s\n", filename);
   read_input_parser(filename);
 
-  /* some checks on the input data */
+  // some checks on the input data
   if((T_global == 0) || (LX==0) || (LY==0) || (LZ==0)) {
-    if(g_proc_id==0) fprintf(stdout, "T and L's must be set\n");
+    if(g_proc_id==0) fprintf(stderr, "[baryon_corr_qdep] T and L's must be set\n");
     usage();
   }
 
-  /* initialize MPI parameters */
+  if(do_spin_projection > -1 && num_component != 16) {
+    fprintf(stderr, "[baryon_corr_qdep] Error, need 16 components to do spin projection\n");
+    exit(4);
+  }
+
+  // initialize MPI parameters
   mpi_init(argc, argv);
 
   if(init_geometry() != 0) {
-    fprintf(stderr, "ERROR from init_geometry\n");
+    fprintf(stderr, "[baryon_corr_qdep] ERROR from init_geometry\n");
     exit(1);
   }
 
@@ -426,6 +440,57 @@ int main(int argc, char **argv) {
   }
   retime = (double)clock() / CLOCKS_PER_SEC;
   fprintf(stdout, "# time to read contractions %e seconds\n", retime-ratime);
+
+  /***********************
+   * spin projection
+   ***********************/
+  if(do_spin_projection > -1) {
+    // spin projection using zero momentum formula
+    for(i=0; i<16; i++) { create_sp(connq_proj+i); }
+
+    if(do_spin_projection == 30) {
+      // zero momentum, spin 3/2
+      for(isnk=0; isnk<snk_momentum_no; isnk++)
+      {
+        for(it=0;it<T;it++)
+        {
+          spin_projection_3_2_zero_momentum (connq_proj, connq+(it*snk_momentum_no+isnk)*num_component);
+          for(icomp=0; icomp<num_component; icomp++) {
+            _sp_eq_sp(connq[(it*snk_momentum_no+isnk)*num_component+icomp], connq_proj[icomp]);
+          }
+        }
+      }
+    } else if (do_spin_projection == 10) {
+      // zero momentum, spin 1/2
+      for(isnk=0; isnk<snk_momentum_no; isnk++)
+      {
+        for(it=0;it<T;it++)
+        {
+          spin_projection_1_2_zero_momentum (connq_proj, connq+(it*snk_momentum_no+isnk)*num_component);
+          for(icomp=0; icomp<num_component; icomp++) {
+            _sp_eq_sp(connq[(it*snk_momentum_no+isnk)*num_component+icomp], connq_proj[icomp]);
+          }
+        }
+      }
+    } else {
+      // spin projection for arbitrary momentum
+      fprintf(stderr, "[baryon_corr_qdep] not yet implemented\n");
+    }
+
+    for(i=0; i<16; i++) { free_sp(connq_proj+i); }
+
+    if(write_spin_projection==2) {
+      sprintf(filename, "%s_proj%d.%.4d.t%.2dx%.2dy%.2dz%.2d.ascii",
+          filename_prefix, do_spin_projection, Nconf, sx0, sx1, sx2, sx3);
+      fprintf(stdout, "# [baryon_corr_qdep] writing spin projection in ascii format to file %s\n", filename);
+      write_contraction2( connq[0][0], filename, num_component*g_sv_dim*g_sv_dim, T*snk_momentum_no, 1, 0);
+    } else if (write_spin_projection == 1) {
+      fprintf(stderr, "[baryon_corr_qdep] not yet implemented\n");
+    }
+
+  } else {
+    fprintf(stdout, "[baryon_corr_qdep] proceed without spin projection\n");
+  }
 
   /***********************
    * fill the correlator *
@@ -801,12 +866,12 @@ int main(int argc, char **argv) {
     if(momentum_list[0]!=NULL) free(momentum_list[0]);
     free(momentum_list);
   }
-  if(momentum_id==NULL) free(momentum_id);
+  if(momentum_id!=NULL) free(momentum_id);
   if(snk_momentum_list != NULL) {
     if(snk_momentum_list[0]!=NULL) free(snk_momentum_list[0]);
     free(snk_momentum_list);
   }
-    
+
   free_geometry();
 
   free_sp(&sp1);
