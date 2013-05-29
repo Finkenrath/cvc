@@ -77,6 +77,7 @@ int unit_gauge_field(double*g, unsigned int N);
 int write_contraction2 (double *s, char *filename, int Nmu, unsigned int items, int write_ascii, int append);
 void printf_fp(fermion_propagator_type f, char*name, FILE*ofs);
 void printf_sp(spinor_propagator_type f, char*name, FILE*ofs);
+void norm2_sp(spinor_propagator_type f, double*res);
 
 int init_rng_stat_file (int seed, char*filename);
 int init_rng_state (int seed, int **rng_state);
