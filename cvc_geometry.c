@@ -299,8 +299,13 @@ int init_geometry(void) {
 
 #endif  /* of ifdef MPI */
 
-  if(g_cart_id==0) fprintf(stdout, "# VOLUME = %d\n# RAND   = %d\n# EDGES  = %d\n# VOLUMEPLUSRAND = %d\n",
-    VOLUME, RAND, EDGES, VOLUMEPLUSRAND);
+  if(g_cart_id==0) {
+    fprintf(stdout, "# [init_geometry] (T, LX, LY, LZ) = (%d, %d, %d, %d)\n", T, LX, LY, LZ);
+    fprintf(stdout, "# [init_geometry] VOLUME = %d\n", VOLUME);
+    fprintf(stdout, "# [init_geometry] RAND   = %d\n", RAND);
+    fprintf(stdout, "# [init_geometry] EDGES  = %d\n", EDGES);
+    fprintf(stdout, "# [init_geometry] VOLUMEPLUSRAND = %d\n", VOLUMEPLUSRAND);
+  }
 
   V = VOLUMEPLUSRAND;
 
