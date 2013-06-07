@@ -65,7 +65,9 @@ int main(int argc, char **argv) {
   
   const int n_c=3;
   const int n_s=4;
-  const char outfile_prefix[] = "deltapp2piN";
+  const char outfile_prefix[] = "sigmaps2piLambda";
+  const double _ONE_OVER_THREE_TI_SQRT2 = 1. / (3. * sqrt(2));
+  const double _MINUS_ONE_OVER_THREE_TI_SQRT2 = -_ONE_OVER_THREE_TI_SQRT2;
 
   int c, i, icomp, imom, count;
   int filename_set = 0;
@@ -88,10 +90,10 @@ int main(int argc, char **argv) {
   char filename[200], contype[200], gauge_field_filename[200], line[200];
   double ratime, retime;
   double plaq_m, plaq_r;
-  int mode = -1;
+  int mode = 2;
   double *work=NULL;
   fermion_propagator_type *fp1=NULL, *fp2=NULL, *fp3=NULL, *fp4=NULL, *fp5=NULL, *fpaux=NULL, *uprop=NULL, *dprop=NULL, *sprop=NULL;
-  spinor_propagator_type *sp1=NULL, *sp2=NULL, *sp3=NULL, *sp4=NULL, *sp5=NULL, *sp6=NULL, *sp7=NULL, *sp8=NULL, *sp9=NULL, *sp_aux=NULL,;
+  spinor_propagator_type *sp1=NULL, *sp2=NULL, *sp3=NULL, *sp4=NULL, *sp5=NULL, *sp6=NULL, *sp7=NULL, *sp8=NULL, *sp9=NULL, *sp_aux=NULL;
   double q[3], phase, *gauge_trafo=NULL, spinor1[24];
   complex w, w1;
   size_t items, bytes;
@@ -99,7 +101,7 @@ int main(int argc, char **argv) {
   int timeslice;
   DML_Checksum ildg_gauge_field_checksum, *spinor_field_checksum=NULL, connq_checksum, *seq_spinor_field_checksum=NULL;
   uint32_t nersc_gauge_field_checksum;
-  int gamma_proj_sign[] = {1,1,1,1,1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+  // int gamma_proj_sign[] = {1,1,1,1,1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
 /***********************************************************/
   int *qlatt_id=NULL, *qlatt_count=NULL, **qlatt_rep=NULL, **qlatt_map=NULL, qlatt_nclass=0;
@@ -152,7 +154,7 @@ int main(int argc, char **argv) {
       break;
     case 'a':
       write_ascii = 1;
-      fprintf(stdout, "# [] will write in ascii format\n");
+      fprintf(stdout, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] will write in ascii format\n");
       break;
     case 'F':
       if(strcmp(optarg, "Wilson") == 0) {
@@ -160,23 +162,23 @@ int main(int argc, char **argv) {
       } else if(strcmp(optarg, "tm") == 0) {
         fermion_type = _TM_FERMION;
       } else {
-        fprintf(stderr, "[] Error, unrecognized fermion type\n");
+        fprintf(stderr, "[sigma_ps_2_pi_lambda_sequential_v4_mpi] Error, unrecognized fermion type\n");
         EXIT(145);
       }
-      fprintf(stdout, "# [] will use fermion type %s ---> no. %d\n", optarg, fermion_type);
+      fprintf(stdout, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] will use fermion type %s ---> no. %d\n", optarg, fermion_type);
       break;
     case 'g':
       do_gt = 1;
-      fprintf(stdout, "# [] will perform gauge transform\n");
+      fprintf(stdout, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] will perform gauge transform\n");
       break;
     case 's':
       use_lattice_momenta = 1;
-      fprintf(stdout, "# [] will use lattice momenta\n");
+      fprintf(stdout, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] will use lattice momenta\n");
       break;
     case 'P':
       snk_momentum_filename_set = 1;
       strcpy(snk_momentum_filename, optarg);
-      fprintf(stdout, "# [] will use nucleon momentum file %s\n", snk_momentum_filename);
+      fprintf(stdout, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] will use nucleon momentum file %s\n", snk_momentum_filename);
       break;
     case 'm':
       if(strcmp(optarg, "sequential")==0) {
@@ -184,11 +186,11 @@ int main(int argc, char **argv) {
       } else if(strcmp(optarg, "contract")==0) {
         mode = 2;
       }
-      fprintf(stdout, "# [] will use mode %d\n", mode);
+      fprintf(stdout, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] will use mode %d\n", mode);
       break;
     case 'S':
       smear_seq_source = 1;
-      fprintf(stdout, "# [] will smear sequential soucre\n");
+      fprintf(stdout, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] will smear sequential soucre\n");
       break;
     case 'h':
     case '?':
@@ -201,7 +203,7 @@ int main(int argc, char **argv) {
 
 
 #if (defined PARALLELTX) || (defined PARALLELTXY)
-  fprintf(stderr, "[] Error, 2-,3-dim. parallel version not yet implemented; exit\n");
+  fprintf(stderr, "[sigma_ps_2_pi_lambda_sequential_v4_mpi] Error, 2-,3-dim. parallel version not yet implemented; exit\n");
   EXIT(1);
 #endif
 
@@ -219,7 +221,7 @@ int main(int argc, char **argv) {
 #ifdef OPENMP
   omp_set_num_threads(g_num_threads);
 #else
-  fprintf(stdout, "[delta_pp_2_pi_N_sequential_v4_mpi] Warning, resetting global thread number to 1\n");
+  fprintf(stdout, "[sigma_ps_2_pi_lambda_sequential_v4_mpi] Warning, resetting global thread number to 1\n");
   g_num_threads = 1;
 #endif
 
@@ -278,7 +280,7 @@ int main(int argc, char **argv) {
     }
 
     if(N_ape > 0) {
-      if(g_cart_id==0) fprintf(stdout, "# [delta_pp_2_pi_N_sequential_v4_mpi] APE smearing gauge field with paramters N_APE=%d, alpha_APE=%e\n", N_ape, alpha_ape);
+      if(g_cart_id==0) fprintf(stdout, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] APE smearing gauge field with paramters N_APE=%d, alpha_APE=%e\n", N_ape, alpha_ape);
 #ifdef OPENMP
       APE_Smearing_Step_threads(g_gauge_field, N_ape, alpha_ape);
 #else
@@ -617,8 +619,8 @@ int main(int argc, char **argv) {
   
       // read 12 sequential propagators
       for(is=0;is<n_s*n_c;is++) {
-        sprintf(filename, "seq_%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.qx%.2dqy%.2dqz%.2d.inverted",
-            filename_prefix, Nconf, sx0, sx1, sx2, sx3, is,
+        sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.qx%.2dqy%.2dqz%.2d.inverted",
+            filename_prefix2, Nconf, sx0, sx1, sx2, sx3, is,
             rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
         status = read_lime_spinor(g_spinor_field[n_s*n_c+is], filename, 0);
         if(status != 0) {
@@ -709,6 +711,19 @@ int main(int argc, char **argv) {
             _fp_eq_zero(fp3[threadid]);
             _fp_eq_zero(fp4[threadid]);
             _fp_eq_zero(fpaux[threadid]);
+
+            // TEST
+/*
+            _sp_eq_zero(sp1[threadid]);
+            _sp_eq_zero(sp2[threadid]);
+            _sp_eq_zero(sp3[threadid]);
+            _sp_eq_zero(sp4[threadid]);
+            _sp_eq_zero(sp5[threadid]);
+            _sp_eq_zero(sp6[threadid]);
+            _sp_eq_zero(sp7[threadid]);
+            _sp_eq_zero(sp8[threadid]);
+            _sp_eq_zero(sp9[threadid]);
+*/
             // fp1[threadid] = C Gamma_1 x S_u = g0 g2 Gamma_1 S_u
             _fp_eq_gamma_ti_fp(fp1[threadid], gamma_component[0][icomp], uprop[threadid]);
             _fp_eq_gamma_ti_fp(fpaux[threadid], 2, fp1[threadid]);
@@ -733,7 +748,7 @@ int main(int argc, char **argv) {
             _fp_eq_fp_ti_gamma(fp5[threadid],   0, sprop[threadid]);
             _fp_eq_fp_ti_gamma(fpaux[threadid], 2, fp5[threadid]);
             _fp_eq_fp_ti_gamma(fp5[threadid], gamma_component[1][icomp], fpaux[threadid]);
-  
+
             // (1)
             // reduce
             _fp_eq_zero(fpaux[threadid]);
@@ -742,7 +757,8 @@ int main(int argc, char **argv) {
             _sp_eq_zero( sp_aux[threadid] );
             _sp_eq_fp_del_contract34_fp(sp_aux[threadid], sprop[threadid], fpaux[threadid]);
 
-            _sp_eq_sp_ti_re(sp1[threadid], sp_aux[threadid], -4.);
+            _sp_eq_sp_ti_re(sp1[threadid], sp_aux[threadid], +4.);
+
 
             // (2)
             // reduce
@@ -753,6 +769,7 @@ int main(int argc, char **argv) {
             _sp_eq_fp_del_contract34_fp(sp_aux[threadid], dprop[threadid], fpaux[threadid]);
 
             _sp_eq_sp_ti_re(sp2[threadid], sp_aux[threadid], +2.);
+
 
             // (3)
             // reduce
@@ -785,6 +802,7 @@ int main(int argc, char **argv) {
 
             _sp_eq_sp_ti_re(sp5[threadid], sp_aux[threadid], +2.);
 
+
             // (6)
             // reduce
             _fp_eq_zero(fpaux[threadid]);
@@ -798,12 +816,13 @@ int main(int argc, char **argv) {
             // (7)
             // reduce
             _fp_eq_zero(fpaux[threadid]);
-            _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp4[threadid], fp1[threadid]);
+            _fp_eq_fp_eps_contract13_fp(fpaux[threadid], fp4[threadid], sprop[threadid]);
             // reduce to spin propagator
             _sp_eq_zero( sp_aux[threadid] );
             _sp_eq_fp_del_contract23_fp(sp_aux[threadid], fp3[threadid], fpaux[threadid]);
 
             _sp_eq_sp_ti_re(sp7[threadid], sp_aux[threadid], +4.);
+
 
             // (8)
             // reduce
@@ -825,6 +844,7 @@ int main(int argc, char **argv) {
 
             _sp_eq_sp_ti_re(sp9[threadid], sp_aux[threadid], +2.);
 
+
             // add and assign
             _sp_pl_eq_sp(sp1[threadid], sp2[threadid]);
             _sp_pl_eq_sp(sp1[threadid], sp3[threadid]);
@@ -835,7 +855,7 @@ int main(int argc, char **argv) {
             _sp_pl_eq_sp(sp1[threadid], sp8[threadid]);
             _sp_pl_eq_sp(sp1[threadid], sp9[threadid]);
 
-            _sp_eq_sp_ti_re(sp2[threadid], sp1[threadid], gamma_component_sign[icomp] * _ONE_OVER_THREE_TI_SQRT2);
+            _sp_eq_sp_ti_re(sp2[threadid], sp1[threadid], gamma_component_sign[icomp] * _MINUS_ONE_OVER_THREE_TI_SQRT2);
             _sp_pl_eq_sp( connq[ix*num_component+icomp], sp2[threadid]);
   
           }  // of icomp
@@ -844,7 +864,7 @@ int main(int argc, char **argv) {
 #ifdef OPENMP
   }
 #endif
-    
+
         /***********************************************
          * finish calculation of connq
          ***********************************************/
@@ -873,7 +893,19 @@ int main(int argc, char **argv) {
           sprintf(filename, "%s_x.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d.ascii",
               outfile_prefix, Nconf, sx0, sx1, sx2, sx3,
               rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-          write_contraction2( connq[0][0], filename, num_component*g_sv_dim*g_sv_dim, VOL3, 1, append);
+
+          // write_contraction2( connq[0][0], filename, num_component*g_sv_dim*g_sv_dim, VOL3, 1, append);
+          ofs = timeslice==0 ? fopen(filename, "w") : fopen(filename, "a");
+          for(x1=0; x1<LX; x1++) {
+          for(x2=0; x2<LY; x2++) {
+          for(x3=0; x3<LZ; x3++) {
+            for(icomp=0; icomp<num_component; icomp++) {
+              ix = g_ipt[0][x1][x2][x3];
+              sprintf(filename, "s_x%.2dy%.2dz%.2d_mu%.2d", x1, x2, x3, icomp);
+              printf_sp(connq[ix*num_component+icomp], filename, ofs);
+            }
+          }}}
+          fclose(ofs); ofs = NULL;
         }
 #endif
   
@@ -1032,7 +1064,7 @@ int main(int argc, char **argv) {
     // write connt
     items = 2 * rel_momentum_no * num_component * T_global;
     if( (buffer = malloc(items*sizeof(double))) == NULL ) {
-      fprintf(stderr, "[] Error, could not allocate buffer; exit\n");
+      fprintf(stderr, "[sigma_ps_2_pi_lambda_sequential_v4_mpi] Error, could not allocate buffer; exit\n");
       EXIT(153);
     }
   
@@ -1041,7 +1073,7 @@ int main(int argc, char **argv) {
 #ifdef MPI
     status = MPI_Gather(connt, count, MPI_DOUBLE, buffer, count, MPI_DOUBLE, 0, g_cart_grid);
     if( status != MPI_SUCCESS ) {
-      fprintf(stderr, "[] Error from MPI_Gather; exit\n");
+      fprintf(stderr, "[sigma_ps_2_pi_lambda_sequential_v4_mpi] Error from MPI_Gather; exit\n");
       EXIT(154);
     }
 #else
@@ -1051,7 +1083,7 @@ int main(int argc, char **argv) {
       sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.fw", outfile_prefix, Nconf, sx0, sx1, sx2, sx3);
       ofs = fopen(filename, "w");
       if(ofs == NULL) {
-        fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
+        fprintf(stderr, "[sigma_ps_2_pi_lambda_sequential_v4_mpi] Error, could not open file %s for writing\n", filename);
         EXIT(3);
       }
      
@@ -1077,7 +1109,7 @@ int main(int argc, char **argv) {
     count = 2 * rel_momentum_no * num_component * T;
 #ifdef MPI
     if( MPI_Gather(connt+count, count, MPI_DOUBLE, buffer, count, MPI_DOUBLE, 0, g_cart_grid) != MPI_SUCCESS) {
-      fprintf(stderr, "[] Error from MPI_Gather; exit\n");
+      fprintf(stderr, "[sigma_ps_2_pi_lambda_sequential_v4_mpi] Error from MPI_Gather; exit\n");
       EXIT(155);
     }
 #else
@@ -1089,7 +1121,7 @@ int main(int argc, char **argv) {
       sprintf(filename, "%s.%.4d.t%.2dx%.2dy%.2dz%.2d.bw", outfile_prefix, Nconf, sx0, sx1, sx2, sx3);
       ofs = fopen(filename, "w");
       if(ofs == NULL) {
-        fprintf(stderr, "[] Error, could not open file %s for writing\n", filename);
+        fprintf(stderr, "[sigma_ps_2_pi_lambda_sequential_v4_mpi] Error, could not open file %s for writing\n", filename);
         EXIT(3);
       }
   
@@ -1148,9 +1180,9 @@ int main(int argc, char **argv) {
 
   if(g_cart_id==0) {
     g_the_time = time(NULL);
-    fprintf(stdout, "# [] %s# [] end fo run\n", ctime(&g_the_time));
+    fprintf(stdout, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] %s# [sigma_ps_2_pi_lambda_sequential_v4_mpi] end fo run\n", ctime(&g_the_time));
     fflush(stdout);
-    fprintf(stderr, "# [] %s# [] end fo run\n", ctime(&g_the_time));
+    fprintf(stderr, "# [sigma_ps_2_pi_lambda_sequential_v4_mpi] %s# [sigma_ps_2_pi_lambda_sequential_v4_mpi] end fo run\n", ctime(&g_the_time));
     fflush(stderr);
   }
 
