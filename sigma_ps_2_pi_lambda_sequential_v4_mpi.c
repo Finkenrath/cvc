@@ -888,12 +888,17 @@ int main(int argc, char **argv) {
             }
           }
         }
-#ifndef MPI
+// #ifndef MPI
         if(write_ascii) {
+#ifdef MPI
+          sprintf(filename, "%s_x.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d.%.2d.ascii",
+              outfile_prefix, Nconf, sx0, sx1, sx2, sx3,
+              rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2], g_cart_id);
+#else
           sprintf(filename, "%s_x.%.4d.t%.2dx%.2dy%.2dz%.2d.qx%.2dqy%.2dqz%.2d.ascii",
               outfile_prefix, Nconf, sx0, sx1, sx2, sx3,
               rel_momentum_list[imom][0],rel_momentum_list[imom][1],rel_momentum_list[imom][2]);
-
+#endif
           // write_contraction2( connq[0][0], filename, num_component*g_sv_dim*g_sv_dim, VOL3, 1, append);
           ofs = timeslice==0 ? fopen(filename, "w") : fopen(filename, "a");
           for(x1=0; x1<LX; x1++) {
@@ -907,7 +912,7 @@ int main(int argc, char **argv) {
           }}}
           fclose(ofs); ofs = NULL;
         }
-#endif
+// #endif
   
         /******************************************************************
          * Fourier transform
