@@ -3877,9 +3877,11 @@ void printf_fp(fermion_propagator_type f, char*name, FILE*ofs) {
   int i,j;
   FILE *my_ofs = ofs==NULL ? stdout : ofs;
   fprintf(my_ofs, "# [] fermion propagator point:\n");
+  fprintf(my_ofs, "\t%s <- array(0., dim=c(%d, %d))\n", name, g_fv_dim, g_fv_dim);
   for(i=0;i<g_fv_dim;i++) {
   for(j=0;j<g_fv_dim;j++) {
-    fprintf(my_ofs, "\t%s[%2d,%2d] <- %25.16e + %25.16e*1.i\n", name, i+1,j+1,f[i][2*j], f[i][2*j+1]);
+    //fprintf(my_ofs, "\t%s[%2d,%2d] <- %25.16e + %25.16e*1.i\n", name, i+1,j+1,f[i][2*j], f[i][2*j+1]);
+    fprintf(my_ofs, "\t%s[%2d,%2d] <- %25.16e + %25.16e*1.i\n", name, i+1,j+1,f[j][2*i], f[j][2*i+1]);
   }}
 }
 
