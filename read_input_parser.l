@@ -1,4 +1,4 @@
-  /***********************************************************************
+/***********************************************************************
  * read_input_parser.l
  * - parsing cvc.input to program
  * - use flex -P <prefix_> ...
@@ -43,7 +43,7 @@ SDIGIT {SIGN}?[[:digit:]]
   char * type;
   double ft_rmax[4];
 
-  int cvc_verbose = 0;
+  int cvc_verbose = 1;
   int myverbose = 0;
 
 %}
@@ -280,147 +280,147 @@ SDIGIT {SIGN}?[[:digit:]]
 
 <TT>{DIGIT}+                  {
   T_global = atoi(yytext);
-  if(myverbose!=0) printf("T_global =%s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] T_global =%s\n", yytext);
 }
 <LL>{DIGIT}+                  {
   L = atoi(yytext);
-  if(myverbose!=0) printf("L =%s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] L =%s\n", yytext);
 }
 <LL5>{DIGIT}+                  {
   L5 = atoi(yytext);
-  if(myverbose!=0) printf("L5 =%s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] L5 =%s\n", yytext);
 }
 <LLX>{DIGIT}+                  {
   LX = atoi(yytext);
-  if(myverbose!=0) printf("LX =%s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] LX =%s\n", yytext);
 }
 <LLY>{DIGIT}+                  {
   LY = atoi(yytext);
-  if(myverbose!=0) printf("LY =%s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] LY =%s\n", yytext);
 }
 <LLZ>{DIGIT}+                  {
   LZ = atoi(yytext);
-  if(myverbose!=0) printf("LZ =%s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] LZ =%s\n", yytext);
 }
 <KAPPA>{FLT}  {
   g_kappa=atof(yytext);
-  if(myverbose!=0) printf("kappa=%s \n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] kappa=%s \n", yytext);
 }
 <MU>{FLT}  {
   g_mu=atof(yytext);
-  if(myverbose!=0) printf("mu=%s \n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] mu=%s \n", yytext);
 }
 <M5>{FLT}  {
   g_m5 = atof(yytext);
-  if(myverbose!=0) printf("m5=%s \n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] m5=%s \n", yytext);
 }
 <MUSIGMA>{FLT}  {
   g_musigma=atof(yytext);
-  if(myverbose!=0) printf("musigma=%s \n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] musigma=%s \n", yytext);
 }
 <MUDELTA>{FLT}  {
   g_mudelta=atof(yytext);
-  if(myverbose!=0) printf("mudelta=%s \n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] mudelta=%s \n", yytext);
 }
 <MUBAR>{FLT}  {
   g_mubar=atof(yytext);
-  if(myverbose!=0) printf("mubar=%s \n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] mubar=%s \n", yytext);
 }
 <M0>{FLT}  {
   g_m0 = atof(yytext);
-  if(myverbose!=0) printf("m0=%s \n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] m0=%s \n", yytext);
 }
 <EPSBAR>{FLT}  {
   g_epsbar=atof(yytext);
-  if(myverbose!=0) printf("mu=%s \n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] mu=%s \n", yytext);
 }
 <NNSAVE>{SDIGIT}+ {
   Nsave=atoi(yytext); 
-  if(myverbose!=0) printf("Nsave= %s \n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] Nsave= %s \n",yytext);
 }
 <NNCONF>{DIGIT}+ {
   Nconf=atoi(yytext);
-  if(myverbose!=0) printf("Nconf=%s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] Nconf=%s\n", yytext);
 }
 <BCT>{FLT} {
   BCangle[0]=atof(yytext);
-  if(myverbose != 0) printf("BCangle[0] for bound. in time set to %e\n", BCangle[0]);
+  if(myverbose != 0) printf("# [read_input_parser] BCangle[0] for bound. in time set to %e\n", BCangle[0]);
 }
 <BCX>{FLT} {
   BCangle[1]=atof(yytext);
-  if(myverbose != 0) printf("BCangle[1] for bound. in x set to %e\n", BCangle[1]);
+  if(myverbose != 0) printf("# [read_input_parser] BCangle[1] for bound. in x set to %e\n", BCangle[1]);
 }
 <BCY>{FLT} {
   BCangle[2]=atof(yytext);
-  if(myverbose != 0) printf("BCangle[2] for bound. in y set to %e\n", BCangle[2]);
+  if(myverbose != 0) printf("# [read_input_parser] BCangle[2] for bound. in y set to %e\n", BCangle[2]);
 }
 <BCZ>{FLT} {
   BCangle[3]=atof(yytext);
-  if(myverbose != 0) printf("BCangle[3] for bound. in z set to %e\n", BCangle[3]);
+  if(myverbose != 0) printf("# [read_input_parser] BCangle[3] for bound. in z set to %e\n", BCangle[3]);
 }
 <SOURCEID>{DIGIT}+ {
   g_sourceid = atoi(yytext);
-  if(myverbose!=0) printf("first source id set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] first source id set to %s\n", yytext);
 }
 <SOURCEID2>{DIGIT}+ {
   g_sourceid2 = atoi(yytext);
-  if(myverbose!=0) printf("second source id set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] second source id set to %s\n", yytext);
 }
 <SOURCEIDSTEP>{DIGIT}+ {
   g_sourceid_step = atoi(yytext);
-  if(myverbose!=0) printf("source id step set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] source id step set to %s\n", yytext);
 }
 <GAUGEID>{DIGIT}+ {
   g_gaugeid = atoi(yytext);
-  if(myverbose!=0) printf("first gauge id set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] first gauge id set to %s\n", yytext);
 }
 <GAUGEID2>{DIGIT}+ {
   g_gaugeid2 = atoi(yytext);
-  if(myverbose!=0) printf("second gauge id set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] second gauge id set to %s\n", yytext);
 }
 <GAUGESTEP>{DIGIT}+ {
   g_gauge_step = atoi(yytext);
-  if(myverbose!=0) printf("gauge step size set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] gauge step size set to %s\n", yytext);
 }
 <PREFIX>{FILENAME} {
   strcpy(filename_prefix,yytext);
-  if(myverbose!=0) printf("prop. filename prefix set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] prop. filename prefix set to %s\n",yytext);
 }
 <PREFIX2>{FILENAME} {
   strcpy(filename_prefix2,yytext);
-  if(myverbose!=0) printf("prop. 2 filename prefix set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] prop. 2 filename prefix set to %s\n",yytext);
 }
 <PREFIX3>{FILENAME} {
   strcpy(filename_prefix3,yytext);
-  if(myverbose!=0) printf("prop. 3 filename prefix set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] prop. 3 filename prefix set to %s\n",yytext);
 }
 <GAUGEPREFIX>{FILENAME} {
   strcpy(gaugefilename_prefix,yytext);
-  if(myverbose!=0) printf("gauge filename prefix set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] gauge filename prefix set to %s\n",yytext);
 }
 <OUTPREFIX>{FILENAME} {
   strcpy(g_outfile_prefix,yytext);
-  if(myverbose!=0) printf("out filename prefix set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] out filename prefix set to %s\n",yytext);
 }
 <RESUME>{DIGIT}+ {
   g_resume=atoi(yytext);
-  if(myverbose!=0) printf("g_resume set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] g_resume set to %s\n",yytext);
 }
 <SUBTRACT>{DIGIT}+ {
   g_subtract=atoi(yytext);
-  if(myverbose!=0) printf("g_subtract set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] g_subtract set to %s\n",yytext);
 }
 <SOURCELOC>{DIGIT}+ {
   g_source_location=atoi(yytext);
-  if(myverbose!=0) printf("source location set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] source location set to %s\n",yytext);
 }
 <FFORMAT>{DIGIT}+ {
   format = atoi(yytext);
-  if(myverbose!=0) printf("format set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] format set to %s\n",yytext);
 }  
 <SSEED>{DIGIT}+ {
   g_seed = (unsigned int)atoi(yytext);
-  if(myverbose!=0) printf("g_seed set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] g_seed set to %s\n",yytext);
 }  
 <NOISETYPE>{NAME} {
   if(strcmp(yytext, "Gaussian")==0 ) {
@@ -428,7 +428,7 @@ SDIGIT {SIGN}?[[:digit:]]
   } else if(strcmp(yytext, "Z2")==0 ) {
     g_noise_type = 2;
   }
-  if(myverbose!=0) printf("noise type set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] noise type set to %s\n",yytext);
 }  
 <SRCTYPE>{FILENAME} {
   if(strcmp(yytext, "Point")==0) {
@@ -446,217 +446,217 @@ SDIGIT {SIGN}?[[:digit:]]
   } else if (strcmp(yytext, "Other")==0 ) {
     g_source_type = -1;
   } 
-  if(myverbose!=0) printf("source type set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] source type set to %s\n",yytext);
 }
 <SPREC>{FLT} {
   solver_precision = atof(yytext);
-  if(myverbose!=0) printf("solver precision set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] solver precision set to %s\n",yytext);
 }
 <RELDELTA>{FLT} {
   reliable_delta = atof(yytext);
-  if(myverbose!=0) printf("reliable delta set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] reliable delta set to %s\n",yytext);
 }
 <MAXITER>{DIGIT}+ {
   niter_max = atoi(yytext);
-  if(myverbose!=0) printf("max. number of iterations set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] max. number of iterations set to %s\n",yytext);
 }
 <HPEMIN>{DIGIT}+ {
   hpe_order_min = atoi(yytext);
-  if(myverbose!=0) printf("min. HPE order set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] min. HPE order set to %s\n",yytext);
 }
 <HPEMAX>{DIGIT}+ {
   hpe_order_max = atoi(yytext);
-  if(myverbose!=0) printf("max. HPE order set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] max. HPE order set to %s\n",yytext);
 }
 <HPEORD>{DIGIT}+ {
   hpe_order = atoi(yytext);
-  if(myverbose!=0) printf("HPE order set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] HPE order set to %s\n",yytext);
 }
 <CUTANG>{FLT} {
   g_cutangle = atof(yytext);
-  if(myverbose!=0) printf("cone cut angle set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] cone cut angle set to %s\n",yytext);
 }
 <CUTRAD>{FLT} {
   g_cutradius = atof(yytext);
-  if(myverbose!=0) printf("cone cut radius set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] cone cut radius set to %s\n",yytext);
 }
 <CUTDIRT>{DIGIT}+ {
   g_cutdir[0] = atoi(yytext);
-  if(myverbose!=0) printf("t-comp. of cut dir angle set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] t-comp. of cut dir angle set to %s\n",yytext);
 }
 <CUTDIRX>{DIGIT}+ {
   g_cutdir[1] = atoi(yytext);
-  if(myverbose!=0) printf("x-comp. of cut dir angle set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] x-comp. of cut dir angle set to %s\n",yytext);
 }
 <CUTDIRY>{DIGIT}+ {
   g_cutdir[2] = atoi(yytext);
-  if(myverbose!=0) printf("y-comp. of cut dir angle set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] y-comp. of cut dir angle set to %s\n",yytext);
 }
 <CUTDIRZ>{DIGIT}+ {
   g_cutdir[3] = atoi(yytext);
-  if(myverbose!=0) printf("z-comp. of cut dir angle set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] z-comp. of cut dir angle set to %s\n",yytext);
 }
 <RMIN>{FLT} {
   g_rmin = atof(yytext);
-  if(myverbose!=0) printf("minimal distance set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] minimal distance set to %s\n",yytext);
 }
 <RMAX>{FLT} {
   g_rmax = atof(yytext);
-  if(myverbose!=0) printf("maximal distance set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] maximal distance set to %s\n",yytext);
 }
 <AVGTT>{DIGIT}+                  {
   avgT = atoi(yytext);
-  if(myverbose!=0) printf("avgT =%s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] avgT =%s\n", yytext);
 }
 <AVGLL>{DIGIT}+                  {
   avgL = atoi(yytext);
-  if(myverbose!=0) printf("avgL =%s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] avgL =%s\n", yytext);
 }
 <MODEL_DCOEFFRE>{FLT} {
   model_dcoeff_re = atof(yytext);
-  if(myverbose!=0) printf("real part of d-coeff. set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] real part of d-coeff. set to %s\n", yytext);
 }
 <MODEL_DCOEFFIM>{FLT} {
   model_dcoeff_im = atof(yytext);
-  if(myverbose!=0) printf("imaginary part of d-coeff. set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] imaginary part of d-coeff. set to %s\n", yytext);
 }
 <MODEL_MRHO>{FLT} {
   model_mrho = atof(yytext);
-  if(myverbose!=0) printf("rho-meson mass set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] rho-meson mass set to %s\n", yytext);
 }
 <FTRMAX1>{FLT} {
   ft_rmax[0] = atof(yytext);
-  if(myverbose!=0) printf("1st rmax for FT set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] 1st rmax for FT set to %s\n", yytext);
 }
 <FTRMAX2>{FLT} {
   ft_rmax[1] = atof(yytext);
-  if(myverbose!=0) printf("2nd rmax for FT set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] 2nd rmax for FT set to %s\n", yytext);
 }
 <FTRMAX3>{FLT} {
   ft_rmax[2] = atof(yytext);
-  if(myverbose!=0) printf("3rd rmax for FT set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] 3rd rmax for FT set to %s\n", yytext);
 }
 <FTRMAX4>{FLT} {
   ft_rmax[3] = atof(yytext);
-  if(myverbose!=0) printf("4th rmax for FT set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] 4th rmax for FT set to %s\n", yytext);
 }
 <PROPNORMSQR>{FLT} {
   g_prop_normsqr = atof(yytext);
-  if(myverbose!=0) printf("propagator norm squared set to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] propagator norm squared set to %s\n", yytext);
 }
 <QHATSQRMIN>{FLT} {
   g_qhatsqr_min = atof(yytext);
-  if(myverbose!=0) printf("set minimal squared Qhat to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set minimal squared Qhat to %s\n", yytext);
 }
 <QHATSQRMAX>{FLT} {
   g_qhatsqr_max = atof(yytext);
-  if(myverbose!=0) printf("set maximal squared Qhat to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set maximal squared Qhat to %s\n", yytext);
 }
 <NLONG>{DIGIT}+ {
   Nlong = atoi(yytext);
-  if(myverbose!=0) printf("set Nlong to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set Nlong to %s\n", yytext);
 }
 <NAPE>{DIGIT}+ {
   N_ape = atoi(yytext);
-  if(myverbose!=0) printf("set N_ape to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set N_ape to %s\n", yytext);
 }
 <NJACOBI>{DIGIT}+ {
   N_Jacobi = atoi(yytext);
-  if(myverbose!=0) printf("set N_Jacobi to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set N_Jacobi to %s\n", yytext);
 }
 <ALPHAAPE>{FLT} {
   alpha_ape = atof(yytext);
-  if(myverbose!=0) printf("set alpha_ape to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set alpha_ape to %s\n", yytext);
 }
 <KAPPAJACOBI>{FLT} {
   kappa_Jacobi = atof(yytext);
-  if(myverbose!=0) printf("set kappa_Jacobi to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set kappa_Jacobi to %s\n", yytext);
 }
 <SRCTIMESLICE>{DIGIT}+ {
   g_source_timeslice = atoi(yytext);
-  if(myverbose!=0) printf("set source timeslice to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set source timeslice to %s\n", yytext);
 }
 <MMSNOMASSES>{DIGIT}+ {
   g_no_extra_masses = atoi(yytext);
-  if(myverbose!=0) printf("set no. of extra masses for mms to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set no. of extra masses for mms to %s\n", yytext);
 }
 <NOLIGHTMASSES>{DIGIT}+ {
   g_no_light_masses = atoi(yytext);
-  if(myverbose!=0) printf("set no. of light masses for mms to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set no. of light masses for mms to %s\n", yytext);
 }
 <NOSTRANGEMASSES>{DIGIT}+ {
   g_no_strange_masses = atoi(yytext);
-  if(myverbose!=0) printf("set no. of strange masses for mms to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set no. of strange masses for mms to %s\n", yytext);
 }
 <NOTPROCS>{DIGIT}+ {
   g_nproc_t = atoi(yytext);
-  if(myverbose!=0) printf("set g_nproc_t to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set g_nproc_t to %s\n", yytext);
 }
 <NOXPROCS>{DIGIT}+ {
   g_nproc_x = atoi(yytext);
-  if(myverbose!=0) printf("set g_nproc_x to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set g_nproc_x to %s\n", yytext);
 }
 <NOYPROCS>{DIGIT}+ {
   g_nproc_y = atoi(yytext);
-  if(myverbose!=0) printf("set g_nproc_y to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set g_nproc_y to %s\n", yytext);
 }
 <LOCLOC>{FILENAME} {
   if(strcmp(yytext, "yes")==0) {
     g_local_local = 1;
-    if(myverbose!=0) printf("do local-local contraction\n");
+    if(myverbose!=0) printf("# [read_input_parser] do local-local contraction\n");
   }
 }
 <LOCSME>{FILENAME} {
   if(strcmp(yytext, "yes")==0) {
     g_local_smeared = 1;
-    if(myverbose!=0) printf("do local-smeared contraction\n");
+    if(myverbose!=0) printf("# [read_input_parser] do local-smeared contraction\n");
   }
 }
 <SMELOC>{FILENAME} {
   if(strcmp(yytext, "yes")==0) {
     g_smeared_local = 1;
-    if(myverbose!=0) printf("do smeared-local contraction\n");
+    if(myverbose!=0) printf("# [read_input_parser] do smeared-local contraction\n");
   }
 }
 <SMESME>{FILENAME} {
   if(strcmp(yytext, "yes")==0) {
     g_smeared_smeared = 1;
-    if(myverbose!=0) printf("do smeared-smeared contraction\n");
+    if(myverbose!=0) printf("# [read_input_parser] do smeared-smeared contraction\n");
   }
 }
 <ROTATE>{FILENAME} {
   if(strcmp(yytext, "yes")==0) {
     g_rotate_ETMC_UKQCD = 1;
-    if(myverbose!=0) printf("rotate propagators UKQCD -> ETMC\n");
+    if(myverbose!=0) printf("# [read_input_parser] rotate propagators UKQCD -> ETMC\n");
   }
 }
 <PROPPOS>{DIGIT}+ {
   g_propagator_position = atoi(yytext);
-  if(myverbose!=0) printf("set propagator position to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set propagator position to %s\n", yytext);
 }
 
 <GPUDEVICENUMBER>{DIGIT}+ {
   g_gpu_device_number = atoi(yytext);
-  if(myverbose!=0) printf("set GPU device number to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set GPU device number to %s\n", yytext);
 }
 <GPUPERNODE>{DIGIT}+ {
   g_gpu_per_node = atoi(yytext);
-  if(myverbose!=0) printf("set number of GPUs  per node to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set number of GPUs  per node to %s\n", yytext);
 }
 
 <COHSRC>{DIGIT}+ {
   g_coherent_source = atoi(yytext);
-  if(myverbose!=0) printf("set coherent source to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set coherent source to %s\n", yytext);
 }
 
 <COHSRCBASE>{DIGIT}+ {
   g_coherent_source_base = atoi(yytext);
-  if(myverbose!=0) printf("set coherent source base to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set coherent source base to %s\n", yytext);
 }
 
 <COHSRCDELTA>{DIGIT}+ {
   g_coherent_source_delta = atoi(yytext);
-  if(myverbose!=0) printf("set coherent source delta to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set coherent source delta to %s\n", yytext);
 }
 <GAUGEFILEFORMAT>{NAME} {
   if(strcmp(yytext, "ildg")==0) {
@@ -664,21 +664,21 @@ SDIGIT {SIGN}?[[:digit:]]
   } else if(strcmp(yytext, "nersc")==0) {
     g_gauge_file_format = 1;
   }
-  if(myverbose!=0) printf("set gauge file format to %s\n", yytext);
+  if(myverbose!=0) printf("# [read_input_parser] set gauge file format to %s\n", yytext);
 }
 <RNGFILE>{FILENAME} {
 //  g_rng_filename = (char*)malloc((strlen(yytext)+1)*sizeof(char));
   strcpy(g_rng_filename, yytext);
-  if(myverbose!=0) printf("g_rng_filename set to %s\n", g_rng_filename);
+  if(myverbose!=0) printf("# [read_input_parser] g_rng_filename set to %s\n", g_rng_filename);
 }
 <SRCINDEX>{DIGIT}+ {
   g_source_index[0] = atoi(yytext);
   g_source_index[1] = g_source_index[0];
-  if(myverbose!=0) printf("start index set to %d\n", g_source_index[0]);
+  if(myverbose!=0) printf("# [read_input_parser] start index set to %d\n", g_source_index[0]);
 }
 <SRCINDEX>{IDXEX} {
   sscanf(yytext, "-%d", g_source_index+1);
-  if(myverbose!=0) printf("end index set to %d\n", g_source_index[1]);
+  if(myverbose!=0) printf("# [read_input_parser] end index set to %d\n", g_source_index[1]);
 }
 <PROPBCTYPE>{NAME} {
   if(strcmp(yytext, "Phase")==0) {
@@ -688,7 +688,7 @@ SDIGIT {SIGN}?[[:digit:]]
   } else {
     g_propagator_bc_type = -1;
   }
-  if(myverbose!=0) printf("propagator boundary condition type set to %d\n", g_propagator_bc_type);
+  if(myverbose!=0) printf("# [read_input_parser] propagator boundary condition type set to %d\n", g_propagator_bc_type);
 }
 <WRITESRC>{NAME} {
   if(strcmp(yytext,"yes")==0) {
@@ -696,7 +696,7 @@ SDIGIT {SIGN}?[[:digit:]]
   } else if(strcmp(yytext,"no")==0) {
     g_write_source = 0;
   }
-  if(myverbose!=0) printf("set write source to %d\n", g_write_source);  
+  if(myverbose!=0) printf("# [read_input_parser] set write source to %d\n", g_write_source);  
 }
 <READSRC>{NAME} {
   if(strcmp(yytext,"yes")==0) {
@@ -704,7 +704,7 @@ SDIGIT {SIGN}?[[:digit:]]
   } else if(strcmp(yytext,"no")==0) {
     g_read_source = 0;
   }
-  if(myverbose!=0) printf("set write source to %d\n", g_write_source);  
+  if(myverbose!=0) printf("# [read_input_parser] set write source to %d\n", g_write_source);  
 }
 <PROPGAMMA>{NAME} {
   if(strcmp(yytext,"DeGrandRossi")==0) {
@@ -712,68 +712,68 @@ SDIGIT {SIGN}?[[:digit:]]
   } else if(strcmp(yytext,"UKQCD")==0) {
     g_propagator_gamma_basis = 2;
   }
-  if(myverbose!=0) printf("set propagator gamma basis type to %d\n", g_propagator_gamma_basis);
+  if(myverbose!=0) printf("# [read_input_parser] set propagator gamma basis type to %d\n", g_propagator_gamma_basis);
 }
 <PROPPREC>{DIGIT}+ {
   g_propagator_precision = atoi(yytext);
-  if(myverbose!=0) printf("set propagator precision to %d\n", g_propagator_precision);
+  if(myverbose!=0) printf("# [read_input_parser] set propagator precision to %d\n", g_propagator_precision);
 }
 <NSAMPLE>{DIGIT}+ {
   g_nsample = atoi(yytext);
-  if(myverbose!=0) printf("set number of samples to %d\n", g_nsample);
+  if(myverbose!=0) printf("# [read_input_parser] set number of samples to %d\n", g_nsample);
 }
 <ASOVERA>{FLT} {
   g_as_over_a = atof(yytext);
-  if(myverbose!=0) printf("as / a set to  %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] as / a set to  %s\n",yytext);
 }
 <NUMTHREADS>{DIGIT}+ {
   g_num_threads = atoi(yytext);
-  if(myverbose!=0) printf("number of threads =%d\n", g_num_threads);
+  if(myverbose!=0) printf("# [read_input_parser] number of threads =%d\n", g_num_threads);
 }
 <SRCMOMX>{SDIGIT}+ {
   g_source_momentum[0] = atoi(yytext);
   g_source_momentum_set = 1;
-  if(myverbose!=0) printf("x-comp. of source momentum set to %d\n", g_source_momentum[0]);
+  if(myverbose!=0) printf("# [read_input_parser] x-comp. of source momentum set to %d\n", g_source_momentum[0]);
 }
 <SRCMOMY>{SDIGIT}+ {
   g_source_momentum[1] = atoi(yytext);
   g_source_momentum_set = 1;
-  if(myverbose!=0) printf("y-comp. of source momentum set to %d\n", g_source_momentum[1]);
+  if(myverbose!=0) printf("# [read_input_parser] y-comp. of source momentum set to %d\n", g_source_momentum[1]);
 }
 <SRCMOMZ>{SDIGIT}+ {
   g_source_momentum[2] = atoi(yytext);
   g_source_momentum_set = 1;
-  if(myverbose!=0) printf("z-comp. of source momentum set to %d\n", g_source_momentum[2]);
+  if(myverbose!=0) printf("# [read_input_parser] z-comp. of source momentum set to %d\n", g_source_momentum[2]);
 }
 <SNKMOMX>{SDIGIT}+ {
   g_sink_momentum[0] = atoi(yytext);
   g_sink_momentum_set = 1;
-  if(myverbose!=0) printf("x-comp. of sink momentum set to %d\n", g_sink_momentum[0]);
+  if(myverbose!=0) printf("# [read_input_parser] x-comp. of sink momentum set to %d\n", g_sink_momentum[0]);
 }
 <SNKMOMY>{SDIGIT}+ {
   g_sink_momentum[1] = atoi(yytext);
   g_sink_momentum_set = 1;
-  if(myverbose!=0) printf("y-comp. of sink momentum set to %d\n", g_sink_momentum[1]);
+  if(myverbose!=0) printf("# [read_input_parser] y-comp. of sink momentum set to %d\n", g_sink_momentum[1]);
 }
 <SNKMOMZ>{SDIGIT}+ {
   g_sink_momentum[2] = atoi(yytext);
   g_sink_momentum_set = 1;
-  if(myverbose!=0) printf("z-comp. of sink momentum set to %d\n", g_sink_momentum[2]);
+  if(myverbose!=0) printf("# [read_input_parser] z-comp. of sink momentum set to %d\n", g_sink_momentum[2]);
 }
 <SEQSRCMOMX>{SDIGIT}+ {
   g_seq_source_momentum[0] = atoi(yytext);
   g_seq_source_momentum_set = 1;
-  if(myverbose!=0) printf("x-comp. of sequential source momentum set to %d\n", g_seq_source_momentum[0]);
+  if(myverbose!=0) printf("# [read_input_parser] x-comp. of sequential source momentum set to %d\n", g_seq_source_momentum[0]);
 }
 <SEQSRCMOMY>{SDIGIT}+ {
   g_seq_source_momentum[1] = atoi(yytext);
   g_seq_source_momentum_set = 1;
-  if(myverbose!=0) printf("y-comp. of sequential source momentum set to %d\n", g_seq_source_momentum[1]);
+  if(myverbose!=0) printf("# [read_input_parser] y-comp. of sequential source momentum set to %d\n", g_seq_source_momentum[1]);
 }
 <SEQSRCMOMZ>{SDIGIT}+ {
   g_seq_source_momentum[2] = atoi(yytext);
   g_seq_source_momentum_set = 1;
-  if(myverbose!=0) printf("z-comp. of sequential source momentum set to %d\n", g_seq_source_momentum[2]);
+  if(myverbose!=0) printf("# [read_input_parser] z-comp. of sequential source momentum set to %d\n", g_seq_source_momentum[2]);
 }
 <CPUPREC>{NAME} {
   if(strcmp(yytext, "half")==0 ) {
@@ -783,7 +783,7 @@ SDIGIT {SIGN}?[[:digit:]]
   } else if(strcmp(yytext, "double")==0 ) {
     g_cpu_prec = 2;
   }
-  if(myverbose!=0) printf("CPU precision (for QUDA library) set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] CPU precision (for QUDA library) set to %s\n",yytext);
 }
 <GPUPREC>{NAME} {
   if(strcmp(yytext, "half")==0 ) {
@@ -793,7 +793,7 @@ SDIGIT {SIGN}?[[:digit:]]
   } else if(strcmp(yytext, "double")==0 ) {
     g_gpu_prec = 2;
   }
-  if(myverbose!=0) printf("GPU precision (for QUDA library) set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] GPU precision (for QUDA library) set to %s\n",yytext);
 }
 <GPUPRECSLOPPY>{NAME} {
   if(strcmp(yytext, "half")==0 ) {
@@ -803,11 +803,11 @@ SDIGIT {SIGN}?[[:digit:]]
   } else if(strcmp(yytext, "double")==0 ) {
     g_gpu_prec_sloppy = 2;
   }
-  if(myverbose!=0) printf("GPU sloppy precision (for QUDA library) set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] GPU sloppy precision (for QUDA library) set to %s\n",yytext);
 }
 <INVERTERTYPE>{NAME} {
   strcpy(g_inverter_type_name, yytext);
-  if(myverbose!=0) printf("inverter type name set to %s\n",yytext);
+  if(myverbose!=0) printf("# [read_input_parser] inverter type name set to %s\n",yytext);
 }
 
 <*>^#   {
@@ -831,7 +831,7 @@ SDIGIT {SIGN}?[[:digit:]]
   BEGIN(ERROR);
 }
 <ERROR>[^\t\n]*             {
-  printf("Parsing error in line %d\nAborting...!\n", line_of_file);
+  printf("# [read_input_parser] Parsing error in line %d\nAborting...!\n", line_of_file);
   exit(1);
 }
 
