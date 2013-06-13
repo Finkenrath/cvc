@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
     usage();
   }
 
-  if(do_spin_projection > -1 && num_component != 16) {
+  if(do_spin_projection > -1 && ( num_component != 16 && num_component!=4 )) {
     fprintf(stderr, "[baryon_corr_qdep] Error, need 16 components to do spin projection\n");
     exit(4);
   }
@@ -445,49 +445,95 @@ int main(int argc, char **argv) {
    * spin projection
    ***********************/
   if(do_spin_projection > -1) {
-    // spin projection using zero momentum formula
-    for(i=0; i<16; i++) { create_sp(connq_proj+i); }
 
-    if(do_spin_projection == 30) {
-      // zero momentum, spin 3/2
-      for(isnk=0; isnk<snk_momentum_no; isnk++)
-      {
-        for(it=0;it<T;it++)
+    if(num_component == 16) {
+      // spin projection using zero momentum formula
+      for(i=0; i<16; i++) { create_sp(connq_proj+i); }
+
+      if(do_spin_projection == 30) {
+        // zero momentum, spin 3/2
+        for(isnk=0; isnk<snk_momentum_no; isnk++)
         {
-          spin_projection_3_2_zero_momentum (connq_proj, connq+(it*snk_momentum_no+isnk)*num_component);
-          for(icomp=0; icomp<num_component; icomp++) {
-            _sp_eq_sp(connq[(it*snk_momentum_no+isnk)*num_component+icomp], connq_proj[icomp]);
+          for(it=0;it<T;it++)
+          {
+            spin_projection_3_2_zero_momentum (connq_proj, connq+(it*snk_momentum_no+isnk)*num_component);
+            for(icomp=0; icomp<num_component; icomp++) {
+              _sp_eq_sp(connq[(it*snk_momentum_no+isnk)*num_component+icomp], connq_proj[icomp]);
+            }
           }
         }
-      }
-    } else if (do_spin_projection == 10) {
-      // zero momentum, spin 1/2
-      for(isnk=0; isnk<snk_momentum_no; isnk++)
-      {
-        for(it=0;it<T;it++)
+      } else if (do_spin_projection == 10) {
+        // zero momentum, spin 1/2
+        for(isnk=0; isnk<snk_momentum_no; isnk++)
         {
-          spin_projection_1_2_zero_momentum (connq_proj, connq+(it*snk_momentum_no+isnk)*num_component);
-          for(icomp=0; icomp<num_component; icomp++) {
-            _sp_eq_sp(connq[(it*snk_momentum_no+isnk)*num_component+icomp], connq_proj[icomp]);
+          for(it=0;it<T;it++)
+          {
+            spin_projection_1_2_zero_momentum (connq_proj, connq+(it*snk_momentum_no+isnk)*num_component);
+            for(icomp=0; icomp<num_component; icomp++) {
+              _sp_eq_sp(connq[(it*snk_momentum_no+isnk)*num_component+icomp], connq_proj[icomp]);
+            }
           }
         }
+      } else {
+        // spin projection for arbitrary momentum
+        fprintf(stderr, "[baryon_corr_qdep] not yet implemented\n");
       }
-    } else {
-      // spin projection for arbitrary momentum
-      fprintf(stderr, "[baryon_corr_qdep] not yet implemented\n");
-    }
 
-    for(i=0; i<16; i++) { free_sp(connq_proj+i); }
+      for(i=0; i<16; i++) { free_sp(connq_proj+i); }
 
-    if(write_spin_projection==2) {
-      sprintf(filename, "%s_proj%d.%.4d.t%.2dx%.2dy%.2dz%.2d.ascii",
-          filename_prefix, do_spin_projection, Nconf, sx0, sx1, sx2, sx3);
-      fprintf(stdout, "# [baryon_corr_qdep] writing spin projection in ascii format to file %s\n", filename);
-      write_contraction2( connq[0][0], filename, num_component*g_sv_dim*g_sv_dim, T*snk_momentum_no, 1, 0);
-    } else if (write_spin_projection == 1) {
-      fprintf(stderr, "[baryon_corr_qdep] not yet implemented\n");
-    }
+      if(write_spin_projection==2) {
+        sprintf(filename, "%s_proj%d.%.4d.t%.2dx%.2dy%.2dz%.2d.ascii",
+            filename_prefix, do_spin_projection, Nconf, sx0, sx1, sx2, sx3);
+        fprintf(stdout, "# [baryon_corr_qdep] writing spin projection in ascii format to file %s\n", filename);
+        write_contraction2( connq[0][0], filename, num_component*g_sv_dim*g_sv_dim, T*snk_momentum_no, 1, 0);
+      } else if (write_spin_projection == 1) {
+        fprintf(stderr, "[baryon_corr_qdep] not yet implemented\n");
+      }
 
+    } else if (num_component == 4) {
+      // spin projection using zero momentum formula
+      for(i=0; i<4; i++) { create_sp(connq_proj+i); }
+
+      if(do_spin_projection == 30) {
+        // zero momentum, spin 3/2
+        for(isnk=0; isnk<snk_momentum_no; isnk++)
+        {
+          for(it=0;it<T;it++)
+          {
+            spin_projection_3_2_zero_momentum_slice (connq_proj, connq+(it*snk_momentum_no+isnk)*num_component);
+            for(icomp=0; icomp<num_component; icomp++) {
+              _sp_eq_sp(connq[(it*snk_momentum_no+isnk)*num_component+icomp], connq_proj[icomp]);
+            }
+          }
+        }
+      } else if (do_spin_projection == 10) {
+        // zero momentum, spin 1/2
+        for(isnk=0; isnk<snk_momentum_no; isnk++)
+        {
+          for(it=0;it<T;it++)
+          {
+            spin_projection_1_2_zero_momentum_slice (connq_proj, connq+(it*snk_momentum_no+isnk)*num_component);
+            for(icomp=0; icomp<num_component; icomp++) {
+              _sp_eq_sp(connq[(it*snk_momentum_no+isnk)*num_component+icomp], connq_proj[icomp]);
+            }
+          }
+        }
+      } else {
+        // spin projection for arbitrary momentum
+        fprintf(stderr, "[baryon_corr_qdep] not yet implemented\n");
+      }
+
+      for(i=0; i<4; i++) { free_sp(connq_proj+i); }
+
+      if(write_spin_projection==2) {
+        sprintf(filename, "%s_proj%d.%.4d.t%.2dx%.2dy%.2dz%.2d.ascii",
+            filename_prefix, do_spin_projection, Nconf, sx0, sx1, sx2, sx3);
+        fprintf(stdout, "# [baryon_corr_qdep] writing spin projection in ascii format to file %s\n", filename);
+        write_contraction2( connq[0][0], filename, num_component*g_sv_dim, T*snk_momentum_no, 1, 0);
+      } else if (write_spin_projection == 1) {
+        fprintf(stderr, "[baryon_corr_qdep] not yet implemented\n");
+      }
+    }  // of if num_component == either 16 or 4
   } else {
     fprintf(stdout, "[baryon_corr_qdep] proceed without spin projection\n");
   }

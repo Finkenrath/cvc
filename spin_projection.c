@@ -504,3 +504,112 @@ void spin_projection_3_2_field (spinor_propagator_type *sfield, spinor_propagato
   free_sp( &sp_aux );
   free_sp( &sp_aux2 );
 }  // end of spin_projection_3_2_field
+
+
+/****************************************************************
+ * s  - result spinor propagator
+ * t  - input spinor propagator
+ * ns - number of slices in spinor propagator, 1 <= ns <= 4
+ ****************************************************************/
+void spin_projection_3_2_zero_momentum_slice (spinor_propagator_type *s, spinor_propagator_type *t) {
+
+  const double _MINUS_ONE_THIRD = -1./3.;
+
+  int i, k, icmp;
+  char name[20];  
+
+  spinor_propagator_type sp_aux, sp_aux2;
+
+  create_sp(&sp_aux);
+  create_sp(&sp_aux2);
+
+  // (i) s_{0} = 0
+  _sp_eq_zero(s[0]);
+
+  for(i=1; i<4; i++) {
+    icmp = i; 
+    _sp_eq_sp(s[icmp], t[icmp]);
+
+    // TEST
+    // printf_sp(s[icmp], "s_diag", stdout);
+
+    _sp_eq_zero(sp_aux2);
+    for(k=1; k<4; k++) {
+      // sp_aux = gamma_k t_k
+      _sp_eq_gamma_ti_sp(sp_aux, k, t[k]);
+
+      // TEST
+      // sprintf(name, "t_%d", k);
+      // printf_sp(t[k], name, stdout);
+
+      // TEST
+      // sprintf(name, "g%dxt_%d", k, k);
+      // printf_sp(sp_aux, name, stdout);
+
+      // sp_aux2 += sp_aux
+      _sp_pl_eq_sp(sp_aux2, sp_aux);
+    }
+
+    // TEST
+    // printf_sp(sp_aux2, "spaux2", stdout);
+    
+    // sp_aux = gamma_i sp_aux2 = gamma_i sum_k gamma_k t_k
+    _sp_eq_gamma_ti_sp(sp_aux, i, sp_aux2);
+
+    // TEST
+    // printf_sp(sp_aux, "gixspaux2", stdout);
+
+    _sp_pl_eq_sp_ti_re(s[icmp], sp_aux, _MINUS_ONE_THIRD);
+
+  }  // end of loop on components i
+
+  free_sp( &sp_aux );
+  free_sp( &sp_aux2 );
+
+}  // end of spin_projection_3_2_zero_momentum_slice
+
+
+/****************************************************************
+ * projection to spin 1/2
+ * - s - result spinor propagator
+ * - t - input spinor propagator
+ ****************************************************************/
+void spin_projection_1_2_zero_momentum_slice (spinor_propagator_type *s, spinor_propagator_type *t) {
+
+  const double _ONE_THIRD = -1./3.;
+
+  int i, k, icmp;
+  char name[20];  
+
+  spinor_propagator_type sp_aux, sp_aux2;
+
+  create_sp(&sp_aux);
+  create_sp(&sp_aux2);
+
+  // (i) s_{0}
+  _sp_eq_zero(s[0]);
+
+  for(i=1; i<4; i++) {
+    icmp = i; 
+    _sp_eq_zero(s[icmp]);
+
+    _sp_eq_zero(sp_aux2);
+    for(k=1; k<4; k++) {
+      // sp_aux = gamma_k t_k
+      _sp_eq_gamma_ti_sp(sp_aux, k, t[k]);
+
+      // sp_aux2 += sp_aux
+      _sp_pl_eq_sp(sp_aux2, sp_aux);
+    }
+
+    // sp_aux = gamma_i sp_aux2 = gamma_i sum_k gamma_k t_k
+    _sp_eq_gamma_ti_sp(sp_aux, i, sp_aux2);
+
+    _sp_pl_eq_sp_ti_re(s[icmp], sp_aux, _ONE_THIRD);
+
+  }  // end of loop on components i
+
+  free_sp( &sp_aux );
+  free_sp( &sp_aux2 );
+
+}  // end of spin_projection_1_2_zero_momentum_slice
