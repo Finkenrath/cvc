@@ -32,7 +32,7 @@
        (1 + gamma_mu) U_mu(x-mu)^+ phi(x-mu) ]
  - diagonal part as: 1 / (2 kappa) phi(x) + i mu gamma_5 \phi(x)
 */
-
+#ifndef OPENMP
 void Q_phi_tbc(double *xi, double *phi) {
   int it, ix, iy, iz;
   int index_s; 
@@ -184,6 +184,205 @@ void Q_phi_tbc(double *xi, double *phi) {
  ****************************************/
 
 }
+#else
+void Q_phi_tbc(double *xi, double *phi) {
+  int ix;
+  int index_s; 
+  double *xi_, *phi_, *U_;
+
+  double _1_2_kappa = 0.5 / g_kappa;
+
+// #pragma omp parallel for private(ix,index_s,phi_,xi_,spinor1,spinor2,U_,SU3_1)  shared(phi,xi,T,_1_2_kappa,g_gauge_field,g_iup,g_idn, co_phase_up)
+#pragma omp parallel private(ix,index_s,phi_,xi_,U_)  shared(phi,xi,_1_2_kappa,g_gauge_field,g_iup,g_idn, co_phase_up, VOLUME)
+{
+  double SU3_1[18];
+  double spinor1[24], spinor2[24];
+  int threadid = omp_get_thread_num();
+  int num_threads = omp_get_num_threads();
+
+  for(ix = threadid; ix < VOLUME; ix+=num_threads)
+  // for(ix = 0; ix < g_num_threads; ix++)
+  {
+#if 0
+      // TEST
+      index_s = omp_get_thread_num();
+      fprintf(stdout, "# [Q_phi_tbc] thread%.4d number of threads = %d\n", index_s, omp_get_num_threads());
+      fprintf(stdout, "# [Q_phi_tbc] thread%.4d address of spinor1 = %lu\n", index_s, spinor1);
+      fprintf(stdout, "# [Q_phi_tbc] thread%.4d address of spinor2 = %lu\n", index_s, spinor2);
+
+      // TEST
+      fprintf(stdout, "# [Q_phi_tbc] thread%.4d ix = %d\n", threadid, ix);
+#endif
+
+      index_s = ix;
+
+      xi_ = xi + _GSI(index_s);
+
+      _fv_eq_zero(xi_);
+
+      /* Negative t-direction. */
+      phi_ = phi + _GSI(g_idn[index_s][0]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(g_idn[index_s][0], 0);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[0]);
+      _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Positive t-direction. */
+      phi_ = phi + _GSI(g_iup[index_s][0]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+      _fv_mi(spinor1);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(index_s, 0);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[0]);
+      _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Negative x-direction. */
+      phi_ = phi + _GSI(g_idn[index_s][1]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(g_idn[index_s][1], 1);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[1]);
+      _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Positive x-direction. */
+      phi_ = phi + _GSI(g_iup[index_s][1]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+      _fv_mi(spinor1);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(index_s, 1);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[1]);
+      _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+
+      /* Negative y-direction. */
+      phi_ = phi + _GSI(g_idn[index_s][2]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(g_idn[index_s][2], 2);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[2]);
+      _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+
+      /* Positive y-direction. */
+      phi_ = phi + _GSI(g_iup[index_s][2]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+      _fv_mi(spinor1);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(index_s, 2);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[2]);
+      _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+
+      /* Negative z-direction. */
+      phi_ = phi + _GSI(g_idn[index_s][3]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(g_idn[index_s][3], 3);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[3]);
+      _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Positive z-direction. */
+      phi_ = phi + _GSI(g_iup[index_s][3]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+      _fv_mi(spinor1);
+      _fv_pl_eq_fv(spinor1, phi_);
+ 
+      U_ = g_gauge_field + _GGI(index_s, 3);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[3]);
+      _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Multiplication with -1/2. */
+
+      _fv_ti_eq_re(xi_, -0.5);
+
+      /* Diagonal elements. */
+
+      phi_ = phi + _GSI(index_s);
+		    
+      _fv_eq_fv_ti_re(spinor1, phi_, _1_2_kappa);
+      _fv_pl_eq_fv(xi_, spinor1);
+		    
+      _fv_eq_gamma_ti_fv(spinor1, 5, phi_);
+      _fv_eq_fv_ti_im(spinor2, spinor1, g_mu);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+  }
+
+}  // end of parallel region
+}
+#endif  // of ifndef OPENMP
+
+#ifndef OPENMP
+void g5_phi(double *phi) {
+  double spinor1[24];
+  int ix;
+  double *phi_;
+
+  for(ix = 0; ix < VOLUME; ix++)
+  {
+      phi_ = phi + _GSI(ix);
+      _fv_eq_gamma_ti_fv(spinor1, 5, phi_);
+      _fv_eq_fv(phi_, spinor1);
+  }
+
+}  // end of g5_phi
+
+#else
+void g5_phi(double *phi) {
+#pragma omp parallel shared(phi, VOLUME)
+{
+  double spinor1[24];
+  int threadid = omp_get_thread_num();
+  int num_threads = omp_get_num_threads();
+  int ix;
+  double *phi_;
+
+  // TEST
+  // fprintf(stdout, "# [g5_phi] thread%.4d number of threads %d\n", threadid, num_threads);
+
+  for(ix = threadid; ix < VOLUME; ix+=num_threads)
+  {
+      phi_ = phi + _GSI(ix);
+      _fv_eq_gamma_ti_fv(spinor1, 5, phi_);
+      _fv_eq_fv(phi_, spinor1);
+  }
+
+}  // end of parallel region
+}  // end of g5_phi
+
+#endif
 
 /**********************************************************************
  * Hopping 
@@ -584,7 +783,7 @@ void BHn (double *xi, double *phi, int n) {
  * - computes xi = gamma_5 Q_f phi 
  *   where Q_f is the tm Dirac operator with twisted boundary conditions.
  **************************************************************************************/
-
+#ifndef OPENMP
 void Qf5(double *xi, double *phi, double mutm) {
   int it, ix, iy, iz;
   int index_s; 
@@ -731,7 +930,149 @@ void Qf5(double *xi, double *phi, double mutm) {
   }
 
 }
+#else
+void Qf5(double *xi, double *phi, double mutm) {
+  int ix;
+  int index_s; 
+  double SU3_1[18];
+  double spinor1[24], spinor2[24], spinor3[24];
+  double *xi_, *phi_, *U_;
 
+  double _1_2_kappa = 0.5 / g_kappa;
+
+
+#pragma omp parallel for private(ix,index_s,phi_,xi_,spinor1,spinor2,U_,SU3_1)  shared(phi,xi,T,_1_2_kappa,g_gauge_field,g_iup,g_idn, co_phase_up)
+  for(ix = 0; ix < VOLUME; ix++) {
+
+      index_s = ix;
+
+      xi_ = spinor3;
+
+      _fv_eq_zero(xi_);
+
+      /* Negative t-direction. */
+      phi_ = phi + _GSI(g_idn[index_s][0]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(g_idn[index_s][0], 0);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[0]);
+      _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Positive t-direction. */
+      phi_ = phi + _GSI(g_iup[index_s][0]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 0, phi_);
+      _fv_mi(spinor1);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(index_s, 0);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[0]);
+      _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Negative x-direction. */
+      phi_ = phi + _GSI(g_idn[index_s][1]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(g_idn[index_s][1], 1);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[1]);
+      _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Positive x-direction. */
+      phi_ = phi + _GSI(g_iup[index_s][1]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 1, phi_);
+      _fv_mi(spinor1);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(index_s, 1);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[1]);
+      _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+
+      /* Negative y-direction. */
+      phi_ = phi + _GSI(g_idn[index_s][2]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(g_idn[index_s][2], 2);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[2]);
+      _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+
+      /* Positive y-direction. */
+      phi_ = phi + _GSI(g_iup[index_s][2]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 2, phi_);
+      _fv_mi(spinor1);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(index_s, 2);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[2]);
+      _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+
+      /* Negative z-direction. */
+      phi_ = phi + _GSI(g_idn[index_s][3]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+      _fv_pl_eq_fv(spinor1, phi_);
+
+      U_ = g_gauge_field + _GGI(g_idn[index_s][3], 3);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[3]);
+      _fv_eq_cm_dag_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Positive z-direction. */
+      phi_ = phi + _GSI(g_iup[index_s][3]);
+
+      _fv_eq_gamma_ti_fv(spinor1, 3, phi_);
+      _fv_mi(spinor1);
+      _fv_pl_eq_fv(spinor1, phi_);
+ 
+      U_ = g_gauge_field + _GGI(index_s, 3);
+
+      _cm_eq_cm_ti_co(SU3_1, U_, &co_phase_up[3]);
+      _fv_eq_cm_ti_fv(spinor2, SU3_1, spinor1);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+      /* Multiplication with -1/2. */
+
+      _fv_ti_eq_re(xi_, -0.5);
+
+      /* Diagonal elements. */
+
+      phi_ = phi + _GSI(index_s);
+		    
+      _fv_eq_fv_ti_re(spinor1, phi_, _1_2_kappa);
+      _fv_pl_eq_fv(xi_, spinor1);
+		    
+      _fv_eq_gamma_ti_fv(spinor1, 5, phi_);
+      _fv_eq_fv_ti_im(spinor2, spinor1, mutm);
+      _fv_pl_eq_fv(xi_, spinor2);
+
+
+      _fv_eq_gamma_ti_fv(xi+_GSI(index_s), 5, xi_);
+  }
+}
+#endif
 
 /********************
  Q_phi
