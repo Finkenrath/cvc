@@ -130,7 +130,6 @@ int main(int argc, char **argv) {
   int snk_momentum_runs = 1, snk_momentum_id=0, snk_momentum[3], src_momentum[3], imom;
   int shift_vector[5][4] =  {{0,0,0,0}, {1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0,1}};
   size_t nconn_length=0, cconn_length=0;
-  int timeslice;
 
   /**************************************************************************************************
    * charged stuff
@@ -794,12 +793,12 @@ int main(int argc, char **argv) {
                   cconn[sl+2*x0  ] += (conf_gamma_sign[(idx-9)/3]*vsign[idx-9+i]*Ctmp[2*x0  ]);
                   cconn[sl+2*x0+1] += (conf_gamma_sign[(idx-9)/3]*vsign[idx-9+i]*Ctmp[2*x0+1]);
                 }
-                for(x0=0; x0<T; x0++) {
-                  x1 = (x0+timeslice)%T_global;
-                  //fprintf(stdout, "rho: %3d%25.16e%25.16e\n", x0, 
-                  //  vsign[idx-9+i]*Ctmp[2*x1  ]/(double)VOL3/2./g_kappa/g_kappa, 
-                  //  vsign[idx-9+i]*Ctmp[2*x1+1]/(double)VOL3/2./g_kappa/g_kappa);
-                }
+                //for(x0=0; x0<T; x0++) {
+                //  x1 = (x0+timeslice)%T_global;
+                //  fprintf(stdout, "rho: %3d%25.16e%25.16e\n", x0, 
+                //    vsign[idx-9+i]*Ctmp[2*x1  ]/(double)VOL3/2./g_kappa/g_kappa, 
+                //    vsign[idx-9+i]*Ctmp[2*x1+1]/(double)VOL3/2./g_kappa/g_kappa);
+                //}
               }
               sl += (2*T); 
               itype++;
@@ -1006,9 +1005,7 @@ int main(int argc, char **argv) {
   fprintf(stderr, "[cvc_2pt_conn] %s[cvc_2pt_conn] end fo run\n", ctime(&g_the_time));
   fflush(stderr);
 
-#ifdef MPI
   MPI_Finalize();
-#endif
 
   return(0);
 
