@@ -39,16 +39,16 @@
 #include "smearing_techniques.h"
 
 void usage() {
-  fprintf(stdout, "\n\nCode to perform contractions for connected contributions\n");
-  fprintf(stdout, "Usage:    [options]\n");
-  fprintf(stdout, "Options: -h, -? this help and exit\n");
-  fprintf(stdout, "         -v verbose [no effect, lots of stdout output anyway]\n");
-  fprintf(stdout, "         -f input filename [default cvc.input]\n");
-  fprintf(stdout, "         -l lightest mass _NOT_ in mms file [default lightest is mms]\n");
-  fprintf(stdout, "         -L other light mass prop. (if any) are _NOT_ mms files [default other lights are mms]\n");
-  fprintf(stdout, "         -H heavy mass prop. (if any) are _NOT_ mms files [default heavy masses are mms]\n");
-  fprintf(stdout, "         -m number of first heavy mass to be _USED_ [default max( 1 , g_no_light_masses)]\n");
-  fprintf(stdout, "         -p <n> number of colours [default 1]\n\n");
+  fprintf(stdout, "# [hl_conn_5] Code to perform contractions for connected contributions\n");
+  fprintf(stdout, "# [hl_conn_5] Usage:    [options]\n");
+  fprintf(stdout, "# [hl_conn_5] Options: -h, -? this help and exit\n");
+  fprintf(stdout, "# [hl_conn_5]         -v verbose [no effect, lots of stdout output anyway]\n");
+  fprintf(stdout, "# [hl_conn_5]         -f input filename [default cvc.input]\n");
+  fprintf(stdout, "# [hl_conn_5]         -l lightest mass _NOT_ in mms file [default lightest is mms]\n");
+  fprintf(stdout, "# [hl_conn_5]         -L other light mass prop. (if any) are _NOT_ mms files [default other lights are mms]\n");
+  fprintf(stdout, "# [hl_conn_5]         -H heavy mass prop. (if any) are _NOT_ mms files [default heavy masses are mms]\n");
+  fprintf(stdout, "# [hl_conn_5]         -m number of first heavy mass to be _USED_ [default max( 1 , g_no_light_masses)]\n");
+  fprintf(stdout, "# [hl_conn_5]         -p <n> number of colours [default 1]\n\n");
 #ifdef MPI
   MPI_Abort(MPI_COMM_WORLD, 1);
   MPI_Finalize();
@@ -241,17 +241,17 @@ int main(int argc, char **argv) {
 
   /* set the default values */
   if(filename_set==0) strcpy(filename, "cvc.input");
-  fprintf(stdout, "# reading input from file %s\n", filename);
+  fprintf(stdout, "# [hl_conn_5] reading input from file %s\n", filename);
   read_input_parser(filename);
 
   /* some checks on the input data */
   if((T_global == 0) || (LX==0) || (LY==0) || (LZ==0)) {
-    if(g_proc_id==0) fprintf(stdout, "T and L's must be set\n");
+    if(g_proc_id==0) fprintf(stdout, "# [hl_conn_5] T and L's must be set\n");
     usage();
   }
 
   if( Nlong > 0 ) {
-    if(g_proc_id==0) fprintf(stdout, "Fuzzing not available in this version.\n");
+    if(g_proc_id==0) fprintf(stdout, "# [hl_conn_5] Fuzzing not available in this version.\n");
     usage();
   }
 
@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
   mpi_init(argc, argv);
 
   VOL3 = LX*LY*LZ;
-  fprintf(stdout, "# [%2d] parameters:\n"\
+  fprintf(stdout, "# [hl_conn_5] %2d parameters:\n"\
                   "# [%2d] T_global     = %3d\n"\
                   "# [%2d] T            = %3d\n"\
 		  "# [%2d] Tstart       = %3d\n"\
@@ -296,7 +296,7 @@ int main(int argc, char **argv) {
 
     alloc_gauge_field(&g_gauge_field, VOLUMEPLUSRAND);
     sprintf(filename, "%s.%.4d", gaugefilename_prefix, Nconf);
-    if(g_cart_id==0) fprintf(stdout, "# reading gauge field from file %s\n", filename);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] reading gauge field from file %s\n", filename);
 #ifdef MPI
     ratime = MPI_Wtime();
 #else
@@ -318,7 +318,7 @@ int main(int argc, char **argv) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for reading gauge field: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for reading gauge field: %e seconds\n", retime-ratime);
 
 #ifdef MPI
     ratime = MPI_Wtime();
@@ -331,20 +331,19 @@ int main(int argc, char **argv) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for exchanging gauge field: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for exchanging gauge field: %e seconds\n", retime-ratime);
 
     /* measure the plaquette */
     plaquette(&plaq);
-    if(g_cart_id==0) fprintf(stdout, "# measured plaquette value: %25.16e\n", plaq);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] measured plaquette value: %25.16e\n", plaq);
 
   } else {
     g_gauge_field = (double*)NULL;
   }
 
-
   if( (N_Jacobi>0) || (Nlong>0) ) {
 
-    if(g_cart_id==0) fprintf(stdout, "# apply APE smearing of gauge field with parameters:\n"\
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] apply APE smearing of gauge field with parameters:\n"\
                                      "# N_ape = %d\n# alpha_ape = %f\n", N_ape, alpha_ape);
     
 #ifdef MPI
@@ -409,7 +408,7 @@ int main(int argc, char **argv) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for APE smearing gauge field: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for APE smearing gauge field: %e seconds\n", retime-ratime);
 
   }
 
@@ -418,7 +417,7 @@ int main(int argc, char **argv) {
    *********************************************************/
   no_fields = 4*( g_no_light_masses + (g_no_extra_masses+1-g_no_light_masses>0) )*n_s*n_c + 1;
   g_spinor_field = (double**)calloc(no_fields, sizeof(double*));
-  if(g_cart_id==0) fprintf(stdout, "# no. of spinor fields is %d\n", no_fields);
+  if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] no. of spinor fields is %d\n", no_fields);
 #if !( (defined PARALLELTX) || (defined PARALLELTXY) )
   for(i=0; i<no_fields-1; i++) alloc_spinor_field(&g_spinor_field[i], VOLUME);
   alloc_spinor_field(&g_spinor_field[no_fields-1], VOLUME + RAND);
@@ -492,23 +491,32 @@ int main(int argc, char **argv) {
     fclose(ofs);
   }
   if(g_cart_id==0) {
-    fprintf(stdout, "# mms masses:\n");
-    for(i=0; i<=g_no_extra_masses; i++) fprintf(stdout, "# mass[%2d] = %e\n",
+    fprintf(stdout, "# [hl_conn_5] mms masses:\n");
+    for(i=0; i<=g_no_extra_masses; i++) fprintf(stdout, "# [hl_conn_5] mass[%2d] = %e\n",
       i, mms_masses[i]);
   } else {
-    if(g_cart_id==0) fprintf(stdout, "# no extra masses specified\n");
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] no extra masses specified\n");
   }
 
   /******************************************************************
    * get the source coordinates 
    ******************************************************************/
 
-  
+  src0 = g_source_location / (LX*g_nproc_x*LY*g_nproc_y*LZ*g_nproc_z);
+  src2 = g_source_location - (LX*g_nproc_x*LY*g_nproc_y*LZ*g_nproc_z) * src0;
+  src1 = src2 / (LY*g_nproc_y*LZ*g_nproc_z);
+  src3 = src2 - (LY*g_nproc_y*LZ*g_nproc_z) * src1;
+  src2 = src3 / (LZ*g_nproc_z);
+  src3 -= (LZ*g_nproc_z)*src2;
+  if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] source location %d = (%d, %d, %d, %d)\n", g_source_location,
+      src0, src1, src2, src3);
+
   /******************************************************************
    * final normalization of the correlators
    ******************************************************************/
-  correlator_norm = 1. / ( 2. * g_kappa * g_kappa * (double)(LX_global*LY_global*LZ) );
-  if(g_cart_id==0) fprintf(stdout, "# correlator_norm = %12.5e\n", correlator_norm);
+  // correlator_norm = 1. / ( 2. * g_kappa * g_kappa * (double)(LX_global*LY_global*LZ) );
+  correlator_norm = 1.;
+  if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] correlator_norm = %12.5e\n", correlator_norm);
 
   /******************************************************************
    ******************************************************************
@@ -518,7 +526,7 @@ int main(int argc, char **argv) {
    ******************************************************************
    ******************************************************************/
 if(g_local_local || g_local_smeared) {
-  if(g_cart_id==0) fprintf(stdout, "# Starting LL and LS contractions\n");
+  if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] Starting LL and LS contractions\n");
   /****************************************************************
    * (1.0) the light masses
    ****************************************************************/
@@ -579,7 +587,7 @@ if(g_local_local || g_local_smeared) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for preparing light prop.: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for preparing light prop.: %e seconds\n", retime-ratime);
   
 #ifdef MPI
     ratime = MPI_Wtime();
@@ -626,7 +634,7 @@ if(g_local_local || g_local_smeared) {
 
 #ifdef MPI
 #if (defined PARALLELTX) || (defined PARALLELTXY)
-/*        if(g_xs_id==0) fprintf(stdout, "# [%2d] collecting results\n", g_cart_id); */
+/*        if(g_xs_id==0) fprintf(stdout, "# [hl_conn_5] %2d collecting results\n", g_cart_id); */
         for(ix=0; ix<8*K*T; ix++) buffer[ix] = 0.;
         for(ix=0; ix<8*K*T_global; ix++) buffer2[ix] = 0.;
         MPI_Allreduce(cconn, buffer, 8*K*T, MPI_DOUBLE, MPI_SUM, g_ts_comm);
@@ -690,7 +698,7 @@ if(g_local_local || g_local_smeared) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for light-light contractions: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for light-light contractions: %e seconds\n", retime-ratime);
 
     index_min += 4*n_s*n_c;
   }
@@ -745,7 +753,7 @@ if(g_local_local || g_local_smeared) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for preparing heavy prop.: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for preparing heavy prop.: %e seconds\n", retime-ratime);
 
   
     /****************************************************************
@@ -758,7 +766,9 @@ if(g_local_local || g_local_smeared) {
 #endif
     count=-1; 
     for(sigmalight=-1; sigmalight<=1; sigmalight+=2) {
-    for(sigmaheavy=-1; sigmaheavy<=1; sigmaheavy+=2) {
+    // for(sigmaheavy=-1; sigmaheavy<=1; sigmaheavy+=2)
+    for(sigmaheavy=-1; sigmaheavy<=-1; sigmaheavy+=2)
+    {
       count++;
       for(ix=0; ix<8*K*T; ix++) cconn[ix] = 0.;
       for(j=0; j<2; j++) {
@@ -810,7 +820,8 @@ if(g_local_local || g_local_smeared) {
         memcpy((void*)buffer2, (void*)cconn, 8*K*T_global*sizeof(double));
 #endif
       if(g_cart_id==0) {
-        sprintf(filename, "correl.%.4d.%.2d.%.2d.%.2d", Nconf, g_source_timeslice, k, k);
+        // sprintf(filename, "correl.%.4d.%.2d.%.2d.%.2d", Nconf, g_source_timeslice, k, k);
+        sprintf(filename, "correl.%.4d.t%.2dx%.2dy%.2dz%.2d.%.2d.%.2d", Nconf, src0, src1, src2, src3, k, k);
         if(count==0) {
           ofs=fopen(filename, "w");
         } else {
@@ -855,7 +866,7 @@ if(g_local_local || g_local_smeared) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for heavy-heavy contractions: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for heavy-heavy contractions: %e seconds\n", retime-ratime);
 
     /****************************************************************
      * (1.1.2) light - heavy contractions
@@ -966,10 +977,10 @@ if(g_local_local || g_local_smeared) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for light-heavy contractions: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for light-heavy contractions: %e seconds\n", retime-ratime);
 
   }  /* loop over heavy extra masses */
-  if(g_cart_id==0) fprintf(stdout, "# finished LL and LS contractions\n");
+  if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] finished LL and LS contractions\n");
 }
 
   /******************************************************************
@@ -981,7 +992,7 @@ if(g_local_local || g_local_smeared) {
    ******************************************************************/
 
 if(g_smeared_smeared || g_smeared_local) {
-  if(g_cart_id==0) fprintf(stdout, "# Starting SL and SS contractions\n");
+  if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] Starting SL and SS contractions\n");
   /****************************************************************
    * (2.0) the light masses
    ****************************************************************/
@@ -1043,7 +1054,7 @@ if(g_smeared_smeared || g_smeared_local) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for preparing prop.: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for preparing prop.: %e seconds\n", retime-ratime);
   
 #ifdef MPI
     ratime = MPI_Wtime();
@@ -1058,7 +1069,7 @@ if(g_smeared_smeared || g_smeared_local) {
         for(idx=0; idx<8*K*T; idx++) cconn[idx] = 0.;
         for(j=0; j<2; j++) {
           ll = j+2;
-/*          if(g_cart_id==0) fprintf(stdout, "# chi[%2d] and psi[%2d]\n", ( sigmalight+1 + j + 4*mms2 )*n_s*n_c, ( sigmaheavy+1 + j + 4*k )*n_s*n_c); */
+/*          if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] chi[%2d] and psi[%2d]\n", ( sigmalight+1 + j + 4*mms2 )*n_s*n_c, ( sigmaheavy+1 + j + 4*k )*n_s*n_c); */
           chi = &(g_spinor_field[( sigmalight+1 + j + 4*mms2 )*n_s*n_c]);
           psi = &(g_spinor_field[( sigmaheavy+1 + j + 4*k    )*n_s*n_c]);
           if(sigmalight==sigmaheavy) {
@@ -1071,21 +1082,21 @@ if(g_smeared_smeared || g_smeared_local) {
 
           /* (pseudo-)scalar sector */
           for(idx=0; idx<16; idx++) {
-/*            if(g_cart_id==0) fprintf(stdout, "# xgindex=(%2d, %2d)\n", xgindex1[idx], xgindex2[idx]); */
+/*            if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] xgindex=(%2d, %2d)\n", xgindex1[idx], xgindex2[idx]); */
             contract_twopoint(&cconn[sl], xgindex1[idx], xgindex2[idx], chi, psi, n_c);
-/*            for(t=0; t<T; t++) fprintf(stdout, "[%2d] %3d%3d%3d%25.16e%25.16e\n", g_cart_id, j, idx, t, cconn[sl+2*t], cconn[sl+2*t+1]); */
+/*            for(t=0; t<T; t++) fprintf(stdout, "# [hl_conn_5] %2d %3d%3d%3d%25.16e%25.16e\n", g_cart_id, j, idx, t, cconn[sl+2*t], cconn[sl+2*t+1]); */
             sl += (2*T);
           }
           /* (pseudo-)vector sector */
           for(idx = 16; idx < 64; idx+=3) {
             for(i = 0; i < 3; i++) {
-/*              if(g_cart_id==0) fprintf(stdout, "# xgindex=(%2d, %2d)\n", xgindex1[idx+i], xgindex2[idx+i]); */
+/*              if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] xgindex=(%2d, %2d)\n", xgindex1[idx+i], xgindex2[idx+i]); */
               for(x0=0; x0<2*T; x0++) Ctmp[x0] = 0.;
               contract_twopoint(Ctmp, xgindex1[idx+i], xgindex2[idx+i], chi, psi, n_c);
               for(x0=0; x0<T; x0++) {
                 cconn[sl+2*x0  ] += (conf_gamma_sign[(idx-16)/3]*xvsign[idx-16+i]*Ctmp[2*x0  ]);
                 cconn[sl+2*x0+1] += (conf_gamma_sign[(idx-16)/3]*xvsign[idx-16+i]*Ctmp[2*x0+1]);
-/*                for(t=0; t<T; t++) fprintf(stdout, "[%2d] %3d%3d%3d%25.16e%25.16e\n", g_cart_id, j, idx+i, t, cconn[sl+2*t], cconn[sl+2*t+1]); */
+/*                for(t=0; t<T; t++) fprintf(stdout, "[hl_conn_5] %2d %3d%3d%3d%25.16e%25.16e\n", g_cart_id, j, idx+i, t, cconn[sl+2*t], cconn[sl+2*t+1]); */
               }
             }
             sl += (2*T);
@@ -1098,13 +1109,13 @@ if(g_smeared_smeared || g_smeared_local) {
         for(ix=0; ix<32; ix++) {
           for(j1=0; j1<2; j1++) {
             for(t=0; t<T; t++) {
-              fprintf(stdout, "[%2d,%2d,%2d-before] %3d%3d%3d%25.16e%25.16e\n", 
+              fprintf(stdout, "# [hl_conn_5] [%2d,%2d,%2d-before] %3d%3d%3d%25.16e%25.16e\n", 
                 g_cart_id, g_ts_id, g_xs_id, 
                 ix, j1+2, t, cconn[2*(K*T*(j1+2) +ix*T+t)], cconn[2*(K*T*(j1+2) + ix*T+t)+1]);
             }
           }
         }
-        if(g_xs_id==0) fprintf(stdout, "# [%2d] collecting results\n", g_cart_id);
+        if(g_xs_id==0) fprintf(stdout, "# [hl_conn_5] [%2d] collecting results\n", g_cart_id);
 */
 
         for(ix=0; ix<8*K*T; ix++) buffer[ix] = 0.;
@@ -1121,7 +1132,7 @@ if(g_smeared_smeared || g_smeared_local) {
           for(ix=0; ix<32; ix++) {
             for(j1=0; j1<2; j1++) {
               for(t=0; t<T; t++) {
-                fprintf(stdout, "[%2d,%2d,%2d-after] %3d%3d%3d%25.16e%25.16e\n", 
+                fprintf(stdout, "# [hl_conn_5] [%2d,%2d,%2d-after] %3d%3d%3d%25.16e%25.16e\n", 
                   g_cart_id, g_ts_id, g_xs_id, 
                   ix, j1+2, t, cconn[2*(c*4*K*T + K*T*(j1+2) + ix*T + t)  ], 
                                cconn[2*(c*4*K*T + K*T*(j1+2) + ix*T + t)+1]);
@@ -1183,7 +1194,7 @@ if(g_smeared_smeared || g_smeared_local) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for light-light contractions: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for light-light contractions: %e seconds\n", retime-ratime);
 
     index_min += 4*n_s*n_c;
   }
@@ -1238,7 +1249,7 @@ if(g_smeared_smeared || g_smeared_local) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for preparing heavy prop.: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for preparing heavy prop.: %e seconds\n", retime-ratime);
 
   
     /****************************************************************
@@ -1348,7 +1359,7 @@ if(g_smeared_smeared || g_smeared_local) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for heavy-heavy contractions: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for heavy-heavy contractions: %e seconds\n", retime-ratime);
 
     /****************************************************************
      * (2.1.2) light - heavy contractions
@@ -1459,10 +1470,10 @@ if(g_smeared_smeared || g_smeared_local) {
 #else
     retime = (double)clock() / CLOCKS_PER_SEC;
 #endif
-    if(g_cart_id==0) fprintf(stdout, "# time for light-heavy contractions: %e seconds\n", retime-ratime);
+    if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] time for light-heavy contractions: %e seconds\n", retime-ratime);
 
   }  /* loop over heavy extra masses */
-  if(g_cart_id==0) fprintf(stdout, "# finished SL and SS contractions\n");
+  if(g_cart_id==0) fprintf(stdout, "# [hl_conn_5] finished SL and SS contractions\n");
 }
   /**************************************************
    * free the allocated memory, finalize 
