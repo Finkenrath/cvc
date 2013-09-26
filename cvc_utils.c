@@ -2033,6 +2033,7 @@ void set_default_input_values(void) {
   g_space_dilution_depth = _default_space_dilution_depth;
 
   g_mms_id = _default_mms_id;
+  g_check_inversion = _default_check_inversion;
 }
 
 void  TraceAB(complex *w, double A[12][24], double B[12][24]) {
@@ -4496,3 +4497,27 @@ int shift_spinor_field (double *s, double *r, int *d) {
   EXIT(1);
 #endif
 }  // end of shift_spinor_field
+
+/***********************************************************************
+ * check_source ()
+ *
+ * - for point sources: apply the Dirac oprator once, subtract 1.0 at
+ *   the source location and calculate the norm of the spinor field
+ *   (cf. apply_Dtm.c)
+ * - assumes that sf has been exchanged beforehand
+ ***********************************************************************/
+void check_source(double *sf, double*work, double mass, unsigned int location, int sc) {
+
+  double norm1, norm2;
+
+  Q_phi(work, sf, mass);
+  work[_GSI(location)+2*sc] -= 1.0;
+
+  spinor_scalar_product_re(&norm1, sf, sf, VOLUME);
+  spinor_scalar_product_re(&norm2, work, work, VOLUME);
+
+  if(g_cart_id==0) {
+    fprintf(stdout, "# [check_source] norm of solution    = %e\n", norm1);
+    fprintf(stdout, "# [check_source] norm of A x - delta = %e\n", norm2);
+  }
+}

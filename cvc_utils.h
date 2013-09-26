@@ -92,5 +92,7 @@ inline void check_F_SU3(float*g, float*res);
 inline unsigned int lexic2eot_5d (unsigned int is, unsigned int ix);
 int shift_spinor_field (double *s, double *r, int *d);
 int printf_SU3_link (double *u, FILE*ofs);
+
+void check_source(double *sf, double*work, double mass, unsigned int location, int sc);
 #endif
 

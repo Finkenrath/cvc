@@ -180,5 +180,7 @@ EXTERN int g_cpu_prec, g_gpu_prec, g_gpu_prec_sloppy;
 EXTERN int g_inverter_type;
 EXTERN char g_inverter_type_name[200];
 EXTERN int g_space_dilution_depth;
+EXTERN int g_mms_id;
+EXTERN int g_check_inversion;
 
 #endif
