@@ -1,0 +1,8 @@
+The debugging levels in CVC follow (more or less), the following convention.
+
+0 no debugging information
+1
+2
+3
+4
+5 very verbose, include memory allocations

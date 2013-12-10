@@ -1887,6 +1887,7 @@ int printf_spinor_field_tzyx(double *s, FILE *ofs) {
 
 void set_default_input_values(void) {
 
+  g_debug_level = _default_g_debug_level;
   T_global    = _default_T_global;
   Tstart      = _default_Tstart;
   LX          = _default_LX;

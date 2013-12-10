@@ -50,6 +50,7 @@ SDIGIT {SIGN}?[[:digit:]]
 
 %option never-interactive
 
+%x DEBUGLEVEL
 %x TT
 %x LLX
 %x LLY
@@ -277,6 +278,12 @@ SDIGIT {SIGN}?[[:digit:]]
 ^gpu_precision{SPC}*={SPC}*                BEGIN(GPUPREC);
 ^gpu_precision_sloppy{SPC}*={SPC}*         BEGIN(GPUPRECSLOPPY);
 ^inverter_type{SPC}*={SPC}*                BEGIN(INVERTERTYPE);
+^debuglevel{SPC}*={SPC}*                   BEGIN(DEBUGLEVEL);
+
+<DEBUGLEVEL>{DIGIT}+  {
+  g_debug_level = atoi(yytext);
+  if(myverbose!=0) printf("# [read_input_parser] g_debug_level =%s\n", yytext);
+}
 
 <TT>{DIGIT}+                  {
   T_global = atoi(yytext);

@@ -1,6 +1,7 @@
 #ifndef _DEFAULT_INPUT_H
 #define _DEFAULT_INPUT_H
 
+#define _default_g_debug_level 0
 #define _default_T_global 0
 #define _default_LX 0
 #define _default_LY 0
