@@ -19,12 +19,12 @@ int isnan_ld (long double x);
 
 void byte_swap(void *ptr, int nmemb);
 void byte_swap_double(void *ptr, int nmemb);
-inline void* byte_swap_assign(void * out_ptr, void * in_ptr, int nmemb);
-inline void* byte_swap_assign_singleprec(void * out_ptr, void * in_ptr, int nmemb);
-inline void* byte_swap_assign_single2double(void * out_ptr, void * in_ptr, int nmemb);
-inline void* single2double(void * out_ptr, void * in_ptr, int nmemb);
-inline void* byte_swap_assign_double2single(void * out_ptr, void * in_ptr, int nmemb);
-inline void* double2single(void * out_ptr, void * in_ptr, int nmemb);
+void* byte_swap_assign(void * out_ptr, void * in_ptr, int nmemb);
+void* byte_swap_assign_singleprec(void * out_ptr, void * in_ptr, int nmemb);
+void* byte_swap_assign_single2double(void * out_ptr, void * in_ptr, int nmemb);
+void* single2double(void * out_ptr, void * in_ptr, int nmemb);
+void* byte_swap_assign_double2single(void * out_ptr, void * in_ptr, int nmemb);
+void* double2single(void * out_ptr, void * in_ptr, int nmemb);
 int big_endian();
 int write_ildg_format_xml(char *filename, LimeWriter * limewriter, const int precision);
 void single2double_cm(double * const R, float * const S);

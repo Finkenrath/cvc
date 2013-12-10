@@ -6,7 +6,6 @@
 // #include "linalg/fp_linalg.h"
 // #include "linalg/sp_linalg.h"
 // basic linear algebra as inline functions
-#include "global.h"
 #include "linalg/fp_linalg_inline.h"
 #include "linalg/sp_linalg_inline.h"
 

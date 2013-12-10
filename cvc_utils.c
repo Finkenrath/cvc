@@ -21,6 +21,9 @@
 #include "read_input_parser.h"
 #include "cvc_utils.h"
 #include "ranlxd.h"
+#include "Q_phi.h"
+#include "invert_Qtm.h"
+
 
 void EV_Hermitian_3x3_Matrix(double *M, double *lambda);
 
@@ -2921,9 +2924,17 @@ int rangauss (double * y1, int NRAND) {
 #define _F(s) s
 #endif
 
-int _F(ilaenv)(int *ispec, char name[], char opts[], int *n1, int *n2, int *n3, int *n4);
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
 
+int _F(ilaenv)(int *ispec, char name[], char opts[], int *n1, int *n2, int *n3, int *n4);
 void _F(zheev)(char *jobz, char *uplo, int *n, double a[], int *lda, double w[], double work[], int *lwork, double *rwork, int *info);
+
+#ifdef __cplusplus
+}
+#endif
 
 /*****************************************************************************
  * Computes the eigenvalues and the eigenvectors of a hermitian 3x3 matrix.

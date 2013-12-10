@@ -18,10 +18,12 @@ int write_lime_spinor(double * const s, char * filename, const int append, const
 
 int write_checksum(char * filename, DML_Checksum *checksum); 
 
+int write_source_type(const int type, char * filename);
+
 /* int write_binary_spinor_data(double * const s, LimeWriter * limewriter,
   const int prec, DML_Checksum * ans); */
 
-int read_lime_spinor(double * const s, char * filename, const int position);
+int read_lime_spinor(double * const s, const char * filename, const int position);
 
 int read_cmi(double *v, const char * filename);
 int write_binary_spinor_data_timeslice(double * const s, LimeWriter * limewriter,

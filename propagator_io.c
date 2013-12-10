@@ -607,7 +607,7 @@ int get_propagator_type(char * filename) {
 }
 
 #ifdef HAVE_LIBLEMON
-int read_lime_spinor(double * const s, char * filename, const int position) {
+int read_lime_spinor(double * const s, const char * filename, const int position) {
   MPI_File *ifs;
   int status = 0, getpos = 0, bytes = 0, prec = 0, prop_type;
   char *header_type = NULL;
@@ -683,7 +683,7 @@ int read_lime_spinor(double * const s, char * filename, const int position) {
   return(0);
 }
 #else
-int read_lime_spinor(double * const s, char * filename, const int position) {
+int read_lime_spinor(double * const s, const char * filename, const int position) {
   FILE * ifs;
   int status=0, getpos=-1;
   n_uint64_t bytes;
@@ -1230,7 +1230,7 @@ int read_lime_spinor_single(float * const s, char * filename, const int position
     limeDestroyReader(limereader);
     fclose(ifs);
     if(g_proc_id==0) fprintf(stderr, "[read_lime_spinor_single] try to read in CMI format\n");
-    return(read_cmi(s, filename));
+    return(read_cmi((double*)s, filename));
   }
   bytes = limeReaderBytes(limereader);
   if(bytes == (LX*g_nproc_x)*(LY*g_nproc_y)*LZ*T_global*(uint64_t)(24*sizeof(double))) prec = 64;
