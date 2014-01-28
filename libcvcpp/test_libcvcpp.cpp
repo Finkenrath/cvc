@@ -435,7 +435,7 @@ void output_correlators(const vector< vector<correlator*> >& correls, const stri
       
         for(unsigned int x0=0; x0<=T_global/2; x0++) {
           fwd_corr_ts = ( x0+source_timeslice) % T_global;
-          bwd_corr_ts = (-x0+g_source_timeslice+T_global) % T_global;
+          bwd_corr_ts = (-x0+source_timeslice+T_global) % T_global;
           corr_fwd_array_index = 2* ( (fwd_corr_ts/T)*T + fwd_corr_ts%T ) + current_isimag[observable];
           corr_bwd_array_index = 2* ( (bwd_corr_ts/T)*T + bwd_corr_ts%T ) + current_isimag[observable];
           
