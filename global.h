@@ -11,6 +11,12 @@
 #include "types.h"
 #include "ifftw.h"
 
+#ifdef __cplusplus
+#include <vector>
+#include "flavour.hpp"
+#include "flavour_pairing.hpp"
+#endif
+
 #define _TM_FERMION        0
 #define _WILSON_FERMION    1
 #define _DW_WILSON_FERMION 2
@@ -74,7 +80,7 @@ typedef struct momentum_info_struct {
 
 EXTERN int g_debug_level;
 EXTERN int T_global, LX_global, LY_global, LZ_global;
-EXTERN int T, L, LX, LY, LZ, VOLUME, Tstart, LXstart, LYstart, LZstart, FFTW_LOC_VOLUME, L5;
+EXTERN int T, L, LX, LY, LZ, VOLUME, VOL3, Tstart, LXstart, LYstart, LZstart, FFTW_LOC_VOLUME, L5;
 EXTERN int RAND, EDGES, VOLUMEPLUSRAND;
 EXTERN int Nconf;
 
@@ -84,9 +90,9 @@ EXTERN int ** g_idn, **g_idn_5d;
 EXTERN int *g_lexic2eo, *g_eo2lexic, *g_iseven, *g_isevent, *g_lexic2eot, *g_eot2lexic;
 EXTERN int *g_lexic2eo_5d, *g_eo2lexic_5d, *g_iseven_5d, *g_isevent_5d, *g_lexic2eot_5d, *g_eot2lexic_5d;
 
-EXTERN double **g_spinor_field;
+EXTERN double **g_spinor_field, *g_work_spinor_field;
 
-EXTERN double *g_gauge_field;
+EXTERN double *g_gauge_field, *g_gauge_field_f;
 
 EXTERN double g_kappa, g_mu, g_musigma, g_mudelta, g_mubar, g_epsbar, g_m5, g_m0, g_kappa5d;
 
@@ -183,5 +189,10 @@ EXTERN char g_inverter_type_name[200];
 EXTERN int g_space_dilution_depth;
 EXTERN int g_mms_id;
 EXTERN int g_check_inversion;
+
+#ifdef __cplusplus
+EXTERN vector<flavour*> g_flavours;
+EXTERN vector<flavour_pairing*> g_flavour_pairings;
+#endif
 
 #endif

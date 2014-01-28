@@ -275,6 +275,7 @@ int init_geometry(void) {
   int dx = 0, dy = 0;
 
   VOLUME         = T*LX*LY*LZ;
+  VOL3           = LX*LY*LZ;
   VOLUMEPLUSRAND = VOLUME;
   RAND           = 0;
   EDGES          = 0;
