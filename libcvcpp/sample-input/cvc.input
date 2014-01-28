@@ -1,0 +1,104 @@
+# *******************************************************
+# * input parameters for cvc-code
+# *******************************************************
+
+debuglevel = 5
+T  = 16
+LX = 8
+LY = 8
+LZ = 8
+
+#nrtprocs=2
+#nryprocs=2
+#nrxprocs=2
+
+gaugefilename_prefix = conf
+n_ape = 1
+alpha_ape = 0.5
+n_jacobi = 1
+kappa_jacobi = 0.5
+
+BeginFlavour
+  name = strange
+  kappa = 0.177
+  masses = 0.02,0.03
+  splitted_propagator = yes
+  in_mms_file = yes
+  n_c = 1
+  n_s = 4
+  no_smearing_combinations = 4
+  source_timeslice=23
+  propagator_basename = source
+  propagator_dirname = strange
+  flavour_type = down
+  first_mass_index=11
+EndFlavour 
+
+BeginFlavour
+  name = up
+  kappa = 0.177
+  masses = 0.001
+  splitted_propagator = yes
+  in_mms_file = no
+  n_c = 1
+  n_s = 4
+  no_smearing_combinations = 4
+  source_timeslice=23
+  propagator_basename = source
+  propagator_dirname = light
+  flavour_type = up
+  first_mass_index=0
+EndFlavour 
+
+BeginFlavourPairing
+  flavours = strange, up 
+  name = kaon
+  smearing_combinations = LL, LS, SS
+EndFlavourPairing
+
+#BeginFlavourPairing
+#  flavours = up, up
+#  name = pion
+#  smearing_combinations = LL, SL, SS
+#EndFlavourPairing
+
+#BeginFlavourPairing
+#  flavours = strange, strange
+#  name = eta_s
+#  smearing_combinations = LL, LS, SL, SS
+#EndFlavourPairing
+
+# kappa =
+# mu    =
+
+# sourceid      =
+# sourceid2     =
+# sourceid_step =
+# gaugeid       =
+# gaugeid2      =
+# gaugeid_step  =
+
+# Nconf  =
+# Nsave  =
+# format =
+
+# BCangleT =
+# BCangleX =
+# BCangleY =
+# BCangleZ =
+
+# filename_prefix      =
+# filename_prefix2     =
+# gaugefilename_prefix =
+
+# resume   =
+# subtract =
+
+# source_location =
+
+# hpe_order     =
+# hpe_order_min =
+# hpe_order_max =
+
+# *******************************************************
+

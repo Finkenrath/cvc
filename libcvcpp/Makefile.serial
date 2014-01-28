@@ -1,0 +1,56 @@
+# ##########
+top_srcdir=$(HOME)/code/cvc.kost
+srcdir=$(HOME)/code/cvc.kost/libcvcpp
+limedir=$(HOME)/local/lime_g++
+fftwdir=/usr
+
+LEX=flex
+#CXX=mpicxx.openmpi
+CXX=g++
+CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall # -DMPI # -DPARALLELTXY
+DEP = ${CXX}
+DEPFLAGS = -MM
+
+INCLUDE = -I$(limedir)/include/ -I$(srcdir) -I$(top_srcdir) -I$(fftwdir)/include/
+LIBS = -L$(limedir)/lib/ -llime  -L/usr/lib/atlas-base/atlas -llapack -lblas -L$(fftwdir)/lib -lfftw -lm /usr/lib/x86_64-linux-gnu/libgfortran.so.3
+LDFLAGS = 
+
+LINK = $(CXX) -o $@ $(LIBS) $(LDFLAGS)
+COMPILE = $(CXX) $(INCLUDE) -o $@ $(CXXFLAGS)
+
+# PROGRAMS treated with LINK
+PROGRAMS = test_libcvcpp
+
+# MODULES and CVC_MODULES treated with COMPILE
+MODULES = flavour flavour_pairing spinor_field propagator smearing_bits correlator $(PROGRAMS)
+CVC_MODULES = get_index io_utils propagator_io Q_phi mpi_init \
+	cvc_geometry cvc_utils invert_Qtm ranlxd ranlxs \
+	DML_crc32 dml read_input_parser deb_printf smearing_techniques \
+	init_gauge_field gettime io gauge_io fuzz fuzz2 fatal_error
+
+# ##########
+
+all: $(PROGRAMS)
+
+$(addsuffix .d,$(MODULES)): %.d: ${srcdir}/%.cpp Makefile
+	@ $(DEP) ${DEPFLAGS} ${INCLUDE} $< > $@
+
+${top_srcdir}/read_input_parser.c: ${top_srcdir}/read_input_parser.l
+	${LEX} -P cvc_ -i -t ${top_srcdir}/read_input_parser.l > ${top_srcdir}/read_input_parser.c
+
+$(addsuffix .d,$(CVC_MODULES)): %.d: ${top_srcdir}/%.c Makefile
+	@ $(DEP) ${DEPFLAGS} ${INCLUDE} $< > $@
+
+$(addsuffix .o,${CVC_MODULES}): %.o: ${top_srcdir}/%.c $(addprefix ${top_srcdir}/, $(addsuffix .h, ${HEADERS})) %.d Makefile
+	${COMPILE} ${OPTARGS} -c $< 
+
+$(addsuffix .o,${MODULES}): %.o: ${srcdir}/%.cpp $(addprefix ${srcdir}/, $(addsuffix .h, ${HEADERS})) %.d Makefile
+	${COMPILE} ${OPTARGS} -c $< 
+
+${PROGRAMS}: %: $(addsuffix .o,${MODULES}) $(addsuffix .o,${CVC_MODULES}) Makefile
+	${LINK} $(addsuffix .o,${MODULES}) $(addsuffix .o,${CVC_MODULES}) $(LIBS)
+	
+clean:
+	rm -v -f *~ *.o *.d $(PROGRAMS)
+	
+.PHONY: clean	
