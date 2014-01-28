@@ -43,6 +43,7 @@
 #include "dml.h"
 #include "io.h"
 #include "io_utils.h"
+#include "gauge_io.h"
 
 /* #define MAXBUF 1048576 */
 
@@ -860,7 +861,7 @@ int read_lime_gauge_field_singleprec_timeslice(double *gfield, const char * file
  *
  *
  *************************************************************************************************/
-int read_ildg_nersc_gauge_field(const double * gauge, const char * filename) {
+int read_ildg_nersc_gauge_field(double * gauge, const char * filename) {
 
   FILE * ifs;
   int t, x, y, z, status;
