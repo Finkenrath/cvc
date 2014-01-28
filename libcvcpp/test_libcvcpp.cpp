@@ -159,6 +159,10 @@ void process_args(int argc, char **argv);
   
   double correlator_norm = 1;
 
+
+
+
+
 int main(int argc, char **argv) {
   // the input file defines flavours and flavour combinations
   read_input_parser("cvc.input");
@@ -174,6 +178,9 @@ int main(int argc, char **argv) {
   }
   
   geometry();
+  
+  // this seems to be the default correlator normalisation used by the ETMC toolset
+  correlator_norm = 1/(2*g_kappa*g_kappa*VOL3*g_nproc_x*g_nproc_y*g_nproc_z);  
   
   // the initialization functions for flavour and flavour_pairing
   // take care of memory management, reading propagators and smearing
@@ -370,9 +377,11 @@ string construct_correlator_filename_create_subdirectory(const string flavour_pa
   dirname << fl_b->params.name << "_";
   dirname << fl_b->params.masses[mass_index_b];
   
-  if( access(dirname.str().c_str(),F_OK) != 0 ) {
-    if( mkdir( dirname.str().c_str(), 0700 ) != 0 ) {
-      fatal_error(22,"Creation of subdirectory %s failed!\n",dirname.str().c_str() );
+  if( g_proc_id == 0 ){
+    if( access(dirname.str().c_str(),F_OK) != 0 ) {
+      if( mkdir( dirname.str().c_str(), 0700 ) != 0 ) {
+        fatal_error(22,"Creation of subdirectory %s failed!\n",dirname.str().c_str() );
+      }
     }
   }
   
@@ -430,10 +439,10 @@ void output_correlators(const vector< vector<correlator*> >& correls, const stri
           corr_fwd_array_index = 2* ( (fwd_corr_ts/T)*T + fwd_corr_ts%T ) + current_isimag[observable];
           corr_bwd_array_index = 2* ( (bwd_corr_ts/T)*T + bwd_corr_ts%T ) + current_isimag[observable];
           
-          fwd_val = current_isneg[observable]*correls[observable][smear_index]->correlator_array_global[corr_fwd_array_index];
+          fwd_val = correlator_norm*current_isneg[observable]*correls[observable][smear_index]->correlator_array_global[corr_fwd_array_index];
           // for x0 == 0 and x0 == T_global, the backward correlator is 0
           bwd_val = (x0 > 0 && x0 < T_global) ? 
-              current_isneg[observable]*correls[observable][smear_index]->correlator_array_global[corr_bwd_array_index] 
+              correlator_norm*current_isneg[observable]*correls[observable][smear_index]->correlator_array_global[corr_bwd_array_index] 
             : 0;
           
           fprintf(ofs, "%3d%3d%4d%25.16e%25.16e\n", observable+1, smear_index_to_cmi_int(smear_index), x0, fwd_val, bwd_val);
