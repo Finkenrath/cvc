@@ -29,6 +29,7 @@
 #include "cvc_utils.h"
 #include "smearing_techniques.h"
 #include "fuzz.h"
+#include "fuzz2.h"
 #include "gettime.h"
 #include "io.h"
 
@@ -68,6 +69,7 @@ void init_gauge_field() {
   if( (N_Jacobi>0) || (Nlong>0) ) {
     /* temporary memory for one gauge field timeslice (allocated below) */
     double* gauge_field_timeslice = (double*)NULL;
+    double* gauge_field_timeslice_old = (double*)NULL;
 
     if(g_cart_id==0) fprintf(stdout, "# [init_gauge_field] apply APE smearing of gauge field with parameters:\n"\
                                      "# N_ape = %d\n# alpha_ape = %f\n", N_ape, alpha_ape);
@@ -76,8 +78,9 @@ void init_gauge_field() {
 
 #if !( (defined PARALLELTX) || (defined PARALLELTXY) )
     alloc_gauge_field(&g_gauge_field_f, VOLUME);
-    if( (gauge_field_timeslice = (double*)malloc(72*VOL3*sizeof(double))) == (double*)NULL  ) {
-      fprintf(stderr, "Error, could not allocate mem for gauge_field_timeslice\n");
+    if( (gauge_field_timeslice = (double*)malloc(72*VOL3*sizeof(double))) == (double*)NULL || 
+        (gauge_field_timeslice_old = (double*)malloc(72*VOL3*sizeof(double))) == (double*)NULL ) {
+      fprintf(stderr, "Error, could not allocate mem for gauge_field_timeslice/_old\n");
 #ifdef MPI
       MPI_Abort(MPI_COMM_WORLD, 3);
       MPI_Finalize();
@@ -85,9 +88,10 @@ void init_gauge_field() {
       exit(2);
     }
     for(unsigned int x0=0; x0<T; x0++) {
+      deb_printf(3,"# [init_gauge_field] APE smearing gauge field timeslice %d\n",x0);
       memcpy((void*)gauge_field_timeslice, (void*)(g_gauge_field+_GGI(g_ipt[x0][0][0][0],0)), 72*VOL3*sizeof(double));
       for(unsigned int smearing_step=0; smearing_step<N_ape; smearing_step++) {
-        APE_Smearing_Step_Timeslice(gauge_field_timeslice, alpha_ape);
+        APE_Smearing_Step_Timeslice_noalloc(gauge_field_timeslice, gauge_field_timeslice_old, alpha_ape);
       }
       if(Nlong > -1) {
         fuzzed_links_Timeslice(g_gauge_field_f, gauge_field_timeslice, Nlong, x0);
@@ -96,9 +100,11 @@ void init_gauge_field() {
       }
     }
     free(gauge_field_timeslice);
+    free(gauge_field_timeslice_old);
 #else
+    alloc_gauge_field(&g_gauge_field_f, VOLUMEPLUSRAND);
     for(unsigned int smearing_step=0; smearing_step<N_ape; smearing_step++) {
-      APE_Smearing_Step(g_gauge_field, alpha_ape);
+      APE_Smearing_Step_noalloc(g_gauge_field, g_gauge_field_f, alpha_ape);
       xchange_gauge_field_timeslice(g_gauge_field);
     }
 

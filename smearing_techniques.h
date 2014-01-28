@@ -16,8 +16,10 @@
 int Fat_Time_Links(double *gauge_field, double *smeared_gauge_field, double time_link_epsilon);
 
 int APE_Smearing_Step(double *smeared_gauge_field, double APE_smearing_alpha);
+int APE_Smearing_Step_noalloc(double *smeared_gauge_field, double* smeared_gauge_field_old, double APE_smearing_alpha);
 
 int APE_Smearing_Step_Timeslice(double *smeared_gauge_field, double APE_smearing_alpha);
+int APE_Smearing_Step_Timeslice_noalloc(double *smeared_gauge_field, double* smeared_gauge_field_old, double APE_smearing_alpha);
 
 int Jacobi_Smearing_Steps(double *smeared_gauge_field, double *psi, int N, double kappa, int timeslice);
 

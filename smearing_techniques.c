@@ -128,9 +128,23 @@ int Fat_Time_Links(double *gauge_field, double *smeared_gauge_field, double time
  *            (has to be done in calling process)
  ************************************************************/
 int APE_Smearing_Step(double *smeared_gauge_field, double APE_smearing_alpha) {
+  double* smeared_gauge_field_old = (double*)NULL;
+  alloc_gauge_field(&smeared_gauge_field_old, VOLUMEPLUSRAND);
+  APE_Smearing_Step_noalloc(smeared_gauge_field, smeared_gauge_field_old, APE_smearing_alpha);
+  free(smeared_gauge_field_old);
+  return(0);
+}
+
+
+/**************************************************************************
+ * Performs an APE smearing step without any memory allocation, all
+ * memory must be provided by the calling function and freed if necessary 
+ * no MPI exchange is carried out so this also has to be done by the 
+ * calling function as necessary 
+ *********************************************************************** */
+int APE_Smearing_Step_noalloc(double *smeared_gauge_field, double* smeared_gauge_field_old, double APE_smearing_alpha) {
   int it, ix, iy, iz, idx;
   double M1[18], M2[18];
-  double *smeared_gauge_field_old = NULL;
   int index;
   int index_mx_1, index_mx_2, index_mx_3;
   int index_px_1, index_px_2, index_px_3;
@@ -140,7 +154,6 @@ int APE_Smearing_Step(double *smeared_gauge_field, double APE_smearing_alpha) {
   int index_pz_1, index_pz_2, index_pz_3;
   double *U = NULL;
 
-  alloc_gauge_field(&smeared_gauge_field_old, VOLUMEPLUSRAND);
   memcpy((void*)smeared_gauge_field_old, (void*)smeared_gauge_field, 72*VOLUMEPLUSRAND*sizeof(double));
 
   for(it = 0; it < T; it++) {
@@ -314,10 +327,8 @@ int APE_Smearing_Step(double *smeared_gauge_field, double APE_smearing_alpha) {
     cm_proj(U);
   }}}}
 
-  free(smeared_gauge_field_old);
   return(0);
 }
-
 
 /*********************************************************
  *
@@ -334,6 +345,30 @@ int APE_Smearing_Step(double *smeared_gauge_field, double APE_smearing_alpha) {
  *            smeared_gauge_field is a _TIMESLICE_
  *********************************************************/
 int APE_Smearing_Step_Timeslice(double *smeared_gauge_field, double APE_smearing_alpha) {
+  
+  double *smeared_gauge_field_old = (double*)NULL;
+  smeared_gauge_field_old = (double*)malloc(72*VOL3*sizeof(double));
+  if(smeared_gauge_field_old == (double*)NULL) {
+    if(g_cart_id==0) fprintf(stderr, "Error, could not allocate mem for smeared_gauge_field_old\n");
+#ifdef MPI
+    MPI_Abort(MPI_COMM_WORLD, 1);
+    MPI_Finalize();
+#endif    
+    return(1);
+  }
+  
+  APE_Smearing_Step_Timeslice_noalloc(smeared_gauge_field, smeared_gauge_field_old, APE_smearing_alpha);
+  
+  free(smeared_gauge_field_old);
+/*  xchange_gauge_field(smeared_gauge_field); */
+  return(0);
+}
+
+/**********************************************************
+ * as above but without memory allocation
+ **********************************************************/ 
+
+int APE_Smearing_Step_Timeslice_noalloc(double *smeared_gauge_field, double *smeared_gauge_field_old, double APE_smearing_alpha) {
   int ix, iy, iz, idx;
   int VOL3 = LX*LY*LZ;
   int index, index_;
@@ -344,17 +379,8 @@ int APE_Smearing_Step_Timeslice(double *smeared_gauge_field, double APE_smearing
   int index_mz_1, index_mz_2, index_mz_3;
   int index_pz_1, index_pz_2, index_pz_3;
   double M1[18], M2[18];
-  double *smeared_gauge_field_old=NULL, *U=NULL;
+  double *U=NULL;
 
-  smeared_gauge_field_old = (double*)malloc(72*VOL3*sizeof(double));
-  if(smeared_gauge_field_old == (double*)NULL) {
-    if(g_cart_id==0) fprintf(stderr, "Error, could not allocate mem for smeared_gauge_field_old\n");
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    MPI_Finalize();
-#endif    
-    return(1);
-  }
   memcpy((void*)smeared_gauge_field_old, (void*)smeared_gauge_field, 72*VOL3*sizeof(double));
 
   for(ix = 0; ix < LX; ix++) {
@@ -525,7 +551,6 @@ int APE_Smearing_Step_Timeslice(double *smeared_gauge_field, double APE_smearing
     cm_proj(U);
   }}}
 
-  free(smeared_gauge_field_old);
 /*  xchange_gauge_field(smeared_gauge_field); */
   return(0);
 }
