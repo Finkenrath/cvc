@@ -11,11 +11,14 @@ DIGIT [[:digit:]]
 ZT [0-9(10)(11)]
 IDXEX ("-"{DIGIT}+)
 SIGN ("+"|"-")
-FLT {SIGN}?{DIGIT}*+"."{DIGIT}*(e("-"|"+")?{DIGIT}+)?
+FLT {SIGN}?{DIGIT}+(".")?{DIGIT}*(e("-"|"+")?{DIGIT}+)?
 FILENAME [a-zA-Z0-9_".""-""/"][a-zA-z0-9"."_"-""/"]+
-NAME [a-zA-Z0-9_]+
+NAME [a-zA-Z0-9_"."]+
 TYPE [0-9A-Z]+
 SDIGIT {SIGN}?[[:digit:]]
+FLTLIST [0-9"."","" "]*
+EQL {SPC}*={SPC}*
+NAMELIST [a-zA-Z0-9_"."" "","]+ 
 
 %{
 #include <stdlib.h>
@@ -26,8 +29,7 @@ SDIGIT {SIGN}?[[:digit:]]
 #include "default_input_values.h"
 #include "cvc_utils.h"
 
-
-  /* Name of the parsing routine */
+/* Name of the parsing routine */
 #define YY_DECL         int parse_config()
 #define YY_NO_UNPUT
 
@@ -37,7 +39,7 @@ SDIGIT {SIGN}?[[:digit:]]
   int comment_caller;
   int name_caller;
   int a,b;
-  float c;
+  double c;
   int reread = 0;
   char name[100];
   char * type;
@@ -45,6 +47,124 @@ SDIGIT {SIGN}?[[:digit:]]
 
   int cvc_verbose = 1;
   int myverbose = 0;
+  
+/* some advanced functionality is only available if compiled with a C++
+ * compiler */
+ 
+#ifdef __cplusplus
+
+#include <vector>
+#include "flavour.hpp"
+#include "flavour_params.hpp"
+#include "flavour_pairing.hpp"
+
+/* given a line of the form name=0.12,0.13,0.15, store floats in
+ * vector of doubles provided by caller */
+ 
+void parse_fltlist(char * text, vector<double>& values ){
+  char * token = NULL;
+  double mass;
+
+  if( values.size() > 0 ) {
+    yy_fatal_error("[read_input_parser::parse_fltlist] target vector does not have zero elements! Exiting!");
+  }
+  
+  if( strtok(text,"\n\t =,\\") != NULL ) {
+    /* Implicitly drop the first token, it is the name */
+    token = strtok(NULL," =,\t");
+      
+    while( token != NULL ) {
+      sscanf(token,"%lf",&mass);
+      values.push_back(mass);
+      if(myverbose!=0) printf("# [read_input_parser::parse_fltlist] \t\t parsed value %lf in line %d\n",mass,line_of_file);
+      token = strtok(NULL," =,\t");
+    }
+  } else {
+    yy_fatal_error("[read_input_parser::parse_fltlist] failed to parse list of floats!");
+  }
+
+  if( values.size() == 0 ) {
+    yy_fatal_error("[read_input_parser::parse_fltlist] failed add any floats. Input line must be malformed.");
+  } 
+}
+
+std::string extract_string(char * text) {
+  std::string rval;
+  char * token = NULL;
+  if( strtok(text,"\n\t =,\\") != NULL ) {
+    /* Implicitly drop the first token, it is before the equal sign */
+    token = strtok(NULL," =,\t");
+      
+    while( token != NULL ) {
+      rval = token;
+      if(myverbose!=0) printf("# [read_input_parser::extract_string] \t\t parsed string '%s' in line %d\n",rval.c_str(),line_of_file);
+      token = strtok(NULL," ,\t");
+    }
+  } else {
+    yy_fatal_error("[read_input_parser::extract_string] failed to parse string!");
+  }
+  
+  return rval;
+}
+
+vector<std::string> extract_vector_of_strings( char * text ) {
+  vector<std::string> rval;
+  char * token = NULL;
+  if( strtok(text,"\n\t =,\\") != NULL ) {
+    /* Implicitly drop the first token, it is before the equal sign */
+    token = strtok(NULL," =,\t");
+      
+    while( token != NULL ) {
+      rval.push_back(token);
+      if(myverbose!=0) printf("# [read_input_parser::extract_vector_of_strings] \t\t parsed string '%s' in line %d\n",rval.back().c_str(),line_of_file);
+      token = strtok(NULL,", \t");
+    }
+  } else {
+    yy_fatal_error("[read_input_parser::extract_vector_of_strings] failed to parse list of strings!");
+  }
+  
+  return rval;
+}
+
+int extract_integer(char * text) {
+  int rval;
+  char * token = NULL;
+  if( strtok(text,"\n\t =,\\") != NULL ) {
+    /* Implicitly drop the first token, it is before the equal sign */
+    token = strtok(NULL," =,\t");
+      
+    while( token != NULL ) {
+      rval = atoi(token);
+      if(myverbose!=0) printf("# [read_input_parser::extract_integer] \t\t parsed integer %d in line %d\n",rval,line_of_file);
+      token = strtok(NULL," =,\t");
+    }
+  } else {
+    yy_fatal_error("[read_input_parser::extract_integer] failed to parse integer!");
+  }
+  
+  return rval;
+}
+
+double extract_float(char * text) {
+  double rval;
+  char * token = NULL;
+  if( strtok(text,"\n\t =,\\") != NULL ) {
+    /* Implicitly drop the first token, it is before the equal sign */
+    token = strtok(NULL," =,\t");
+      
+    while( token != NULL ) {
+      rval = atof(token);
+      if(myverbose!=0) printf("# [read_input_parser::extract_float] \t\t parsed 'float' %lf in line %d\n",rval,line_of_file);
+      token = strtok(NULL," =,\t");
+    }
+  } else {
+    yy_fatal_error("[read_input_parser::extract_float] failed to parse 'float'!");
+  }
+  
+  return rval;
+}
+
+#endif
 
 %}
 
@@ -163,6 +283,20 @@ SDIGIT {SIGN}?[[:digit:]]
 %x GPUPRECSLOPPY
 %x INVERTERTYPE
 
+%{
+#ifdef __cplusplus
+%}
+
+%x INITFLAVOUR
+%x PARSEFLAVOUR
+
+%x INITFLAVOURPAIRING
+%x PARSEFLAVOURPAIRING
+
+%{
+#endif /* __cplusplus */
+%}
+
 %x COMMENT
 %x ERROR
 
@@ -280,11 +414,19 @@ SDIGIT {SIGN}?[[:digit:]]
 ^inverter_type{SPC}*={SPC}*                BEGIN(INVERTERTYPE);
 ^debuglevel{SPC}*={SPC}*                   BEGIN(DEBUGLEVEL);
 
+%{
+#ifdef __cplusplus
+%}
+^BeginFlavour{SPC}*                        BEGIN(INITFLAVOUR);
+^BeginFlavourPairing{SPC}*                 BEGIN(INITFLAVOURPAIRING);
+%{
+#endif /* __cplusplus */
+%}
+
 <DEBUGLEVEL>{DIGIT}+  {
   g_debug_level = atoi(yytext);
   if(myverbose!=0) printf("# [read_input_parser] g_debug_level =%s\n", yytext);
 }
-
 <TT>{DIGIT}+                  {
   T_global = atoi(yytext);
   if(myverbose!=0) printf("# [read_input_parser] T_global =%s\n", yytext);
@@ -817,8 +959,137 @@ SDIGIT {SIGN}?[[:digit:]]
   if(myverbose!=0) printf("# [read_input_parser] inverter type name set to %s\n",yytext);
 }
 
+%{
+#ifdef __cplusplus
+%}
+
+<INITFLAVOUR>{SPC}*\n {
+  if(myverbose!=0) printf("# [read_input_parser] Adding a new flavour on line %d\n",line_of_file);  
+  g_flavours.push_back( new flavour );
+  line_of_file++;
+  BEGIN(PARSEFLAVOUR);
+}
+<PARSEFLAVOUR>{
+  {SPC}*kappa{EQL}{FLT} {
+    g_flavours.back()->params.kappa = extract_float(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t kappa for flavour set to %lf in line %d\n",
+      g_flavours.back()->params.kappa,line_of_file);
+  }
+  {SPC}*masses{EQL}{FLTLIST} {
+    if(myverbose!=0) printf("# [read_input_parser] \t parsing list of masses in line %d for flavour %d\n",
+      line_of_file, (unsigned int)g_flavours.size() );
+          
+    parse_fltlist(yytext,g_flavours.back()->params.masses);
+    g_flavours.back()->params.no_masses = (unsigned int)g_flavours.back()->params.masses.size();
+    
+    if(myverbose!=0) printf("# [read_input_parser] \t %d masses for flavour set in line %d\n",
+      g_flavours.back()->params.no_masses,line_of_file);
+  }
+  {SPC}*in_mms_file{EQL}yes {
+    g_flavours.back()->params.in_mms_file = true;
+    if(myverbose!=0) printf("# [read_input_parser] \t Propagators stored in MMS files in line %d\n",line_of_file);
+  }
+  {SPC}*in_mms_file{EQL}no {
+    g_flavours.back()->params.in_mms_file = false;
+    if(myverbose!=0) printf("# [read_input_parser] \t Propagators stored in non-MMS files in line %d\n",line_of_file);
+  }
+  {SPC}*splitted_propagator{EQL}yes {
+    g_flavours.back()->params.splitted_propagator = true;
+    if(myverbose!=0) printf("# [read_input_parser] \t Separate propagators for all indices in line %d\n",line_of_file);
+  }
+  {SPC}*splitted_propagator{EQL}no {
+    g_flavours.back()->params.splitted_propagator = false;
+    if(myverbose!=0) printf("# [read_input_parser] \t Individual propagators for all indices in line %d\n",line_of_file);
+  }
+  {SPC}*flavour_type{EQL}down {
+    g_flavours.back()->params.type = down_type;
+    if(myverbose!=0) printf("# [read_input_parser] \t Flavour type is 'down' in line %d\n",line_of_file);
+  }
+  {SPC}*flavour_type{EQL}up {
+    g_flavours.back()->params.type = up_type;
+    if(myverbose!=0) printf("# [read_input_parser] \t Flavour type is 'up' in line %d\n",line_of_file);
+  }
+  {SPC}*first_mass_index{EQL}{DIGIT}+ {
+    g_flavours.back()->params.first_mass_index = extract_integer(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t First mass index is %d in line %d\n",
+      g_flavours.back()->params.first_mass_index,line_of_file);
+  }
+  {SPC}*n_c{EQL}{DIGIT}+ {
+    g_flavours.back()->params.n_c = extract_integer(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t No. of color indices is %d in line %d\n",
+      g_flavours.back()->params.n_c,line_of_file);
+  }
+  {SPC}*n_s{EQL}{DIGIT}+ {
+    g_flavours.back()->params.n_s = extract_integer(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t No. of spin indices is %d in line %d\n",
+      g_flavours.back()->params.n_s,line_of_file);
+  }
+  {SPC}*source_timeslice{EQL}{DIGIT}+ {
+    g_flavours.back()->params.source_timeslice = extract_integer(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t Source timeslice is %d in line %d\n",
+      g_flavours.back()->params.source_timeslice,line_of_file);  
+  }
+  {SPC}*no_smearing_combinations{EQL}{DIGIT}+ {
+    g_flavours.back()->params.no_smearing_combinations = extract_integer(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t No. of smearing combinations is %d in line %d\n",
+      g_flavours.back()->params.no_smearing_combinations,line_of_file);
+  }
+  {SPC}*propagator_dirname{EQL}{NAME}+ {
+    g_flavours.back()->params.propagator_dirname = extract_string(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t Propagator dirname is '%s' in line %d\n",
+      g_flavours.back()->params.propagator_dirname.c_str(),line_of_file);
+  }
+  {SPC}*propagator_basename{EQL}{NAME}+ {
+    g_flavours.back()->params.propagator_basename = extract_string(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t Propagator basename is '%s' in line %d\n",
+      g_flavours.back()->params.propagator_basename.c_str(),line_of_file);
+  }
+  {SPC}*name{EQL}{NAME}+ {
+    g_flavours.back()->params.name = extract_string(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t Flavour name is '%s' in line %d\n",
+      g_flavours.back()->params.name.c_str(),line_of_file);
+  }
+  ^EndFlavour{SPC}* {
+    if(myverbose!=0) printf("# [read_input_parser] Finished adding a new flavour on line %d\n",line_of_file);
+    BEGIN(0);
+  }
+}
+
+<INITFLAVOURPAIRING>{SPC}*\n {
+  if(myverbose!=0) printf("# [read_input_parser] Adding a new flavour pairing on line %d\n",line_of_file);  
+  g_flavour_pairings.push_back( new flavour_pairing(&g_flavours) );
+  line_of_file++;
+  BEGIN(PARSEFLAVOURPAIRING);
+}
+<PARSEFLAVOURPAIRING>{
+  {SPC}*flavours{EQL}{NAMELIST}+ {
+    g_flavour_pairings.back()->set_flavour_names( extract_vector_of_strings( yytext ) );
+    if(myverbose!=0) printf("# [read_input_parser] \t Defined pairing '%s' in line %d\n",
+      g_flavour_pairings.back()->get_flavour_names_string().c_str(),line_of_file);  
+  }
+  {SPC}*name{EQL}{NAME}+ {
+    g_flavour_pairings.back()->set_name( extract_string(yytext) );
+    if(myverbose!=0) printf("# [read_input_parser] \t Flavour pairing name is '%s' in line %d\n",
+      g_flavour_pairings.back()->get_name().c_str(),line_of_file);
+  }
+  {SPC}*smearing_combinations{EQL}{NAMELIST}+ {
+    g_flavour_pairings.back()->set_smearing_combinations( extract_vector_of_strings(yytext) );
+    printf("%s",yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t Defined smearing combinations '%s' in line %d\n",
+      g_flavour_pairings.back()->get_smearing_combinations_string().c_str(),line_of_file);  
+  }    
+  ^EndFlavourPairing{SPC}* {
+    if(myverbose!=0) printf("# [read_input_parser] Finished adding a new flavour pairing on line %d\n",line_of_file);
+    BEGIN(0);
+  }
+}
+
+%{
+#endif /* __cplusplus */
+%}
+
 <*>^#   {
-   comment_caller = YY_START;   
+   comment_caller = YY_START;
    BEGIN(COMMENT);
 }
 <*>{SPC}*#    {
@@ -829,7 +1100,14 @@ SDIGIT {SIGN}?[[:digit:]]
   BEGIN(comment_caller);
 }
 
-<*>\n                       {
+%{
+/* if we are in any of these starting conditions, we cannot go back to starting condition 0!
+ * Otherwise we would stop parsing the relevant commands. */
+%}
+<PARSEFLAVOUR,PARSEFLAVOURPAIRING>{SPC}*\n {
+  line_of_file++;
+}
+<*>{SPC}*\n                       {
   line_of_file++;
   BEGIN(0);
 }
