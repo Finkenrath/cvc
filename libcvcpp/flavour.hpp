@@ -65,7 +65,7 @@ public:
   flavour( flavour_params i_params );
   void init();
   void init( flavour_params i_params );
-  string construct_propagator_filename(const unsigned int i_mass, const unsigned i_index );
+  string construct_propagator_filename(const unsigned int i_mass_ctr, const unsigned i_index );
     
   flavour_params params;  
   

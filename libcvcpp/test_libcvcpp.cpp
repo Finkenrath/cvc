@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
 
   // buffer memory for allreduce in correlator collection
 #ifdef MPI
-  double allreduce_buffer[2*T_global];
+  double allreduce_buffer[2*T];
 #else
   double* allreduce_buffer = (double*)NULL;
 #endif
@@ -407,7 +407,6 @@ void output_correlators(const vector< vector<correlator*> >& correls, const stri
     if( ofs == (FILE*)NULL ) {
       fatal_error(9,"Could not open file %s for writing!\n",correlator_filename.c_str());
     }
-  
   
     // Marcus's format
     //fprintf(ofs, "# %5d%4d%4d%4d%4d%15.8e %s %s_%15.8e %s_%15.8e\tLL,LS,SL,SS\n",

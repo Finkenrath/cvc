@@ -47,6 +47,10 @@ propagator::propagator(string i_filename, t_smear_index i_smear_index, unsigned 
   init( i_filename, i_smear_index, i_scidac_pos, i_in_mms_file );
 }
 
+propagator::propagator(const propagator& i_propagator){
+  initialized = false;    
+}
+
 propagator::~propagator(){
   de_init();
 }

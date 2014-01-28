@@ -43,18 +43,16 @@ void flavour::init() {
     deb_printf(1,"# [flavour::init] Initialising flavour %s.\n",params.name.c_str());
     
     propagators.resize(params.no_masses);
-    for( unsigned int mass = 0; mass < params.no_masses; ++mass ) {
+    for( unsigned int mass_ctr = 0; mass_ctr < params.no_masses; ++mass_ctr ) {
       //deb_printf(1,"# [flavour::init] Initialising mass %f for flavour %s.\n", params.mass[mass], params.name);
-      propagators[mass].resize(params.no_smearing_combinations);
+      propagators[mass_ctr].resize(params.no_smearing_combinations);
       for( unsigned int smearing = 0; smearing < params.no_smearing_combinations; ++smearing ) {
-        propagators[mass][smearing].resize(params.n_c*params.n_s);
+        propagators[mass_ctr][smearing].resize(params.n_c*params.n_s);
         for( unsigned int index = 0; index < params.n_c*params.n_s; ++index ) {
           deb_printf(1,"# [flavour::init] Initialising propagator for flavour %s, smearing_combination %s, mass %e, index %u\n", 
-            params.name.c_str(), smear_index_to_string(smearing).c_str(), params.masses[mass], index);
+            params.name.c_str(), smear_index_to_string(smearing).c_str(), params.masses[mass_ctr], index);
           
-          unsigned int mass_index = params.first_mass_index+mass;
-          
-          unsigned int smearing_index = ( smearing < 2 ? 0 : 1 );
+          unsigned int mass_index = params.first_mass_index+mass_ctr;
           
           /* propagator files can contain multiple propagators. either just two
            * when up and down are stored in the same file or 2*2*params.n_c*params.n_s
@@ -63,6 +61,10 @@ void flavour::init() {
            * which are stupidly stored as consecutive indices)
            * in the case of MMS files, there are no explicit down propagators
            * scidac_offset keeps track of which propagator to read out */
+          
+          // example: propagators from local sources, indices:   00, 01, 02, 03 (spin dilution)
+          //          propagators from smeared sources, indices: 04, 05, 06, 07
+          unsigned int smearing_index = ( smearing < 2 ? 0 : 1 );
            
           unsigned int scidac_offset = 0;
           if(params.splitted_propagator == false) {
@@ -85,22 +87,22 @@ void flavour::init() {
           
           string filename = construct_propagator_filename( mass_index, filename_index );
           
-          propagators[mass][smearing][index].init( filename, smearing, scidac_offset, params.in_mms_file );
+          propagators[mass_ctr][smearing][index].init( filename, smearing, scidac_offset, params.in_mms_file );
           
           /* propagator::read_from_x() applies Qf5 if we're dealing with an MMS propagator
            * this currently uses g_kappa and g_mu, so we have to set g_mu and g_kappa accordingly */
           double mu_save = g_mu;
           double kappa_save = g_kappa;
           if ( params.in_mms_file ) {
-            g_mu = (params.type == down_type ? -1 : 1) * params.masses[mass];
+            g_mu = (params.type == down_type ? -1 : 1) * params.masses[mass_ctr];
             g_kappa = params.kappa;
           }
           
           /* for smearing indices 1 and 3 we can reuse data and just copy the previous propagator */
           if( smearing % 2 == 0 ) {
-            propagators[mass][smearing][index].read_from_file();
+            propagators[mass_ctr][smearing][index].read_from_file();
           } else {
-            propagators[mass][smearing][index].read_from_memory( propagators[mass][smearing-1][index] );
+            propagators[mass_ctr][smearing][index].read_from_memory( propagators[mass_ctr][smearing-1][index] );
           }
           
           // reset g_kappa and g_mu
@@ -141,7 +143,7 @@ void flavour::init( flavour_params i_params ) {
  * 
  */
 
-string flavour::construct_propagator_filename( const unsigned int i_mass, const unsigned int i_index ) {
+string flavour::construct_propagator_filename( const unsigned int i_mass_ctr, const unsigned int i_index ) {
   stringstream filename;
   
   // TODO: add support for volume sources?
@@ -156,7 +158,7 @@ string flavour::construct_propagator_filename( const unsigned int i_mass, const 
   
   // multiple masses not in mms file but in subdirectories
   if(params.no_masses > 1 && params.in_mms_file == false) {
-    filename << params.propagator_dirname << setw(2) << i_mass << "/";
+    filename << params.propagator_dirname << setw(2) << i_mass_ctr << "/";
   }
   filename << params.propagator_basename << ".";
   
@@ -174,7 +176,7 @@ string flavour::construct_propagator_filename( const unsigned int i_mass, const 
   }
   
   if(params.in_mms_file){
-    filename << "cgmms." << setw(2) << i_mass << ".";
+    filename << "cgmms." << setw(2) << i_mass_ctr << ".";
   }
   
   filename << "inverted";

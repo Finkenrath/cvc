@@ -29,6 +29,10 @@ spinor_field::spinor_field() {
   allocated = false;
 }
 
+spinor_field::spinor_field( const spinor_field& i_spinor_field ) {
+  allocated = false;
+}
+
 spinor_field::spinor_field(unsigned int i_size) {
   allocated = false;
   allocate(i_size);

@@ -30,6 +30,9 @@ class spinor_field{
 public:
   spinor_field();
   spinor_field(unsigned int i_size);
+  // the copy constructor is a dummy which DOES NOT copy anything
+  // it exists solely for the purpose of allowing resize() in vectors of spinor_field type
+  spinor_field(const spinor_field& i_spinor_field);
   ~spinor_field();
   
   void allocate(unsigned int i_size);

@@ -29,6 +29,11 @@ correlator::correlator(){
   allocate();
 }
 
+correlator::correlator(const correlator& i_correlator){
+  constructor_common();
+  allocate();
+}
+
 correlator::correlator(double* i_allreduce_buffer ){
   constructor_common();
   allocate();
@@ -37,15 +42,15 @@ correlator::correlator(double* i_allreduce_buffer ){
 
 correlator::~correlator() {
   deallocate();
-  allreduce_buffer = NULL;
+  constructor_common();
 }
 
 void correlator::constructor_common() {
   initialized = false;
   allocated = false;
+  allreduce_buffer = NULL;
   correlator_array = NULL;
   correlator_array_global = NULL;
-  allreduce_buffer = NULL;
 }
 
 void correlator::set_allreduce_buffer( double* i_allreduce_buffer ) {
@@ -68,7 +73,7 @@ void correlator::allocate(){
     if(correlator_array == NULL)
       fatal_error(1,"ERROR: [correlator::allocate] Could not allocate rank-local correlator memory!\n");
 
-#ifdef MPI    
+#ifdef MPI
     correlator_array_global = (double*)malloc(2*T_global*sizeof(double));
     if(correlator_array_global == NULL)
       fatal_error(1,"ERROR: [correlator::allocate] Could not allocate MPI-global correlator memory!\n");
@@ -110,15 +115,14 @@ void correlator::exchange(){
   if(initialized) {
 #ifdef MPI
 #if (defined PARALLELTX) || (defined PARALLELTXY)
-  //for(unsinged int ix=0; ix<8*K*T; ix++) allreduce_buffer[ix] = 0.;
-  //for(unsigned int ix=0; ix<8*K*T_global; ix++) buffer2[ix] = 0.;
-  //MPI_Allreduce(cconn, buffer, 8*K*T, MPI_DOUBLE, MPI_SUM, g_ts_comm);
-  //MPI_Allgather(buffer, 8*K*T, MPI_DOUBLE, buffer2, 8*K*T, MPI_DOUBLE, g_xs_comm);
+  for(unsigned int ix=0; ix<2*T; ix++) allreduce_buffer[ix] = 0.;
+  MPI_Allreduce(correlator_array, allreduce_buffer, 2*T, MPI_DOUBLE, MPI_SUM, g_ts_comm);
+  MPI_Allgather(allreduce_buffer, 2*T, MPI_DOUBLE, correlator_array_global, 2*T, MPI_DOUBLE, g_xs_comm);
 #else
-  //MPI_Gather(cconn, 8*K*T, MPI_DOUBLE, buffer2, 8*K*T, MPI_DOUBLE, 0, g_cart_grid);
+  MPI_Gather(correlator_array, 2*T, MPI_DOUBLE, correlator_array_global, 2*T, MPI_DOUBLE, 0, g_cart_grid);
 #endif
 #else
-  //memcpy((void*)buffer2, (void*)cconn, 2*K*T_global*sizeof(double));
+  // without MPI, correlator_array_global points to correlator_array and no copying is necessary!
 #endif
   }
 }

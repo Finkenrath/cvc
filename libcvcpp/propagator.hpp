@@ -36,10 +36,12 @@ class propagator{
 public:
   propagator();
   propagator(string i_filename, t_smear_index i_smear_index, unsigned int i_scidac_pos, bool i_in_mms_file );
-  //propagator( string i_filename, t_smear_index i_smear_index );
+  // the copy constructor is a dummy function which DOES NOT actually copy anything
+  // it exists solely for the purpose of being able to resize() vectors of propagators
+  propagator(const propagator& i_propagator);
   ~propagator();
+  
   void init( string i_filename, t_smear_index i_smearing_type, unsigned int scidac_pos, bool i_in_mms_file );
-  //void init( string i_filename, unsigned int i_smearing_type );
   void read_from_memory( const propagator & i_prop );
   void read_from_file();
   void de_init();

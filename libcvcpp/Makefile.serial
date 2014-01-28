@@ -5,9 +5,12 @@ limedir=$(HOME)/local/lime_g++
 fftwdir=/usr
 
 LEX=flex
-#CXX=mpicxx.openmpi
-CXX=g++
-CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall # -DMPI # -DPARALLELTXY
+CXX=mpicxx.openmpi #MPI
+CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall -DMPI -DPARALLELTXY # MPI
+
+#CXX=g++ # no MPI
+#CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall no MPI
+
 DEP = ${CXX}
 DEPFLAGS = -MM
 
