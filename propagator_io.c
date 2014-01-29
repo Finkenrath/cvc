@@ -215,7 +215,7 @@ int read_binary_spinor_data(double * const s, LemonReader * reader,
   if (prec == 32) fbspin /= 2;
   bytes = fbspin;
 
-  if((void*)(filebuffer = malloc(VOLUME * bytes)) == NULL) {
+  if((void*)(filebuffer = (char*)malloc(VOLUME * bytes)) == NULL) {
     fprintf (stderr, "[read_binary_spinor_data] malloc errno in read_binary_spinor_data_parallel\n");
     MPI_Abort(MPI_COMM_WORLD, 1);
     MPI_Finalize();
@@ -547,8 +547,15 @@ int write_lime_spinor(double * const s, char * filename,
     }
     limeDestroyHeader( limeheader );
   }
-  
+
+  // a C++ compiler will complain if we don't explicitly cast limewriter
+  // to LemonWriter type when Lemon is used
+#ifdef HAVE_LIBLEMON
+  status = write_binary_spinor_data(s, (LemonWriter*)limewriter, prec, &checksum);
+#else
   status = write_binary_spinor_data(s, limewriter, prec, &checksum);
+#endif  
+  
   if(g_cart_id==0) {
     printf("# [write_lime_spinor] Final check sum is (%#lx  %#lx)\n", checksum.suma, checksum.sumb);
     if(ferror(ofs)) {
@@ -607,10 +614,9 @@ int get_propagator_type(char * filename) {
 }
 
 #ifdef HAVE_LIBLEMON
-int read_lime_spinor(double * const s, const char * filename, const int position) {
+int read_lime_spinor(double * const s, char * filename, const int position) {
   MPI_File *ifs;
   int status = 0, getpos = 0, bytes = 0, prec = 0, prop_type;
-  char *header_type = NULL;
   LemonReader *reader = NULL;
   DML_Checksum checksum;
 
@@ -640,7 +646,7 @@ int read_lime_spinor(double * const s, const char * filename, const int position
       status = LIME_EOF;
       break;
     }
-    header_type = lemonReaderType(reader);
+    const char* header_type = lemonReaderType(reader);
     if (strcmp("scidac-binary-data", header_type) == 0) {
       if (getpos == position)
         break;
@@ -683,7 +689,7 @@ int read_lime_spinor(double * const s, const char * filename, const int position
   return(0);
 }
 #else
-int read_lime_spinor(double * const s, const char * filename, const int position) {
+int read_lime_spinor(double * const s, char * filename, const int position) {
   FILE * ifs;
   int status=0, getpos=-1;
   n_uint64_t bytes;

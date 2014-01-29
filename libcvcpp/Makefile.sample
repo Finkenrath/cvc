@@ -2,11 +2,12 @@
 top_srcdir=$(HOME)/code/cvc.kost
 srcdir=$(HOME)/code/cvc.kost/libcvcpp
 limedir=$(HOME)/local/lime_g++
+lemondir=$(HOME)/local/lemon_g++
 fftwdir=/usr
 
 LEX=flex
 CXX=mpicxx.openmpi #MPI
-CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall -DMPI -DPARALLELTXY # MPI
+CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall -DMPI -DPARALLELTXY -DHAVE_LIBLEMON # MPI
 
 #CXX=g++ # no MPI
 #CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall no MPI
@@ -15,7 +16,7 @@ DEP = ${CXX}
 DEPFLAGS = -MM
 
 INCLUDE = -I$(limedir)/include/ -I$(srcdir) -I$(top_srcdir) -I$(fftwdir)/include/
-LIBS = -L$(limedir)/lib/ -llime  -L/usr/lib/atlas-base/atlas -llapack -lblas -L$(fftwdir)/lib -lfftw -lm /usr/lib/x86_64-linux-gnu/libgfortran.so.3
+LIBS = -L$(limedir)/lib/ -L$(lemondir)/lib/  -llime -llemon -L/usr/lib/atlas-base/atlas -llapack -lblas -L$(fftwdir)/lib -lfftw -lm /usr/lib/x86_64-linux-gnu/libgfortran.so.3
 LDFLAGS = 
 
 LINK = $(CXX) -o $@ $(LIBS) $(LDFLAGS)

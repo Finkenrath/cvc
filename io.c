@@ -48,14 +48,13 @@
 /* #define MAXBUF 1048576 */
 
 #ifdef HAVE_LIBLEMON
-int read_lime_gauge_field_doubleprec(const char * filename) {
+int read_lime_gauge_field_doubleprec(char * filename) {
   MPI_File *ifs=NULL;
   int t, x, y, z, status;
   n_uint64_t bytes;
   int latticeSize[] = {T_global, LX_global, LY_global, LZ};
   int scidacMapping[] = {0, 3, 2, 1};
   int prec;
-  char * header_type;
   LemonReader * reader=NULL;
   double tmp[72], tmp2[72];
   int words_bigendian, mu, i, j;
@@ -91,13 +90,13 @@ int read_lime_gauge_field_doubleprec(const char * filename) {
       status = LIME_EOF;
       break;
     }
-    header_type = lemonReaderType(reader);
+    const char* header_type = lemonReaderType(reader);
     if (strcmp("ildg-binary-data", header_type) == 0) break;
   }
   if(status==LIME_EOF) {
     fprintf(stderr, "no ildg-binary-data record found in file %s\n",filename);
     lemonDestroyReader(reader);
-    fclose(ifs);
+    fclose((FILE*)ifs);
     MPI_Abort(MPI_COMM_WORLD, 1);
     MPI_Finalize();
     exit(502);
@@ -127,7 +126,7 @@ int read_lime_gauge_field_doubleprec(const char * filename) {
   if (prec == 32) fbsu3 /= 2;
   bytes = 4 * fbsu3;
 
-  if((void*)(filebuffer = malloc(VOLUME * bytes)) == NULL) {
+  if((void*)(filebuffer = (char*)malloc(VOLUME * bytes)) == NULL) {
     printf ("malloc errno in read_binary_gauge_data_parallel\n");
     return 1;
   }
@@ -189,11 +188,10 @@ int read_lime_gauge_field_doubleprec(const char * filename) {
   return(0);
 }
 #else
-int read_lime_gauge_field_doubleprec(const char * filename) {
+int read_lime_gauge_field_doubleprec(char * filename) {
   FILE * ifs;
   int t, x, y, z, status;
   n_uint64_t bytes;
-  char * header_type;
   LimeReader * limereader;
   double tmp[72], tmp2[72];
   int words_bigendian, mu, i, j;
@@ -226,7 +224,7 @@ int read_lime_gauge_field_doubleprec(const char * filename) {
       status = LIME_EOF;
       break;
     }
-    header_type = limeReaderType(limereader);
+    const char* eader_type = limeReaderType(limereader);
     if(strcmp("ildg-binary-data",header_type) == 0) break;
   }
   if(status == LIME_EOF) {
@@ -338,14 +336,13 @@ int read_lime_gauge_field_doubleprec(const char * filename) {
 #endif
 
 #ifdef HAVE_LIBLEMON
-int read_lime_gauge_field_singleprec(const char * filename) {
+int read_lime_gauge_field_singleprec(char * filename) {
   MPI_File *ifs=NULL;
   int t, x, y, z, status;
   n_uint64_t bytes;
   int latticeSize[] = {T_global, LX_global, LY_global, LZ};
   int scidacMapping[] = {0, 3, 2, 1};
   int prec;
-  char * header_type;
   LemonReader * reader=NULL;
   double tmp[72], tmp2[72];
   int words_bigendian, mu, i, j;
@@ -381,13 +378,13 @@ int read_lime_gauge_field_singleprec(const char * filename) {
       status = LIME_EOF;
       break;
     }
-    header_type = lemonReaderType(reader);
+    const char* header_type = lemonReaderType(reader);
     if (strcmp("ildg-binary-data", header_type) == 0) break;
   }
   if(status==LIME_EOF) {
     fprintf(stderr, "no ildg-binary-data record found in file %s\n",filename);
     lemonDestroyReader(reader);
-    fclose(ifs);
+    fclose((FILE*)ifs);
     MPI_Abort(MPI_COMM_WORLD, 1);
     MPI_Finalize();
     exit(502);
@@ -417,7 +414,7 @@ int read_lime_gauge_field_singleprec(const char * filename) {
   if (prec == 32) fbsu3 /= 2;
   bytes = 4 * fbsu3;
 
-  if((void*)(filebuffer = malloc(VOLUME * bytes)) == NULL) {
+  if((void*)(filebuffer = (char*)malloc(VOLUME * bytes)) == NULL) {
     printf ("malloc errno in read_binary_gauge_data_parallel\n");
     return 1;
   }
@@ -479,7 +476,7 @@ int read_lime_gauge_field_singleprec(const char * filename) {
   return(0);
 }
 #else
-int read_lime_gauge_field_singleprec(const char * filename) {
+int read_lime_gauge_field_singleprec(char * filename) {
 
   FILE * ifs;
   int t, x, y, z, status;
@@ -613,7 +610,7 @@ int read_lime_gauge_field_singleprec(const char * filename) {
  *
  *
  *********************************************************************************************/
-int read_lime_gauge_field_doubleprec_timeslice(double *gfield, const char * filename, const int timeslice, DML_Checksum *checksum) {
+int read_lime_gauge_field_doubleprec_timeslice(double *gfield, char * filename, const int timeslice, DML_Checksum *checksum) {
 #ifndef MPI
   FILE * ifs;
   int t, x, y, z, status;
@@ -736,7 +733,7 @@ int read_lime_gauge_field_doubleprec_timeslice(double *gfield, const char * file
  *
  *
  *************************************************************************************************/
-int read_lime_gauge_field_singleprec_timeslice(double *gfield, const char * filename, const int timeslice, DML_Checksum *checksum) {
+int read_lime_gauge_field_singleprec_timeslice(double *gfield, char * filename, const int timeslice, DML_Checksum *checksum) {
 #ifndef MPI
   FILE * ifs;
   int t, x, y, z, status;
@@ -861,7 +858,7 @@ int read_lime_gauge_field_singleprec_timeslice(double *gfield, const char * file
  *
  *
  *************************************************************************************************/
-int read_ildg_nersc_gauge_field(double * gauge, const char * filename) {
+int read_ildg_nersc_gauge_field(double * gauge, char * filename) {
 
   FILE * ifs;
   int t, x, y, z, status;

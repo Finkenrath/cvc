@@ -72,7 +72,10 @@ void propagator::init( string i_filename, t_smear_index i_smear_index, unsigned 
 
 void propagator::read_from_file() {
   if( initialized ){
-    read_lime_spinor(field.mem, filename.c_str(), scidac_pos);
+    /* the cast to (char*) is technically invalid but when using LEMON, the filename
+     * is passed through to MPI_File_open which, at least for OpenMPI,
+     * stupidly calls for a (char*) argument */
+    read_lime_spinor(field.mem, (char*)filename.c_str(), scidac_pos);
     post_read_common();
   } else {
     deb_printf( 0, "WARNING: [propagator] read_from_file called but data structure is not initialised!\n" );
