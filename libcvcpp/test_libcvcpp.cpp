@@ -58,6 +58,10 @@ void output_correlators(const vector< vector<correlator*> >& correls, const stri
 
 void process_args(int argc, char **argv);
 
+/*********************************************************************************************************
+ * Some global definitions for convenience
+ */
+
   double c_conf_gamma_sign[]  = {1., 1., 1., -1., -1., -1., -1., 1., 1., 1., -1., -1.,  1.,  1., 1., 1.};
   double n_conf_gamma_sign[]  = {1., 1., 1., -1., -1., -1., -1., 1., 1., 1.,  1.,  1., -1., -1., 1., 1.};
 
@@ -159,12 +163,12 @@ void process_args(int argc, char **argv);
   
   double correlator_norm = 1;
 
-
-
+/**************************************************************************************/
 
 
 int main(int argc, char **argv) {
   // the input file defines flavours and flavour combinations
+  // and the relevant data structures are initialized below
   read_input_parser("cvc.input");
   
 #ifdef MPI
@@ -204,7 +208,7 @@ int main(int argc, char **argv) {
    * 
    */
 
-  // buffer memory for allreduce in correlator collection
+  // buffer memory for allreduce in correlator computation
 #ifdef MPI
   double allreduce_buffer[2*T];
 #else
@@ -247,21 +251,31 @@ int main(int argc, char **argv) {
           }
           
         // select arrays of gamma permutations depending on whether we are
-        // contracting a neutral or a charged meson  
-          current_gindex1 = ngindex1;
-          current_gindex2 = ngindex2;
-          current_isimag = nisimag;
-          current_vsign = nvsign;
-          current_conf_gamma_sign = n_conf_gamma_sign;
+        // contracting a neutral (same flavours) or a charged meson (different flavours)
+        // FIXME: this actually won't work because in twisted mass the propagators
+        // in the pseudoscalar correlator can be related and are effectively of the same
+        // flavor!
+        // need some control code in flavour combination
+        //  current_gindex1 = ngindex1;
+        //  current_gindex2 = ngindex2;
+        //  current_isimag = nisimag;
+        //  current_vsign = nvsign;
+        //  current_conf_gamma_sign = n_conf_gamma_sign;
         } else {
-          current_gindex1 = gindex1;
-          current_gindex2 = gindex2;
-          current_isimag = isimag;
-          current_vsign = vsign;
-          current_conf_gamma_sign = c_conf_gamma_sign;
+        //  current_gindex1 = gindex1;
+        //  current_gindex2 = gindex2;
+        //  current_isimag = isimag;
+        //  current_vsign = vsign;
+        //  current_conf_gamma_sign = c_conf_gamma_sign;
         }
         
+        // FIXME: fow now hard-code for charged gamma combinations
         
+        current_gindex1 = gindex1;
+        current_gindex2 = gindex2;
+        current_isimag = isimag;
+        current_vsign = vsign;
+        current_conf_gamma_sign = c_conf_gamma_sign;
         
         // zero out memory for correlator storage
         zero_correls(correls);
@@ -385,7 +399,7 @@ string construct_correlator_filename_create_subdirectory(const string flavour_pa
     }
   }
   
-  // format for puttogether.sh requires .$timeslice(2).$confnum(4)
+  // puttogether.sh requires the filename to be $basename.$timeslice(2).$confnum(4)
   // silly, really...
   rval << dirname.str() << "/" << "outprcv.";
   rval << setw(2) << setfill('0') << fl_a->params.source_timeslice << '.';
@@ -436,8 +450,8 @@ void output_correlators(const vector< vector<correlator*> >& correls, const stri
         for(unsigned int x0=0; x0<=T_global/2; x0++) {
           fwd_corr_ts = ( x0+source_timeslice) % T_global;
           bwd_corr_ts = (-x0+source_timeslice+T_global) % T_global;
-          corr_fwd_array_index = 2* ( (fwd_corr_ts/T)*T + fwd_corr_ts%T ) + current_isimag[observable];
-          corr_bwd_array_index = 2* ( (bwd_corr_ts/T)*T + bwd_corr_ts%T ) + current_isimag[observable];
+          corr_fwd_array_index = 2* ( (fwd_corr_ts/T)*T + fwd_corr_ts%T ) + current_isimag[observable%16];
+          corr_bwd_array_index = 2* ( (bwd_corr_ts/T)*T + bwd_corr_ts%T ) + current_isimag[observable%16];
           
           fwd_val = correlator_norm*current_isneg[observable]*correls[observable][smear_index]->correlator_array_global[corr_fwd_array_index];
           // for x0 == 0 and x0 == T_global, the backward correlator is 0
