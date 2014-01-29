@@ -1269,14 +1269,14 @@ int read_lime_spinor_single(float * const s, char * filename, const int position
  * read a timeslice from a spinor field
  ******************************************************************/
 #ifdef HAVE_LIBLEMON
-int read_lime_spinor_timeslice(double * const s, char * filename, const int position) {
+int read_lime_spinor_timeslice(double * const s, int timeslice, char * filename, const int position, DML_Checksum* checksum) {
   if (g_cart_id == 0) fprintf(stderr, "[read_lime_spinor_timeslice] Error, no version for lemon so far\n");
   MPI_Abort(MPI_COMM_WORLD, 1);
   MPI_Finalize();
   return(1);
 }
 #else
-int read_lime_spinor_timeslice(double * const s, int timeslice, char * filename, const int position, DML_Checksum*checksum) {
+int read_lime_spinor_timeslice(double * const s, int timeslice, char * filename, const int position, DML_Checksum* checksum) {
 #ifdef MPI
   if (g_cart_id == 0) fprintf(stderr, "[read_lime_spinor_timeslice] Error, no version for MPI so far\n");
   MPI_Abort(MPI_COMM_WORLD, 2);

@@ -41,5 +41,5 @@ int rotate_propagator_ETMC_UKQCD (double *spinor, long unsigned int V);
 
 int read_lime_spinor_single(float * const s, char * filename, const int position);
 int read_binary_spinor_data_timeslice(double * const s, int timeslice, LimeReader * limereader, const int prec, DML_Checksum *ans);
-int read_lime_spinor_timeslice(double * const s, int timeslice, char * filename, const int position, DML_Checksum*checksum);
+int read_lime_spinor_timeslice(double * const s, int timeslice, char * filename, const int position, DML_Checksum* checksum);
 #endif
