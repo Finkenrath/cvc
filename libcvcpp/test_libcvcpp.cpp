@@ -454,8 +454,8 @@ void output_correlators(const vector< vector<correlator*> >& correls, const stri
           corr_bwd_array_index = 2* ( (bwd_corr_ts/T)*T + bwd_corr_ts%T ) + current_isimag[observable%16];
           
           fwd_val = correlator_norm*current_isneg[observable]*correls[observable][smear_index]->correlator_array_global[corr_fwd_array_index];
-          // for x0 == 0 and x0 == T_global, the backward correlator is 0
-          bwd_val = (x0 > 0 && x0 < T_global) ? 
+          // for x0 == 0 and x0 == T_global/2, the backward correlator is 0
+          bwd_val = (x0 > 0 && x0 < T_global/2) ? 
               correlator_norm*current_isneg[observable]*correls[observable][smear_index]->correlator_array_global[corr_bwd_array_index] 
             : 0;
           
