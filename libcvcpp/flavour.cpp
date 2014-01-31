@@ -126,21 +126,29 @@ void flavour::init( flavour_params i_params ) {
 /* these are the types of filenames that exist with the zero-padded width of the numbers given by (#)
  * 
  * splitted:
- * basename.confnum(4).t_source(2).ix(2).[h]inverted
- * basename.operator_id(2).confnum(4).t_source(2).ix(2).cgmms.mass(2).inverted
+ * a) basename.confnum(4).t_source(2).ix(2).[h]inverted
+ * b) basename.operator_id(2).confnum(4).t_source(2).ix(2).cgmms.mass(2).inverted
  * 
  * combined:
- * basename.confnum(4).t_source(2).[h]inverted
- * basename.operator_id(2).confnum(4).t_source(2).cgmms.mass(2).inverted
+ * c) basename.confnum(4).t_source(2).[h]inverted
+ * d) basename.operator_id(2).confnum(4).t_source(2).cgmms.mass(2).inverted
  * 
  * volume source:
- * basename.confnum(4).sample(5).inverted
- * basename.operator_id(2).confnum(4).t_source(2).mass(2).inverted
+ * e) basename.confnum(4).sample(5).inverted
+ * f) basename.operator_id(2).confnum(4).t_source(2).mass(2).inverted
  * 
  * these are further specified by a subdirectory in which propagators may be stored
  * as well as a further subdirectory in case multiple masses are provided 
  * as non-MMS propagators
  * 
+ * so a full filename could be, for example:
+ * 
+ * light/light_02/source.0235.23.04.inverted (a)
+ * 
+ * or equivalently in an mms file
+ * 
+ * light/source.00.0235.23.04.cgmms.02.inverted (b)
+ *
  */
 
 string flavour::construct_propagator_filename( const unsigned int i_mass_ctr, const unsigned int i_index ) {
@@ -158,7 +166,7 @@ string flavour::construct_propagator_filename( const unsigned int i_mass_ctr, co
   
   // multiple masses not in mms file but in subdirectories
   if(params.no_masses > 1 && params.in_mms_file == false) {
-    filename << params.propagator_dirname << setw(2) << i_mass_ctr << "/";
+    filename << params.propagator_dirname << '_' << setw(2) << i_mass_ctr << "/";
   }
   filename << params.propagator_basename << ".";
   
