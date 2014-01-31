@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <getopt.h>
 
 #include "global.h"
 #include "cvc_complex.h"
@@ -57,6 +58,7 @@ string construct_correlator_filename_create_subdirectory(const string flavour_pa
 void output_correlators(const vector< vector<correlator*> >& correls, const string flavour_pairing_name, const flavour* const fl_a, const flavour* const fl_b, const unsigned int mass_index_a, const unsigned int mass_index_b);
 
 void process_args(int argc, char **argv);
+void usage();
 
 /*********************************************************************************************************
  * Some global definitions for convenience
@@ -72,13 +74,15 @@ void process_args(int argc, char **argv);
   /**************************************************************************************************
    * charged stuff
    *
-   * (pseudo-)scalar:
+   * (pseudo-)scalar: observables 1-16
+   * 
    * g5 - g5,	g5   - g0g5,	g0g5 - g5,	g0g5 - g0g5,
    * g0 - g0,	g5   - g0,	g0   - g5,	g0g5 - g0,
    * g0 - g0g5,	1    - 1,	1    - g5,	g5   - 1,
    * 1  - g0g5,	g0g5 - 1,	1    - g0,	g0   - 1
    *
-   * (pseudo-)vector:
+   * (pseudo-)vector: observables 17-32
+   * 
    * gig0 - gig0,	gi     - gi,		gig5 - gig5,	gig0   - gi,
    * gi   - gig0,	gig0   - gig5,		gig5 - gig0,	gi     - gig5,
    * gig5 - gi,		gig0g5 - gig0g5,	gig0 - gig0g5,	gig0g5 - gig0,
@@ -95,7 +99,7 @@ void process_args(int argc, char **argv);
   /* due to twisting we have several correlators that are purely imaginary */
   int isimag[]  = {0, 0, 0, 0, 
                    0, 1, 1, 1, 
-                   1, 0, 1, 1, 
+                   1, 0, 0, 0, 
                    1, 1, 0, 0,
 
                    0, 0, 0, 0, 
@@ -165,18 +169,21 @@ void process_args(int argc, char **argv);
 
 /**************************************************************************************/
 
+int verbose = 0;
+string input_filename = "cvc.input";
 
-int main(int argc, char **argv) {
-  // the input file defines flavours and flavour combinations
-  // and the relevant data structures are initialized below
-  read_input_parser("cvc.input");
-  
+int main(int argc, char **argv) {  
 #ifdef MPI
   MPI_Status status;
   MPI_Init(&argc, &argv);
 #endif  
+
+  process_args(argc,argv);
+  // the input file defines flavours and flavour combinations
+  // and the relevant data structures are initialized below
+  read_input_parser(input_filename.c_str()); 
+
   mpi_init(argc,argv);
-  
   if(init_geometry() != 0) {
     fatal_error(1, "ERROR: init_geometry failed!\n");
   }
@@ -199,14 +206,6 @@ int main(int argc, char **argv) {
     prop_a[i] = NULL;
     prop_b[i] = NULL;
   }
-    
-  /*** TODO:
-   * 4) write output routine for all correlators (build filename first)
-   * 5) look if i really need VOLUMEPLUSRAND entries for all the spinor fields
-   * 6) consider the partial initialization and memory management so that
-   *    flavour a only needs to hold one mass in memory
-   * 
-   */
 
   // buffer memory for allreduce in correlator computation
 #ifdef MPI
@@ -269,7 +268,7 @@ int main(int argc, char **argv) {
         //  current_conf_gamma_sign = c_conf_gamma_sign;
         }
         
-        // FIXME: fow now hard-code for charged gamma combinations
+        // FIXME: for now hard-code for charged gamma combinations
         
         current_gindex1 = gindex1;
         current_gindex2 = gindex2;
@@ -312,14 +311,6 @@ int main(int argc, char **argv) {
             // assign correlator to holding data structure
             correls[observable][smear_index]->set_correlator_array(corr_temp);
           } /* observable */
-            
-          //deb_printf(0,"%s mu1=%e mu2=%e %s\n",(*fp_it)->get_name().c_str(), fl_a->params.masses[mass_index_a], fl_b->params.masses[mass_index_b] ,smear_index_to_string(smear_index).c_str());
-          //contract_twopoint(cconn, gindex1[observable], gindex2[observable], b_prop, a_prop, fl_a->params.n_c);
-          //deb_printf(0,"%3u %3u %3u %25.16e %25.16e \n", observable+1 /*type*/, smear_index_to_cmi_int(smear_index), 0, cconn[0], 0.0);
-          //for(unsigned int t = 1; t < T/2; ++t) {
-          //  deb_printf(0,"%3u %3u %3u %25.16e %25.16e \n", observable+1 /*type*/, smear_index_to_cmi_int(smear_index), t, cconn[2*t+isimag[observable]], cconn[2*T-2*t+isimag[observable]]);
-          //}
-          
         } /* smear_index */
         
         // output correlators uses construct_correlator_filename to build a filename
@@ -342,13 +333,18 @@ int main(int argc, char **argv) {
   free_global_data_structures();
   free_geometry();
   #ifdef MPI
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
   #endif
 }
 
+
+
+/***************************************************************************************/
+
 void init_global_data_structures() {
   alloc_spinor_field(&g_work_spinor_field, VOLUMEPLUSRAND);
-  
+    
   /* all memory management is done at the level of the init methods */
   init_gauge_field();
   
@@ -378,7 +374,35 @@ void free_global_data_structures() {
   }
 }
 
+void usage() {
+  deb_printf(0, "# [test_libcvcpp] Testing code for the CVC++ addon library for CVC\n");
+  deb_printf(0, "# [test_libcvcpp] Usage:   test_libcvcpp [options]\n");
+  deb_printf(0, "# [test_libcvcpp] Options: -h, -? this help and exit\n");
+  deb_printf(0, "# [test_libcvcpp]          -v verbose [no effect, lots of stdout output anyway]\n");
+  deb_printf(0, "# [test_libcvcpp]          -f input filename [default cvc.input]\n");
+#ifdef MPI
+  MPI_Finalize();
+#endif
+  exit(0);
+}
+
 void process_args( int argc, char **argv ) {
+  char c;
+  while ((c = getopt(argc, argv, "h?vf")) != -1) {
+    switch (c) {
+    case 'v':
+      verbose = 1;
+      break;
+    case 'f':
+      input_filename = optarg;
+      break;
+    case 'h':
+    case '?':
+    default:
+      usage();
+      break;
+    }
+  } 
 }
 
 string construct_correlator_filename_create_subdirectory(const string flavour_pairing_name, const flavour* const fl_a, const flavour* const fl_b, const unsigned int mass_index_a, const unsigned int mass_index_b) {
