@@ -1144,7 +1144,7 @@ int yywrap()
  * read_input returns 2 if the input file did not exist 
  */
 
-int read_input_parser(char * conf_file){
+int read_input_parser(const char * conf_file){
 
   /********************************************
    * Setting default values!
@@ -1180,7 +1180,7 @@ int read_input_parser(char * conf_file){
  * reread_input returns 2 if the input file did not exist 
  */
 
-int reread_input_parser(char * conf_file){
+int reread_input_parser(const char * conf_file){
 
   if(cvc_verbose && g_proc_id == 0) {
     myverbose = 1;
