@@ -224,7 +224,7 @@ int read_lime_gauge_field_doubleprec(char * filename) {
       status = LIME_EOF;
       break;
     }
-    const char* eader_type = limeReaderType(limereader);
+    const char* header_type = limeReaderType(limereader);
     if(strcmp("ildg-binary-data",header_type) == 0) break;
   }
   if(status == LIME_EOF) {
