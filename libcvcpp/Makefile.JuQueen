@@ -1,0 +1,26 @@
+
+# these four need to be set!
+# please note that LIME and LEMON need to have 'extern "C"' blocks in lime.h and lemon.h !
+top_srcdir=$(HOME)/code/cvc
+srcdir=$(HOME)/code/cvc/libcvcpp
+limedir=$(HOME)/libs/lime
+lemondir=$(HOME)/libs/lemon
+
+LEX=flex
+
+# we use gcc to create the .d files, it works just fine like this
+CCDEP=/bgsys/drivers/V1R2M1/ppc64/comm/bin/gcc/mpicxx
+DEPFLAGS=-MM
+
+# BG/Q XLC++
+CXX=/bgsys/drivers/V1R2M1/ppc64/comm/bin/xl/mpixlcxx_r
+CXXFLAGS=-O2 -qstrict=all -qfullpath -qtune=qp -qarch=qp -qmaxmem=-1 -DCVC  -DPARALLELTXY -DHAVE_LIBLEMON -DMPI -DMPICH_SKIP_MPICXX -qsourcetype=c++
+INCLUDE = -I$(limedir)/include -I$(lemondir)/include -I$(srcdir) -I$(top_srcdir)
+LIBS = -lm -lstdc++ -lxl -lxlopt -lesslbg -llapack -lesslbg -lxlfmath -lxlfpad -lxlf90_r -lxlsmp -lpthread -llime -llemon
+LDFLAGS = -L$(limedir)/lib -L$(lemondir)/lib -L/bgsys/drivers/ppcfloor/gnu-linux/powerpc64-bgq-linux/lib -L/opt/ibmcmp/lib64/bg/bglib64 -L/usr/local/bg_soft/lapack/3.3.0/lib -L/opt/ibmmath/lib64 -L/opt/ibmcmp/xlf/bg/14.1/lib64 -L/opt/ibmcmp/xlsmp/bg/3.1/bglib64
+
+LINK = $(CXX) ${LDFLAGS} -o $@
+COMPILE = $(CXX) $(INCLUDE) -o $@ $(CXXFLAGS)
+
+# the actual compilation rules are here
+include ${srcdir}/Makefile.common
