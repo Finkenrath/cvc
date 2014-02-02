@@ -47,6 +47,7 @@ public:
   flavour_pairing();
   flavour_pairing( vector<flavour*>* i_flavours_collection );
   flavour_pairing( vector<string>& i_flavour_names, vector<flavour*>* i_flavours_collection );
+  ~flavour_pairing();
   
   void init();
   

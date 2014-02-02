@@ -47,6 +47,14 @@ flavour_pairing::flavour_pairing( vector<flavour*>* i_flavours_collection ) {
   flavours_collection = i_flavours_collection;
 }
 
+flavour_pairing::~flavour_pairing() {
+  // free all allocated "meson" objects, freeing correlator memory with the last one
+  while( observables.size() > 0 ) {
+    delete observables.back();
+    observables.pop_back();
+  }
+}
+
 void flavour_pairing::constructor_common() {
   initialized = false;
   a = NULL;
