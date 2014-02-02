@@ -9,7 +9,7 @@ lemondir=$(HOME)/libs/lemon
 LEX=flex
 
 # we use gcc to create the .d files, it works just fine like this
-CCDEP=/bgsys/drivers/V1R2M1/ppc64/comm/bin/gcc/mpicxx
+DEP=/bgsys/drivers/V1R2M1/ppc64/comm/bin/gcc/mpicxx
 DEPFLAGS=-MM
 
 # BG/Q XLC++
