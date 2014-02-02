@@ -122,8 +122,8 @@ void flavour_pairing::set_observable_names( const vector<string>& i_observable_n
 
 string flavour_pairing::get_observable_names_string() {
   stringstream rval;
-  for( vector<meson*>::iterator obs_iter = observables.begin(); obs_iter != observables.end(); ++obs_iter ) {
-    rval << (*obs_iter)->get_name() << " ";
+  for( vector<string>::iterator obs_name_iter = observable_names.begin(); obs_name_iter != observable_names.end(); ++obs_name_iter ) {
+    rval << *obs_name_iter << " ";
   }
   return rval.str();
 }
