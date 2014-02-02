@@ -33,13 +33,13 @@
  *    fopen/fclose iterations
  */ 
 
-#ifndef _CORRELATOR_HPP
-#define _CORRELATOR_HPP
-
 #include <string>
 #include "global.h"
 
 using namespace std;
+
+#ifndef _CORRELATOR_HPP
+#define _CORRELATOR_HPP
 
 class correlator{
   public:

@@ -24,6 +24,7 @@
 #include "global.h"
 #include "cvc_utils.h"
 #include "deb_printf.h"
+#include "fatal_error.h"
 
 spinor_field::spinor_field() {
   allocated = false;
@@ -54,7 +55,7 @@ void spinor_field::allocate() {
     allocate(VOLUMEPLUSRAND);
   } else {
     if(VOLUMEPLUSRAND == 0){
-      deb_printf(0,"# [spinor_field] VOLUMEPLUSRAND has not been initialized! Cannot allocate.\n");
+      fatal_error(0,"ERROR: [spinor_field] VOLUMEPLUSRAND has not been initialized! Cannot allocate.\n");
     }
     if(allocated) {
       deb_printf(0,"# [spinor_field] allocate() called despite being already allocated, doing nothing!\n");

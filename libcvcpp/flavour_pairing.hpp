@@ -19,8 +19,8 @@
  *
  ************************************************************************/
 
-/* The flavour pairing class is a slightly inefficient but necessary way of defining
- * "mesons" during program initialization. 
+/* The flavour pairing class is a slightly inefficient but necessary way of
+ * pairing up flavours for contractions during program initialization. 
  * Initialization: It is passed a vector of two strings via 'set_flavour_names' 
  * which could be, e.g. "up" and "strange".
  * In addition, it must be passed a pointer to a vector of 'flavour'. The 'init'
@@ -29,16 +29,17 @@
  * When a name matches, the pointers a and b are set to point to the respective flavours.
  *  */
 
-#ifndef _FLAVOUR_PAIRING_HPP
-#define _FLAVOUR_PAIRING_HPP
-
 #include <vector>
 #include <string>
 
 #include "flavour.hpp"
 #include "smearing_bits.hpp"
+#include "meson.hpp"
 
 using namespace std;
+
+#ifndef _FLAVOUR_PAIRING_HPP
+#define _FLAVOUR_PAIRING_HPP
 
 class flavour_pairing {
 public:
@@ -49,8 +50,11 @@ public:
   
   void init();
   
-  void set_smearing_combinations( vector<string> i_smearing_combinations_descriptors );
-  string get_smearing_combinations_string();
+  //void set_smearing_combinations( vector<string> i_smearing_combinations_descriptors );
+  //string get_smearing_combinations_string();
+  
+  void set_observable_names( const vector<string>& i_observables_names );
+  string get_observable_names_string();
   
   void set_flavour_names(vector<string> i_flavour_names);
   void set_flavours_collection(vector<flavour*>* i_flavours_collection);
@@ -68,13 +72,15 @@ public:
   flavour* a;
   flavour* b;
   
-  vector<t_smear_bitmask> smearing_combinations;
+  // collection of observable types for this flavour pairing
+  vector<meson*> observables;
 
 private:
   bool initialized;
   string name;
   vector<flavour*>* flavours_collection;
   vector<string> flavour_names;
+  vector<string> observable_names;
   
   void constructor_common();
 };

@@ -24,6 +24,7 @@
 #include <string>
 #include <sstream>
 
+#include "meson.hpp"
 #include "flavour_pairing.hpp"
  
 #include "global.h"
@@ -69,6 +70,12 @@ void flavour_pairing::init() {
           b = (*it);
         }
       }
+      
+      // initialize observables for this flavour pairing
+      for( vector<string>::const_iterator obs_name_iter = observable_names.begin(); obs_name_iter != observable_names.end(); ++obs_name_iter) {
+        observables.push_back( get_meson_pointer_from_name( *obs_name_iter ) );
+      }
+      
       /* check_consistency will fatal_error the program if anything fails */
       initialized = check_consistency();
       
@@ -82,7 +89,7 @@ void flavour_pairing::init() {
 }
 
 bool flavour_pairing::preinit_check() {
-  return( !flavour_names.empty() && !smearing_combinations.empty() && !name.empty() );
+  return( !flavour_names.empty() && !observable_names.empty() && !name.empty() );
 }
 
 bool flavour_pairing::check_consistency() {
@@ -108,15 +115,17 @@ bool flavour_pairing::check_consistency() {
   // any failures will result in program termination so we simply return true if we reach this point!
   return true;
 }
-  
 
-void flavour_pairing::set_smearing_combinations( vector<string> i_smearing_combinations_descriptors ){
-  if( !smearing_combinations.empty() ){ 
-    smearing_combinations.clear();
+void flavour_pairing::set_observable_names( const vector<string>& i_observable_names ) {
+  observable_names = i_observable_names;
+}
+
+string flavour_pairing::get_observable_names_string() {
+  stringstream rval;
+  for( vector<meson*>::iterator obs_iter = observables.begin(); obs_iter != observables.end(); ++obs_iter ) {
+    rval << (*obs_iter)->get_name() << " ";
   }
-  for( vector<string>::iterator it = i_smearing_combinations_descriptors.begin(); it != i_smearing_combinations_descriptors.end(); ++it ) {
-    smearing_combinations.push_back( smear_string_to_bitmask( *it ) );
-  }
+  return rval.str();
 }
 
 void flavour_pairing::set_flavour_names( vector<string> i_flavour_names ){
@@ -130,15 +139,6 @@ string flavour_pairing::get_flavour_names_string() {
   }
   
   return flavour_names_string.str();
-}
-
-string flavour_pairing::get_smearing_combinations_string() {
-  stringstream smearing_descriptor_string;
-  for( vector<t_smear_bitmask>::iterator it = smearing_combinations.begin(); it != smearing_combinations.end(); ++it ) {
-    smearing_descriptor_string << smear_bitmask_to_string( *it ) << " ";
-  }
-  
-  return smearing_descriptor_string.str();
 }
 
 void flavour_pairing::set_name( string i_name ) {

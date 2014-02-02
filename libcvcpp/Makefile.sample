@@ -8,12 +8,12 @@ fftwdir=/usr
 LEX=flex
 
 # MPI
-CXX=mpicxx.openmpi #MPI
-CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall -DMPI -DPARALLELTXY -DHAVE_LIBLEMON # MPI
+#CXX=mpicxx.openmpi    # with MPI
+#CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall -DMPI -DPARALLELTXY -DHAVE_LIBLEMON    # with MPI
 
 # no MPI
-#CXX=g++ # no MPI
-#CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall no MPI
+CXX=g++    # no MPI
+CXXFLAGS=-g -ggdb -DF_ -O0 -DCVC -pedantic -Wall    # no MPI
 
 DEP = ${CXX}
 DEPFLAGS = -MM
@@ -28,40 +28,51 @@ COMPILE = $(CXX) $(INCLUDE) -o $@ $(CXXFLAGS)
 # PROGRAMS treated with COMPILE and LINK
 PROGRAMS = test_libcvcpp
 
-# MODULES and CVC_MODULES treated with COMPILE
-MODULES = flavour flavour_pairing spinor_field propagator smearing_bits correlator
+# MODULES, CVC_MODULES and HEADERLESS_CVC_MODULES treated with COMPILE
+MODULES = flavour flavour_pairing spinor_field propagator smearing_bits correlator \
+	correlator_memory meson charged_conn_meson_20 neutral_conn_meson_20 \
+	charged_conn_meson_32 neutral_conn_meson_32
+
 CVC_MODULES = get_index io_utils propagator_io Q_phi mpi_init \
 	cvc_geometry cvc_utils invert_Qtm ranlxd ranlxs \
-	DML_crc32 dml read_input_parser deb_printf smearing_techniques \
+	dml read_input_parser deb_printf smearing_techniques \
 	init_gauge_field gettime io gauge_io fuzz fuzz2 fatal_error
+	
+HEADERLESS_CVC_MODULES = DML_crc32
 
 # ##########
 
 all: $(PROGRAMS)
 
-$(addsuffix .d,$(MODULES)): %.d: ${srcdir}/%.cpp Makefile
+$(addsuffix .d,$(MODULES)): %.d: ${srcdir}/%.cpp ${srcdir}/%.hpp Makefile
+	@ $(DEP) ${DEPFLAGS} ${INCLUDE} $< > $@
+
+$(addsuffix .d,$(HEADERLESS_CVC_MODULES)): %.d: ${top_srcdir}/%.c Makefile
 	@ $(DEP) ${DEPFLAGS} ${INCLUDE} $< > $@
 
 $(addsuffix .d,$(PROGRAMS)): %.d: ${srcdir}/%.cpp Makefile
 	@ $(DEP) ${DEPFLAGS} ${INCLUDE} $< > $@
 
-$(addsuffix .d,$(CVC_MODULES)): %.d: ${top_srcdir}/%.c Makefile
+$(addsuffix .d,$(CVC_MODULES)): %.d: ${top_srcdir}/%.c ${top_srcdir}/%.h Makefile
 	@ $(DEP) ${DEPFLAGS} ${INCLUDE} $< > $@
 
-${top_srcdir}/read_input_parser.c: ${top_srcdir}/read_input_parser.l
+${top_srcdir}/read_input_parser.c: ${top_srcdir}/read_input_parser.l ${top_srcdir}/read_input_parser.h
 	${LEX} -P cvc_ -i -t ${top_srcdir}/read_input_parser.l > ${top_srcdir}/read_input_parser.c
 
-$(addsuffix .o,${CVC_MODULES}): %.o: ${top_srcdir}/%.c $(addprefix ${top_srcdir}/, $(addsuffix .h, ${HEADERS})) %.d Makefile
+$(addsuffix .o,${CVC_MODULES}): %.o: ${top_srcdir}/%.c ${top_srcdir}/%.h %.d Makefile
 	${COMPILE} ${OPTARGS} -c $< 
 
-$(addsuffix .o,${MODULES}): %.o: ${srcdir}/%.cpp $(addprefix ${srcdir}/, $(addsuffix .h, ${HEADERS})) %.d Makefile
+$(addsuffix .o,${HEADERLESS_CVC_MODULES}): %.o: ${top_srcdir}/%.c %.d Makefile
+	${COMPILE} ${OPTARGS} -c $< 
+
+$(addsuffix .o,${MODULES}): %.o: ${srcdir}/%.cpp ${srcdir}/%.hpp %.d Makefile
 	${COMPILE} ${OPTARGS} -c $<
 	
-$(addsuffix .o,${PROGRAMS}): %.o: ${srcdir}/%.cpp $(addprefix ${srcdir}/, $(addsuffix .h, ${HEADERS})) %.d Makefile
+$(addsuffix .o,${PROGRAMS}): %.o: ${srcdir}/%.cpp %.d Makefile
 	${COMPILE} ${OPTARGS} -c $<	
 
-${PROGRAMS}: %: $(addsuffix .o, ${PROGRAMS}) $(addsuffix .o,${MODULES}) $(addsuffix .o,${CVC_MODULES}) Makefile
-	${LINK} $@.o $(addsuffix .o,${MODULES}) $(addsuffix .o,${CVC_MODULES}) $(LIBS)
+${PROGRAMS}: %: $(addsuffix .o, ${PROGRAMS}) $(addsuffix .o,${MODULES}) $(addsuffix .o,${CVC_MODULES}) $(addsuffix .o,${HEADERLESS_CVC_MODULES}) Makefile
+	${LINK} $@.o $(addsuffix .o,${MODULES}) $(addsuffix .o,${CVC_MODULES}) $(addsuffix .o,${HEADERLESS_CVC_MODULES}) $(LIBS)
 	
 clean:
 	rm -v -f *~ *.o *.d $(PROGRAMS)

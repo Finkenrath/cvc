@@ -1072,11 +1072,10 @@ double extract_float(char * text) {
     if(myverbose!=0) printf("# [read_input_parser] \t Flavour pairing name is '%s' in line %d\n",
       g_flavour_pairings.back()->get_name().c_str(),line_of_file);
   }
-  {SPC}*smearing_combinations{EQL}{NAMELIST}+ {
-    g_flavour_pairings.back()->set_smearing_combinations( extract_vector_of_strings(yytext) );
-    printf("%s",yytext);
-    if(myverbose!=0) printf("# [read_input_parser] \t Defined smearing combinations '%s' in line %d\n",
-      g_flavour_pairings.back()->get_smearing_combinations_string().c_str(),line_of_file);  
+  {SPC}*observables{EQL}{NAMELIST}+ {
+    g_flavour_pairings.back()->set_observable_names( extract_vector_of_strings(yytext) );
+    if(myverbose!=0) printf("# [read_input_parser] \t Defined observables '%s' in line %d\n",
+      g_flavour_pairings.back()->get_observable_names_string().c_str(),line_of_file);  
   }    
   ^EndFlavourPairing{SPC}* {
     if(myverbose!=0) printf("# [read_input_parser] Finished adding a new flavour pairing on line %d\n",line_of_file);

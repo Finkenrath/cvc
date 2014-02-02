@@ -13,6 +13,7 @@
 
 #ifdef __cplusplus
 #include <vector>
+#include "meson.hpp"
 #include "flavour.hpp"
 #include "flavour_pairing.hpp"
 #endif
@@ -191,6 +192,7 @@ EXTERN int g_mms_id;
 EXTERN int g_check_inversion;
 
 #ifdef __cplusplus
+using namespace std;
 EXTERN vector<flavour*> g_flavours;
 EXTERN vector<flavour_pairing*> g_flavour_pairings;
 #endif
