@@ -177,20 +177,19 @@ void usage() {
 }
 
 void process_args( int argc, char **argv ) {
-  char c;
-  while ((c = getopt(argc, argv, "h?vf")) != -1) {
+  int c;
+  while ( (c = getopt (argc, argv, "vhf:")) != -1 ) {
     switch (c) {
-    case 'v':
-      verbose = 1;
-      break;
-    case 'f':
-      input_filename = optarg;
-      break;
-    case 'h':
-    case '?':
-    default:
-      usage();
-      break;
+      case 'v':
+        verbose = 1;
+        break;
+      case 'f':
+        input_filename = optarg;
+        break;
+      case 'h':
+      default:
+        usage();
+        break;
     }
-  } 
+  }
 }
