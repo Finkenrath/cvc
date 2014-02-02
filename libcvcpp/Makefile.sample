@@ -13,7 +13,7 @@ LEX=flex
 
 # no MPI
 CXX=g++    # no MPI
-CXXFLAGS=-g -ggdb -DF_ -O0 -DCVC -pedantic -Wall    # no MPI
+CXXFLAGS=-DF_ -O2 -DCVC -pedantic -Wall    # no MPI
 
 DEP = ${CXX}
 DEPFLAGS = -MM
