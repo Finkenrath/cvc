@@ -102,22 +102,22 @@ bool flavour_pairing::preinit_check() {
 
 bool flavour_pairing::check_consistency() {
   if( a == NULL ) {
-    fatal_error(1,"ERROR: [flavour_pairing::check_consistency] Flavour a in flavour pairing %s could not be found!\n", name.c_str() );
+    fatal_error(50,"ERROR: [flavour_pairing::check_consistency] Flavour a (%s) in flavour pairing %s could not be found!\n", flavour_names[0].c_str() , name.c_str() );
   }
   if( b == NULL ) {
-    fatal_error(1,"ERROR: [flavour_pairing::check_consistency] Flavour b in flavour pairing %s could not be found!\n", name.c_str() );
+    fatal_error(51,"ERROR: [flavour_pairing::check_consistency] Flavour b (%s) in flavour pairing %s could not be found!\n", flavour_names[1].c_str(), name.c_str() );
   }
   if( a->params.no_smearing_combinations != b->params.no_smearing_combinations ) {
-    fatal_error(1,"ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, smearing_combinations do not match for flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
+    fatal_error(52,"ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, smearing_combinations do not match for flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
   }
   if( a->params.n_s != b->params.n_s ) {
-    fatal_error(1,"ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, n_s do not match for flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );    
+    fatal_error(53,"ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, n_s do not match for flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );    
   }
   if( a->params.n_c != b->params.n_c ) {
-    fatal_error(1,"ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, n_c do not match for flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );        
+    fatal_error(54,"ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, n_c do not match for flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );        
   }
   if( a->params.source_timeslice != b->params.source_timeslice ) {
-    fatal_error(1, "ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, the source timeslice differs between flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
+    fatal_error(55, "ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, the source timeslice differs between flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
   }
   
   // any failures will result in program termination so we simply return true if we reach this point!

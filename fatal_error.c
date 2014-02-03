@@ -30,12 +30,12 @@
  #include "fatal_error.h"
  
  void fatal_error(const unsigned int signal, const char * format, ...) {
-  if(g_proc_id == 0) {
-    va_list va;
-    va_start(va,format);
-    vprintf(format,va);
-    va_end(va);
-  }
+  va_list va;
+  va_start(va,format);
+  vprintf(format,va);
+  fflush(stdout);
+  va_end(va);
+
 #ifdef MPI
   MPI_Abort(MPI_COMM_WORLD, signal);
   MPI_Finalize();
