@@ -51,14 +51,14 @@ void spinor_field::deallocate() {
 }
 
 void spinor_field::allocate() {
-  if(!allocated && VOLUMEPLUSRAND != 0){
-    allocate(VOLUMEPLUSRAND);
+  if(!allocated && VOLUME != 0){
+    allocate(VOLUME);
   } else {
-    if(VOLUMEPLUSRAND == 0){
-      fatal_error(0,"ERROR: [spinor_field] VOLUMEPLUSRAND has not been initialized! Cannot allocate.\n");
+    if(VOLUME == 0){
+      fatal_error(0,"ERROR: [spinor_field::allocate] VOLUME has not been initialized! Cannot allocate.\n");
     }
     if(allocated) {
-      deb_printf(0,"# [spinor_field] allocate() called despite being already allocated, doing nothing!\n");
+      deb_printf(0,"# [spinor_field::allocate] allocate() called despite being already allocated, doing nothing!\n");
     }
   }
 }

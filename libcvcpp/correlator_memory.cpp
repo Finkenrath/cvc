@@ -55,7 +55,9 @@ correlator_memory::~correlator_memory() {
   if( initialized && ref_count <= 1 ) {
     de_init();
   }
-  --ref_count;
+  if(ref_count != 0 ) {
+    --ref_count;
+  }
 }
 
 void correlator_memory::init() {

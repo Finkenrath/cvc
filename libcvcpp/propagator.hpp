@@ -61,6 +61,9 @@ private:
   bool initialized;
   unsigned int scidac_pos;
   string filename;
+  
+  static unsigned int ref_count;
+  static double* spinor_mpi_buffer;
 };
 
 #endif /* _PROPAGATOR_HPP */

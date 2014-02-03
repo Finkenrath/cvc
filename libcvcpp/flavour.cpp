@@ -44,7 +44,6 @@ void flavour::init() {
     
     propagators.resize(params.no_masses);
     for( unsigned int mass_ctr = 0; mass_ctr < params.no_masses; ++mass_ctr ) {
-      //deb_printf(1,"# [flavour::init] Initialising mass %f for flavour %s.\n", params.mass[mass], params.name);
       propagators[mass_ctr].resize(params.no_smearing_combinations);
       for( unsigned int smearing = 0; smearing < params.no_smearing_combinations; ++smearing ) {
         propagators[mass_ctr][smearing].resize(params.n_c*params.n_s);
