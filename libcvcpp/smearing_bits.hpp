@@ -28,12 +28,12 @@
  * for historical reasons. Also, data storage in vectors is a bit tricky 
  * in C++ with arbitrary integers as indices. */
 
+#ifndef _SMEARING_BITS_HPP
+#define _SMEARING_BITS_HPP
+
 #include <string>
 
 using namespace std;
-
-#ifndef _SMEARING_BITS_HPP
-#define _SMEARING_BITS_HPP
 
 typedef enum smearing_bits { 
   SOURCE_LOCAL=1,

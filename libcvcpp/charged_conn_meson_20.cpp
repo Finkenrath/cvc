@@ -42,8 +42,6 @@ const string charged_conn_meson_20::charged_conn_meson_20_name = "charged_conn_m
 
 const unsigned int charged_conn_meson_20::charged_conn_meson_20_N_correlators = 20;
 
-const bool charged_conn_meson_20::charged_conn_meson_20_is_mass_diagonal = false;
-
 const int charged_conn_meson_20::charged_conn_meson_20_isimag[20] = {
                                             0, 0, 0, 0, 0, 1, 1, 1, 1,
                                             0, 0, 0, 0, 0, 1, 1, 1, 1,
@@ -78,8 +76,7 @@ const double charged_conn_meson_20::charged_conn_meson_20_conf_gamma_sign[9] = {
 // construct underlying meson base class
 charged_conn_meson_20::charged_conn_meson_20() : 
   meson(charged_conn_meson_20_name,
-        charged_conn_meson_20_N_correlators, charged_conn_meson_20_is_mass_diagonal, 
-        charged_conn_meson_20_is_vector_correl, 
+        charged_conn_meson_20_N_correlators, charged_conn_meson_20_is_vector_correl, 
         charged_conn_meson_20_isimag, charged_conn_meson_20_isneg, charged_conn_meson_20_gindex1, 
         charged_conn_meson_20_gindex2, charged_conn_meson_20_vsign, charged_conn_meson_20_conf_gamma_sign)
 {

@@ -21,11 +21,11 @@
  
 /* See meson.hpp for a description of what this class and its static class members
 * represent */
-
-#include "meson.hpp"
  
 #ifndef _NEUTRAL_CONN_MESON_32_HPP
 #define _NEUTRAL_CONN_MESON_32_HPP
+
+#include "meson.hpp"
 
 /* Gamma combinations for 32 neutral connected meson correlators from hl_conn_5.c in the CVC
  * code by Marcus Petschlies.
@@ -51,7 +51,6 @@ class neutral_conn_meson_32 : public meson
   protected:
     static const string neutral_conn_meson_32_name;
     static const unsigned int neutral_conn_meson_32_N_correlators;
-    static const bool neutral_conn_meson_32_is_mass_diagonal;
     static const unsigned int neutral_conn_meson_32_is_vector_correl[32];
     static const int neutral_conn_meson_32_isimag[32];
     static const int neutral_conn_meson_32_gindex1[64];

@@ -29,17 +29,17 @@
  * When a name matches, the pointers a and b are set to point to the respective flavours.
  *  */
 
-#include <vector>
-#include <string>
-
-#include "flavour.hpp"
-#include "smearing_bits.hpp"
-#include "meson.hpp"
-
-using namespace std;
-
 #ifndef _FLAVOUR_PAIRING_HPP
 #define _FLAVOUR_PAIRING_HPP
+
+#include <string>
+#include <vector>
+
+// forward declarations
+class meson;
+class flavour;
+
+using namespace std;
 
 class flavour_pairing {
 public:
@@ -51,19 +51,23 @@ public:
   
   void init();
   
-  //void set_smearing_combinations( vector<string> i_smearing_combinations_descriptors );
-  //string get_smearing_combinations_string();
-  
   void set_observable_names( const vector<string>& i_observables_names );
   string get_observable_names_string();
   
-  void set_flavour_names(vector<string> i_flavour_names);
-  void set_flavours_collection(vector<flavour*>* i_flavours_collection);
-  
+  void set_flavour_names( const vector<string>& i_flavour_names);
   string get_flavour_names_string();
   
+  void set_flavours_collection(vector<flavour*>* i_flavours_collection);
+
   void set_name( string i_name );
+  
+  // i messed up a little with constness in the "meson" class I think, 
+  // so this is a quick fix for a silly problem -Bartek
   string get_name();
+  string get_name() const;
+
+  void set_mass_diagonal( const bool& i_mass_diagonal );
+  bool is_mass_diagonal();
   
   // when init is called, parts of the data structure must already be set
   bool preinit_check();
@@ -78,6 +82,7 @@ public:
 
 private:
   bool initialized;
+  bool mass_diagonal;
   string name;
   vector<flavour*>* flavours_collection;
   vector<string> flavour_names;

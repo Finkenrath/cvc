@@ -46,6 +46,9 @@
  * is a bit obfuscating but allows the whole parameter set to be passed from one
  * object to another. */
 
+#ifndef _FLAVOUR_HPP
+#define _FLAVOUR_HPP
+
 #include <vector>
 #include <sstream>
 #include <string>
@@ -57,9 +60,6 @@
 #include "propagator.hpp"
 
 using namespace std;
-
-#ifndef _FLAVOUR_HPP
-#define _FLAVOUR_HPP
 
 class flavour{
 public:

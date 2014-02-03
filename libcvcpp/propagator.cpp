@@ -28,6 +28,7 @@
 #include "smearing_techniques.h"
 #include "deb_printf.h"
 #include "Q_phi.h"
+#include "propagator_io.h"
 
 #include "propagator.hpp"
 

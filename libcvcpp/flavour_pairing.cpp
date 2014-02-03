@@ -20,15 +20,14 @@
  ************************************************************************/
  
 #include <iostream>
-#include <vector>
-#include <string>
 #include <sstream>
-
-#include "meson.hpp"
-#include "flavour_pairing.hpp"
  
 #include "global.h"
 #include "fatal_error.h"
+
+#include "flavour_pairing.hpp"
+#include "flavour.hpp"
+#include "meson.hpp"
  
 using namespace std;
  
@@ -57,6 +56,7 @@ flavour_pairing::~flavour_pairing() {
 
 void flavour_pairing::constructor_common() {
   initialized = false;
+  mass_diagonal = false;
   a = NULL;
   b = NULL;
   flavours_collection = NULL;
@@ -65,7 +65,7 @@ void flavour_pairing::constructor_common() {
 void flavour_pairing::init() {
   if( !initialized ){
     
-    // check if names, flavour collection and smearing combinations have been properly set
+    // check if names, observables and flavour collection have been properly set
     // after instantiation
     if( preinit_check() ) {
       /* traverse the flavour collection and assign the correct ones to the pairing
@@ -136,7 +136,7 @@ string flavour_pairing::get_observable_names_string() {
   return rval.str();
 }
 
-void flavour_pairing::set_flavour_names( vector<string> i_flavour_names ){
+void flavour_pairing::set_flavour_names( const vector<string>& i_flavour_names ){
   flavour_names = i_flavour_names;
 }
 
@@ -156,3 +156,16 @@ void flavour_pairing::set_name( string i_name ) {
 string flavour_pairing::get_name() {
   return name;
 }
+
+string flavour_pairing::get_name() const {
+  return name;
+}
+
+bool flavour_pairing::is_mass_diagonal() {
+  return mass_diagonal;
+}
+
+void flavour_pairing::set_mass_diagonal( const bool& i_mass_diagonal ) {
+  mass_diagonal = i_mass_diagonal;
+}
+  

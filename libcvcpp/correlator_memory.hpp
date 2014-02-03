@@ -19,18 +19,19 @@
  *
  ************************************************************************/
 
-#include <vector>
-
-#include "correlator.hpp"
-
-using namespace std;
-
 /* Data structure which provides a simple interface to allocate and free
  * memory for the storage of correlators 
  */
  
 #ifndef _CORRELATOR_MEMORY_HPP
 #define _CORRELATOR_MEMORY_HPP
+
+#include <vector>
+
+// forward declarations
+class correlator;
+
+using namespace std;
 
 class correlator_memory {
   public:

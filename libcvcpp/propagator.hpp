@@ -19,18 +19,15 @@
  *
  ************************************************************************/
 
+#ifndef _PROPAGATOR_HPP
+#define _PROPAGATOR_HPP
+
 #include <string>
 
-#include "propagator_io.h"
-
 #include "spinor_field.hpp"
-
 #include "smearing_bits.hpp"
 
 using namespace std;
-
-#ifndef _PROPAGATOR_HPP
-#define _PROPAGATOR_HPP
 
 class propagator{
 public:

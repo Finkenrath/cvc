@@ -45,8 +45,6 @@ const string neutral_conn_meson_32::neutral_conn_meson_32_name = "neutral_conn_m
 
 const unsigned int neutral_conn_meson_32::neutral_conn_meson_32_N_correlators = 32;
 
-const bool neutral_conn_meson_32::neutral_conn_meson_32_is_mass_diagonal = true;
-
 const int neutral_conn_meson_32::neutral_conn_meson_32_isimag[32] = {
                                                                       0, 0, 0, 0,
                                                                       0, 1, 1, 1,
@@ -95,8 +93,7 @@ const double neutral_conn_meson_32::neutral_conn_meson_32_conf_gamma_sign[16] = 
 // construct underlying meson base class
 neutral_conn_meson_32::neutral_conn_meson_32() : 
   meson(neutral_conn_meson_32_name,
-        neutral_conn_meson_32_N_correlators, neutral_conn_meson_32_is_mass_diagonal, 
-        neutral_conn_meson_32_is_vector_correl, 
+        neutral_conn_meson_32_N_correlators, neutral_conn_meson_32_is_vector_correl, 
         neutral_conn_meson_32_isimag, neutral_conn_meson_32_isneg, neutral_conn_meson_32_gindex1, 
         neutral_conn_meson_32_gindex2, neutral_conn_meson_32_vsign, neutral_conn_meson_32_conf_gamma_sign)
 {

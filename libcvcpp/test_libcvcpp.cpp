@@ -95,14 +95,12 @@ int main(int argc, char **argv) {
         for( unsigned int mass_index_b = 0; mass_index_b < fl_b->params.no_masses ; ++mass_index_b ) {
           
           /* if the two flavours are the same, we only do the mass diagonal case
-           * we do the same if the observables in question only make sense in the mass diagonal case
-           * but the flavours are necessarily positive and negative parity components (or up and down types)
-           * of the same doublet */ 
-          if ( fl_a == fl_b || (*obs_it)->get_is_mass_diagonal() == true ) {
+           * we do the same if pairing has been defined to be mass-diagonal by
+           * the user */
+          if ( fl_a == fl_b || (*fp_it)->is_mass_diagonal() == true ) {
             /* since the flavours are the same, the mass indices will have the same ranges
              * and we can use this as a criterion for staying on the mass diagonal
-             * the same is true, when the observable is mass diagonal,
-             * in the case of user error, we notify below but still carry out the contraction */
+             * the same is hopefully true if the user has set the relevant flag */
             if( mass_index_a != mass_index_b ) {
               continue;
             }
@@ -115,7 +113,7 @@ Flavour '%s' mass: %f, Flavour '%s' mass: %f\n", (*fp_it)->get_name().c_str(),
           }
         
         // carry out the contractions for the given set of observables
-        (*obs_it)->do_contractions( (*fp_it)->get_name(), fl_a, fl_b, mass_index_a, mass_index_b );
+        (*obs_it)->do_contractions( *fp_it, mass_index_a, mass_index_b );
         
         } /* mass_index_b */
       } /* mass_index_a */

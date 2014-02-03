@@ -40,17 +40,21 @@
  * specialized implementations of these functions if that proves 
  * necessary.
  * */ 
-
-#include <iostream> 
- 
-#include "flavour.hpp"
-#include "correlator.hpp"
-#include "correlator_memory.hpp" 
-
-using namespace std;
  
 #ifndef _MESON_HPP
 #define _MESON_HPP
+
+#include <vector>
+#include <string>
+
+using namespace std;
+
+#include "correlator_memory.hpp"
+
+class flavour;
+class flavour_pairing;
+class correlator;
+class propagator;
 
 class meson {
   public:
@@ -58,7 +62,6 @@ class meson {
     meson(const meson& i_meson);
     meson(const string& i_name,
           const unsigned int i_N_correlators,
-          const bool i_is_mass_diagonal,
           const unsigned int* i_is_vector_correl,
           const int* i_isimag,
           const double* i_isneg,
@@ -66,8 +69,6 @@ class meson {
           const int* i_gindex2,
           const double* i_vsign,
           const double* i_conf_gamma_sign);
-          
-    virtual bool get_is_mass_diagonal();
   
     virtual void output_correlators(const vector< vector<correlator*> >* const correls, 
                                     const string& flavour_pairing_name, 
@@ -77,8 +78,7 @@ class meson {
     virtual void collect_props(double** prop_a, double** prop_b, const vector<propagator>& props_a, 
                                const vector<propagator>& props_b, const unsigned int no_spin_colour_indices);
                                
-    virtual void do_contractions(const string& flavour_pairing_name, 
-                                 const flavour* const fl_a, const flavour* const fl_b, 
+    virtual void do_contractions(const flavour_pairing* const fp,
                                  const unsigned int mass_index_a, const unsigned int mass_index_b );
     
     virtual string construct_correlator_filename_create_subdirectory(
@@ -95,7 +95,6 @@ class meson {
     correlator_memory correl_mem;
     
     unsigned int N_correlators;
-    bool is_mass_diagonal;
     string name;
     const unsigned int* is_vector_correl;
     const int* isimag;

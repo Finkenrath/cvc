@@ -20,6 +20,7 @@
  ************************************************************************/
 
 #include <cstring>
+#include <iostream> 
 
 #include <sys/stat.h>
 
@@ -28,7 +29,13 @@
 #include "deb_printf.h"
 #include "fatal_error.h"
 
-#include "meson.hpp"  
+#include "flavour.hpp"
+#include "flavour_pairing.hpp"
+#include "correlator.hpp"
+#include "correlator_memory.hpp"
+#include "propagator.hpp"
+
+using namespace std;
 
 // derived class headers should be listed here
 #include "charged_conn_meson_20.hpp"
@@ -64,7 +71,6 @@ meson::meson(const meson& i_meson) {
 
 meson::meson( const string& i_name,
               const unsigned int i_N_correlators,
-              const bool i_is_mass_diagonal,
               const unsigned int* i_is_vector_correl, 
               const int* i_isimag, 
               const double* i_isneg,
@@ -76,7 +82,6 @@ meson::meson( const string& i_name,
   
   name = i_name;
   N_correlators = i_N_correlators;
-  is_mass_diagonal = i_is_mass_diagonal;
   is_vector_correl = i_is_vector_correl;
   isimag = i_isimag;
   isneg = i_isneg;
@@ -88,17 +93,15 @@ meson::meson( const string& i_name,
   
 }
 
-
-bool meson::get_is_mass_diagonal() {
-  return is_mass_diagonal;
-}
-
 string meson::get_name() {
   return name;
 }
 
-void meson::do_contractions(const string& flavour_pairing_name, const flavour* const fl_a, const flavour* const fl_b, const unsigned int mass_index_a, const unsigned int mass_index_b) {  
+void meson::do_contractions(const flavour_pairing* fp, const unsigned int mass_index_a, const unsigned int mass_index_b) {  
   if(initialized){
+    const flavour* const fl_a = fp->a;
+    const flavour* const fl_b = fp->b;
+    
     deb_printf(1,"# [meson::do_contractions] Doing '%s' contractions for flavours '%s' and '%s', masses %f and %f!\n",
                   name.c_str(), fl_a->params.name.c_str(), fl_b->params.name.c_str(), 
                   fl_a->params.masses[mass_index_a], fl_b->params.masses[mass_index_b]);
@@ -166,7 +169,7 @@ void meson::do_contractions(const string& flavour_pairing_name, const flavour* c
       } /* for(corr_idx) */
     } /* for(smear_index) */
     
-    output_correlators(correls, flavour_pairing_name, fl_a, fl_b, mass_index_a, mass_index_b );
+    output_correlators(correls, fp->get_name(), fl_a, fl_b, mass_index_a, mass_index_b );
     
     // free convenience arrays
     free(prop_a);
@@ -286,7 +289,6 @@ string meson::construct_correlator_filename_create_subdirectory(const string& fl
 void meson::print_info() {
   deb_printf(0,"Observables: %s\n", name.c_str() );
   deb_printf(0,"N_correlators: %u\n", N_correlators);
-  deb_printf(0,"is_mass_diagonal: %d\n",(int)is_mass_diagonal);
   deb_printf(0,"is_vector_correl[3]: %d\n",is_vector_correl[3]);  
   deb_printf(0,"isimag[3]: %d\n",isimag[3]);  
   deb_printf(0,"gindex1[3]: %d\n",gindex1[3]);  
