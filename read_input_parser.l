@@ -24,6 +24,9 @@ NAMELIST [a-zA-Z0-9_"."" "","]+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef MPI
+#include <mpi.h>
+#endif
 #include "global.h"
 #include "read_input_parser.h"
 #include "default_input_values.h"
@@ -1072,6 +1075,14 @@ double extract_float(char * text) {
     if(myverbose!=0) printf("# [read_input_parser] \t Flavour pairing name is '%s' in line %d\n",
       g_flavour_pairings.back()->get_name().c_str(),line_of_file);
   }
+  {SPC}*mass_diagonal{EQL}yes {
+    g_flavour_pairings.back()->set_mass_diagonal( true );
+    if(myverbose!=0) printf("# [read_input_parser] \t Flavour pairing set to compute only mass-diagonal correlators in line %d\n",line_of_file);
+  }
+  {SPC}*mass_diagonal{EQL}no {
+    g_flavour_pairings.back()->set_mass_diagonal( false );
+    if(myverbose!=0) printf("# [read_input_parser] \t Flavour pairing set to compute all mass combinations in line %d\n",line_of_file);
+  }
   {SPC}*observables{EQL}{NAMELIST}+ {
     g_flavour_pairings.back()->set_observable_names( extract_vector_of_strings(yytext) );
     if(myverbose!=0) printf("# [read_input_parser] \t Defined observables '%s' in line %d\n",
@@ -1151,7 +1162,14 @@ int read_input_parser(const char * conf_file){
   reread = 0;
   set_default_input_values();
 
-  if( (g_proc_id == 0) && (cvc_verbose>0) ) {
+  int read_input_proc_id = 0;
+#ifdef MPI
+  /* under normal circumstances g_proc_id is only set when CVC's mpi_init function is called,
+     getting a proc_id here prevents getting output from all the processes */
+  MPI_Comm_rank(MPI_COMM_WORLD, &read_input_proc_id);
+#endif
+
+  if( (read_input_proc_id == 0) && (cvc_verbose>0) ) {
     myverbose = 1;
   }
   if ((yyin = fopen(conf_file, "rt")) == NULL){
