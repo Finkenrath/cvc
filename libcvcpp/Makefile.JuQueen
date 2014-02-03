@@ -13,8 +13,9 @@ DEP=/bgsys/drivers/V1R2M1/ppc64/comm/bin/gcc/mpicxx
 DEPFLAGS=-MM
 
 # BG/Q XLC++
+# note that MPICH_SKIP_MPICXX is necessary because we define "MPI" and we don't use the C++ MPI interface
 CXX=/bgsys/drivers/V1R2M1/ppc64/comm/bin/xl/mpixlcxx_r
-CXXFLAGS=-O2 -qstrict=all -qfullpath -qtune=qp -qarch=qp -qmaxmem=-1 -DCVC  -DPARALLELTXY -DHAVE_LIBLEMON -DMPI -DMPICH_SKIP_MPICXX -qsourcetype=c++
+CXXFLAGS=-O2 -qstrict=all -qtune=qp -qarch=qp -qmaxmem=-1 -DCVC  -DPARALLELTXY -DHAVE_LIBLEMON -DMPI -DMPICH_SKIP_MPICXX -qsourcetype=c++
 INCLUDE = -I$(limedir)/include -I$(lemondir)/include -I$(srcdir) -I$(top_srcdir)
 LIBS = -lm -lstdc++ -lxl -lxlopt -lesslbg -llapack -lesslbg -lxlfmath -lxlfpad -lxlf90_r -lxlsmp -lpthread -llime -llemon
 LDFLAGS = -L$(limedir)/lib -L$(lemondir)/lib -L/bgsys/drivers/ppcfloor/gnu-linux/powerpc64-bgq-linux/lib -L/opt/ibmcmp/lib64/bg/bglib64 -L/usr/local/bg_soft/lapack/3.3.0/lib -L/opt/ibmmath/lib64 -L/opt/ibmcmp/xlf/bg/14.1/lib64 -L/opt/ibmcmp/xlsmp/bg/3.1/bglib64
