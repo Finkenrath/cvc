@@ -69,14 +69,20 @@ void correlator::set_correlator_array( const double* const i_correlator_array ) 
 
 void correlator::allocate(){
   if(!allocated){
+    if( T == 0 ) {
+      fatal_error(11, "ERROR: [correlator::allocate] called but T has not been set!\n");
+    }
     correlator_array = (double*)malloc(2*T*sizeof(double));
     if(correlator_array == NULL)
-      fatal_error(1,"ERROR: [correlator::allocate] Could not allocate rank-local correlator memory!\n");
+      fatal_error(12,"ERROR: [correlator::allocate] Could not allocate rank-local correlator memory!\n");
 
 #ifdef MPI
+    if( T_global == 0 ) {
+      fatal_error(13, "ERROR: [correlator::allocate] called but T_global has not been set!\n");
+    }
     correlator_array_global = (double*)malloc(2*T_global*sizeof(double));
     if(correlator_array_global == NULL)
-      fatal_error(1,"ERROR: [correlator::allocate] Could not allocate MPI-global correlator memory!\n");
+      fatal_error(14,"ERROR: [correlator::allocate] Could not allocate MPI-global correlator memory!\n");
 #else
     correlator_array_global = correlator_array;
 #endif
@@ -88,9 +94,9 @@ void correlator::allocate(){
 }
 
 void correlator::zero_out(){
-  if(allocated){
+  if(allocated && correlator_array != NULL ){
     memset(correlator_array, 0, sizeof(double)*2*T);
-#ifdef MPI    
+#ifdef MPI
     memset(correlator_array_global, 0, sizeof(double)*2*T_global);
 #endif
   } else {
