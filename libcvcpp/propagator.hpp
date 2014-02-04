@@ -62,8 +62,11 @@ private:
   unsigned int scidac_pos;
   string filename;
   
-  static unsigned int ref_count;
+  // we allocate some static memory for MPI exchange
   static double* spinor_mpi_buffer;
+  static bool spinor_mpi_buffer_allocated;
+  // and we need to keep track of how many propagator objects are still instantiated
+  static unsigned int ref_count;
 };
 
 #endif /* _PROPAGATOR_HPP */

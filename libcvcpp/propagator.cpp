@@ -38,6 +38,7 @@ using namespace std;
 // initialize static member variables
 unsigned int propagator::ref_count = 0;
 double* propagator::spinor_mpi_buffer = (double*)NULL;
+bool propagator::spinor_mpi_buffer_allocated = false;
 
 propagator::propagator() {
   ++ref_count;
@@ -70,6 +71,7 @@ void propagator::init( string i_filename, t_smear_index i_smear_index, unsigned 
       if( spinor_mpi_buffer == NULL ) {
         fatal_error(88, "ERROR: [propagator::init] Failed to allocate memory for spinor_mpi_buffer!\n");
       }
+      spinor_mpi_buffer_allocated = true;
     }
 #endif
 
@@ -159,6 +161,7 @@ void propagator::de_init() {
   if( ref_count <= 1 ) {
     if( spinor_mpi_buffer != NULL ) {
       free(spinor_mpi_buffer);
+      spinor_mpi_buffer_allocated = false;
     }
   }
   if(ref_count != 0) {
