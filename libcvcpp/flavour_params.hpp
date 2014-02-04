@@ -34,11 +34,6 @@ typedef enum flavour_type{
   down_type,
   indeterminate_type } flavour_type;
 
-typedef struct index_pair{
-  unsigned int begin;
-  unsigned int end;
-} index_pair;
-
 typedef struct flavour_params{
   unsigned int no_masses;
   vector<double> masses;
