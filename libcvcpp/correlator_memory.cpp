@@ -129,7 +129,7 @@ correlator_memory::get_correls_pointer(const unsigned int N_correlators, const u
     return &correls;
   } else {
     fatal_error(0,"ERROR: [correlator_memory::get_correls_pointer] called but initialization failed. Something must have gone wrong!\n");
-    // no return because we just terminated the program!
+    return &correls;
   }
 }
 
