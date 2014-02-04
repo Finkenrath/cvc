@@ -94,8 +94,8 @@ class meson {
     bool initialized;
     correlator_memory correl_mem;
     
-    unsigned int N_correlators;
     string name;
+    unsigned int N_correlators;
     const unsigned int* is_vector_correl;
     const int* isimag;
     const double* isneg;

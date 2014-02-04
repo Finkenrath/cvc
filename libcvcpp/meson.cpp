@@ -77,18 +77,18 @@ meson::meson( const string& i_name,
               const int* i_gindex1, 
               const int* i_gindex2, 
               const double* i_vsign, 
-              const double* i_conf_gamma_sign)
+              const double* i_conf_gamma_sign) :
+                name( i_name ),
+                N_correlators( i_N_correlators ),
+                is_vector_correl( i_is_vector_correl), 
+                isimag( i_isimag ),
+                isneg( i_isneg ),
+                gindex1( i_gindex1 ),
+                gindex2( i_gindex2 ),
+                vsign( i_vsign ),
+                conf_gamma_sign( i_conf_gamma_sign )
 {
   
-  name = i_name;
-  N_correlators = i_N_correlators;
-  is_vector_correl = i_is_vector_correl;
-  isimag = i_isimag;
-  isneg = i_isneg;
-  gindex1 = i_gindex1;
-  gindex2 = i_gindex2;
-  vsign = i_vsign;
-  conf_gamma_sign = i_conf_gamma_sign;
   initialized = true;
   
 }
