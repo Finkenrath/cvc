@@ -71,11 +71,11 @@ const int charged_conn_meson_20::charged_conn_meson_20_gindex2[40] = {
                    4, 
                    13, 14, 15};
     
-const double charged_conn_meson_20::charged_conn_meson_20_vsign[31] = {
+const double charged_conn_meson_20::charged_conn_meson_20_vsign[30] = {
                    1., 1., 1., 1., 1., 1., 1., 1., 1., 1., -1., 1., 1., -1., 1., 1., -1., 1., 
-                   1., -1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.};
+                   1., -1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.};
     
-const double charged_conn_meson_20::charged_conn_meson_20_conf_gamma_sign[9] = {1., 1., 1., 1., 1., -1., -1., -1., -1.};
+const double charged_conn_meson_20::charged_conn_meson_20_conf_gamma_sign[10] = {1., 1., 1., 1., 1., -1., -1., -1., -1., 1.};
 
 // construct underlying meson base class
 charged_conn_meson_20::charged_conn_meson_20() : 

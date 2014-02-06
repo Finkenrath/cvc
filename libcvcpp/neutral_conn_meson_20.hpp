@@ -51,8 +51,8 @@ class neutral_conn_meson_20 : public meson
     static const int neutral_conn_meson_20_gindex1[40];
     static const int neutral_conn_meson_20_gindex2[40];
     static const double neutral_conn_meson_20_isneg[20];
-    static const double neutral_conn_meson_20_vsign[31];
-    static const double neutral_conn_meson_20_conf_gamma_sign[9];
+    static const double neutral_conn_meson_20_vsign[30];
+    static const double neutral_conn_meson_20_conf_gamma_sign[10];
 };
 
 #endif // _NEUTRAL_CONN_MESON_20_HPP

@@ -65,11 +65,11 @@ const int neutral_conn_meson_20::neutral_conn_meson_20_gindex2[40] = {
                   10, 11, 12, 1, 2, 3, 13, 14, 15, 1, 2, 3, 10, 11, 12, 13, 14, 15, 10, 11, 12, 13, 14, 15, 1, 2, 3, 
                   0, 7, 8, 9};
     
-const double neutral_conn_meson_20::neutral_conn_meson_20_vsign[31] = {
+const double neutral_conn_meson_20::neutral_conn_meson_20_vsign[30] = {
                   1., 1., 1., 1., 1., 1., 1., 1., 1., 1., -1., 1., 1., -1., 1., 1., -1., 1.,                                                  
-                  1., 1., 1., 1., -1., 1., 1., -1., 1., 1., -1., 1., 1.};
+                  1., 1., 1., 1., -1., 1., 1., -1., 1., 1., -1., 1.};
     
-const double neutral_conn_meson_20::neutral_conn_meson_20_conf_gamma_sign[9] = {1., 1., 1., 1., 1., -1., -1., -1., -1.};
+const double neutral_conn_meson_20::neutral_conn_meson_20_conf_gamma_sign[10] = {1., 1., 1., 1., 1., -1., -1., -1., -1., 1.};
 
 // construct underlying meson base class
 neutral_conn_meson_20::neutral_conn_meson_20() : 
