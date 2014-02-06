@@ -50,9 +50,9 @@ const unsigned int charged_conn_meson_32::charged_conn_meson_32_N_correlators = 
 const int charged_conn_meson_32::charged_conn_meson_32_isimag[32] = {
                                                                       0, 0, 0, 0, 
                                                                       0, 1, 1, 1, 
-                                                                      1, 0, 0, 0, 
+                                                                      1, 0, 1, 1, 
                                                                       1, 1, 0, 0,
-                                                      
+                                                   
                                                                       0, 0, 0, 0, 
                                                                       0, 1, 1, 1, 
                                                                       1, 0, 1, 1, 
