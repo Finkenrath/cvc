@@ -105,6 +105,9 @@ class meson {
     const double* conf_gamma_sign;
 };
 
+// allocates memory for an object derived from the meson class and returns a meson
+// pointer to it. The caller is responsible for freeing memory!
+
 meson* get_meson_pointer_from_name( const string i_observables_name );
  
 #endif

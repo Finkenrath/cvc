@@ -44,6 +44,7 @@ using namespace std;
 #include "neutral_conn_meson_32.hpp"
 
 // derived class constructors should be called here
+// note that this function is not part of the class!
 meson* get_meson_pointer_from_name( const string i_observables_name ) {
   meson* rval;
   if( i_observables_name == "charged_conn_meson_20" ) {
@@ -119,6 +120,8 @@ void meson::do_contractions(const flavour_pairing* fp, const unsigned int mass_i
     double* temp_correl = correl_mem.get_temp_correl_pointer();
     double* temp_vector_correl = correl_mem.get_temp_vector_correl_pointer();
     
+    // this zeroes out all the correlators stored in the data structure pointed to
+    // by correls
     correl_mem.zero_out();
     
     // the slightly inverted looping over smearing combinations first is a result of the way
@@ -216,7 +219,6 @@ void meson::output_correlators(const vector< vector<correlator*> >* const correl
           Nconf, source_timeslice, LX_global, LY_global, LZ_global, T_global, g_kappa);
       }
   
-    
       /* the output format is as follows:
       * observable smearing_combination timeslice forward_prop backward_prop
       */
