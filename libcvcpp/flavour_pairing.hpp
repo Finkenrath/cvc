@@ -29,8 +29,8 @@
  * When a name matches, the pointers a and b are set to point to the respective flavours.
  *  */
 
-#ifndef _FLAVOUR_PAIRING_HPP
-#define _FLAVOUR_PAIRING_HPP
+#ifndef FLAVOUR_PAIRING_HPP_
+#define FLAVOUR_PAIRING_HPP_
 
 #include <string>
 #include <vector>
@@ -91,4 +91,4 @@ private:
   void constructor_common();
 };
 
-#endif /* _FLAVOUR_PAIRING_HPP */
+#endif /* FLAVOUR_PAIRING_HPP_ */

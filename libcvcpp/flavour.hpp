@@ -46,8 +46,8 @@
  * is a bit obfuscating but allows the whole parameter set to be passed from one
  * object to another. */
 
-#ifndef _FLAVOUR_HPP
-#define _FLAVOUR_HPP
+#ifndef FLAVOUR_HPP_
+#define FLAVOUR_HPP_
 
 #include <vector>
 #include <sstream>
@@ -78,5 +78,5 @@ private:
   bool initialized;
 };
 
-#endif /*_FLAVOUR_HPP*/
+#endif /*FLAVOUR_HPP_*/
   

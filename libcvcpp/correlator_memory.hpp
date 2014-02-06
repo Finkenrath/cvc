@@ -23,8 +23,8 @@
  * memory for the storage of correlators 
  */
  
-#ifndef _CORRELATOR_MEMORY_HPP
-#define _CORRELATOR_MEMORY_HPP
+#ifndef CORRELATOR_MEMORY_HPP_
+#define CORRELATOR_MEMORY_HPP_
 
 #include <vector>
 
@@ -61,4 +61,4 @@ class correlator_memory {
     static double* allreduce_buffer;
 };
 
-#endif // _CORRELATOR_MEMORY_HPP
+#endif // CORRELATOR_MEMORY_HPP_

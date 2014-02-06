@@ -22,8 +22,8 @@
 /* See meson.hpp for a description of what this class and its static class members
 * represent */
  
-#ifndef _NEUTRAL_CONN_MESON_32_HPP
-#define _NEUTRAL_CONN_MESON_32_HPP
+#ifndef NEUTRAL_CONN_MESON_32_HPP_
+#define NEUTRAL_CONN_MESON_32_HPP_
 
 #include "meson.hpp"
 
@@ -60,4 +60,4 @@ class neutral_conn_meson_32 : public meson
     static const double neutral_conn_meson_32_conf_gamma_sign[16];
 };
 
-#endif // _NEUTRAL_CONN_MESON_32_HPP
+#endif // NEUTRAL_CONN_MESON_32_HPP_

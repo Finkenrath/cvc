@@ -28,8 +28,8 @@
  * for historical reasons. Also, data storage in vectors is a bit tricky 
  * in C++ with arbitrary integers as indices. */
 
-#ifndef _SMEARING_BITS_HPP
-#define _SMEARING_BITS_HPP
+#ifndef SMEARING_BITS_HPP_
+#define SMEARING_BITS_HPP_
 
 #include <string>
 
@@ -88,4 +88,4 @@ t_smear_string smear_cmi_int_to_string( t_smear_cmi_int i_smear_cmi_int );
 t_smear_bitmask smear_string_to_bitmask( t_smear_string i_smear_string );
 t_smear_cmi_int smear_string_to_cmi_int( t_smear_string i_smear_string );
 
-#endif
+#endif /*SMEARING_BITS_HPP_*/

@@ -33,8 +33,8 @@
  *    fopen/fclose iterations
  */ 
 
-#ifndef _CORRELATOR_HPP
-#define _CORRELATOR_HPP
+#ifndef CORRELATOR_HPP_
+#define CORRELATOR_HPP_
 
 #include <string>
 #include "global.h"
@@ -74,4 +74,4 @@ class correlator{
     bool allocated;
 };
 
-#endif /* _CORRELATOR_HPP */
+#endif /* CORRELATOR_HPP_ */

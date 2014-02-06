@@ -23,8 +23,8 @@
  * handling for spinor fields
  * it also provides a wrapper for MPI exchange */
 
-#ifndef _SPINOR_FIELD_HPP
-#define _SPINOR_FIELD_HPP
+#ifndef SPINOR_FIELD_HPP_
+#define SPINOR_FIELD_HPP_
 
 class spinor_field{
 public:
@@ -51,4 +51,4 @@ private:
   unsigned int size;
 };
 
-#endif /* _SPINOR_FIELD_HPP */
+#endif /* SPINOR_FIELD_HPP_ */

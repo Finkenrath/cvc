@@ -19,8 +19,8 @@
  *
  ************************************************************************/
 
-#ifndef _PROPAGATOR_HPP
-#define _PROPAGATOR_HPP
+#ifndef PROPAGATOR_HPP_
+#define PROPAGATOR_HPP_
 
 #include <string>
 
@@ -69,4 +69,4 @@ private:
   static unsigned int ref_count;
 };
 
-#endif /* _PROPAGATOR_HPP */
+#endif /* PROPAGATOR_HPP_ */

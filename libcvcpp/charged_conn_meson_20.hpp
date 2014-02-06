@@ -22,8 +22,8 @@
 /* See meson.hpp for a description of what this class and its static class members
 * represent */
  
-#ifndef _CHARGED_CONN_MESON_20_HPP
-#define _CHARGED_CONN_MESON_20_HPP
+#ifndef CHARGED_CONN_MESON_20_HPP_
+#define CHARGED_CONN_MESON_20_HPP_
 
 #include "meson.hpp"
 
@@ -54,4 +54,4 @@ class charged_conn_meson_20 : public meson
     static const double charged_conn_meson_20_conf_gamma_sign[10];
 };
 
-#endif // _CHARGED_CONN_MESON_20_HPP
+#endif // CHARGED_CONN_MESON_20_HPP_

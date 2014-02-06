@@ -41,8 +41,8 @@
  * necessary.
  * */ 
  
-#ifndef _MESON_HPP
-#define _MESON_HPP
+#ifndef MESON_HPP_
+#define MESON_HPP_
 
 #include <vector>
 #include <string>
@@ -110,4 +110,4 @@ class meson {
 
 meson* get_meson_pointer_from_name( const string i_observables_name );
  
-#endif
+#endif /*MESON_HPP_*/

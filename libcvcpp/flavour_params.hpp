@@ -19,8 +19,8 @@
  *
  ************************************************************************/
 
-#ifndef _FLAVOUR_PARAMS_HPP
-#define _FLAVOUR_PARAMS_HPP
+#ifndef FLAVOUR_PARAMS_HPP_
+#define FLAVOUR_PARAMS_HPP_
 
 #include <vector>
 #include <string>
