@@ -167,7 +167,11 @@ string flavour::construct_propagator_filename( const unsigned int i_mass_ctr, co
   
   // multiple masses not in mms file but in subdirectories
   if(params.no_masses > 1 && params.in_mms_file == false) {
-    filename << params.propagator_dirname << '_' << setw(2) << i_mass_ctr << "/";
+    if( params.propagator_dirname != string("") ) {
+      filename << params.propagator_dirname << '_' << setw(2) << i_mass_ctr << "/";
+    } else {
+      filename << setw(2) << i_mass_ctr << "/";
+    }
   }
   filename << params.propagator_basename << ".";
   
