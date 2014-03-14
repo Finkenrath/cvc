@@ -146,7 +146,7 @@ void meson::do_contractions(const flavour_pairing* fp, const unsigned int mass_i
                       fl_a->params.n_c*fl_a->params.n_s);        
         } else { // FF
           collect_props(prop_a, prop_b, 
-                      fl_a->propagators[mass_index_a][1], fl_b->propagators[mass_index_b][2],
+                      fl_a->propagators[mass_index_a][2], fl_b->propagators[mass_index_b][1],
                       fl_a->params.n_c*fl_a->params.n_s);                
         }
       } else {
