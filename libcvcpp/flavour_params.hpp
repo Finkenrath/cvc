@@ -32,6 +32,8 @@ using namespace std;
 typedef enum flavour_type{
   up_type,
   down_type,
+  up_type_doublet,
+  down_type_doublet,
   indeterminate_type } flavour_type;
 
 typedef struct flavour_params{
@@ -41,7 +43,7 @@ typedef struct flavour_params{
   
   bool in_mms_file;
   
-  /* using 'splitted' for historical reasons as this is what is used in tmLQCD */
+  /* using the word 'splitted' for historical reasons as this is what is used in tmLQCD */
   bool splitted_propagator;
   string propagator_dirname;
   string propagator_basename;
@@ -51,6 +53,8 @@ typedef struct flavour_params{
   unsigned int n_s;
   unsigned int source_timeslice;
   unsigned int no_smearing_combinations;
+  t_delocalization_type delocalization_type;
+  
   
   vector<t_smear_bitmask> smearing_combinations;
   

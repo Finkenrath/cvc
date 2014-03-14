@@ -30,6 +30,7 @@
 #include "Q_phi.h"
 #include "propagator_io.h"
 #include "fatal_error.h"
+#include "fuzz2.h"
 
 #include "propagator.hpp"
 
@@ -45,10 +46,10 @@ propagator::propagator() {
   initialized = false;
 }
 
-propagator::propagator(string i_filename, t_smear_index i_smear_index, unsigned int i_scidac_pos, bool i_in_mms_file ){
+propagator::propagator(string i_filename, t_smear_index i_smear_index, unsigned int i_scidac_pos, bool i_in_mms_file, t_delocalization_type i_delocalization_type ){
   initialized = false;
   ++ref_count;
-  init( i_filename, i_smear_index, i_scidac_pos, i_in_mms_file );
+  init( i_filename, i_smear_index, i_scidac_pos, i_in_mms_file, i_delocalization_type );
 }
 
 propagator::propagator(const propagator& i_propagator){
@@ -60,7 +61,7 @@ propagator::~propagator(){
   de_init();
 }
 
-void propagator::init( string i_filename, t_smear_index i_smear_index, unsigned int i_scidac_pos, bool i_in_mms_file ){
+void propagator::init( string i_filename, t_smear_index i_smear_index, unsigned int i_scidac_pos, bool i_in_mms_file, t_delocalization_type i_delocalization_type ){
   if( !initialized ) {
 #ifdef MPI
     if( spinor_mpi_buffer == NULL ) {
@@ -78,7 +79,7 @@ void propagator::init( string i_filename, t_smear_index i_smear_index, unsigned 
     in_mms_file = i_in_mms_file;
     filename = i_filename;
     scidac_pos = i_scidac_pos;
-    set_smearing_type(i_smear_index);
+    set_smearing_type(i_smear_index, i_delocalization_type);
     field.allocate();
     initialized = true;
   }
@@ -117,7 +118,9 @@ void propagator::post_read_common() {
   }
   if( (smear_bitmask & PROP_SMEARED) == PROP_SMEARED ){
     Jacobi_smear();
-  }    
+  } else if( (smear_bitmask & PROP_FUZZED) == PROP_FUZZED ){
+    Fuzz();
+  }
 }
 
 void propagator::Jacobi_smear() {
@@ -137,8 +140,20 @@ void propagator::Jacobi_smear() {
 #endif
 }
 
-void propagator::set_smearing_type(t_smear_index i_smear_index){
-  smear_bitmask = smear_index_to_bitmask(i_smear_index);
+void propagator::Fuzz() {
+  deb_printf(1,"# [propagator::Fuzz] Fuzzing propagator!\n");
+#ifdef MPI
+  memcpy( spinor_mpi_buffer , field.mem, 24*VOLUME*sizeof(double) );
+  xchange_field_timeslice( spinor_mpi_buffer );
+  Fuzz_prop3(g_gauge_field_f, spinor_mpi_buffer, g_work_spinor_field, Nlong);
+  memcpy( field.mem, spinor_mpi_buffer, 24*VOLUME*sizeof(double) );
+#else
+  Fuzz_prop3(g_gauge_field_f, field.mem, g_work_spinor_field, Nlong);
+#endif
+}
+
+void propagator::set_smearing_type(t_smear_index i_smear_index, t_delocalization_type i_delocalization_type){
+  smear_bitmask = smear_index_to_bitmask(i_smear_index, i_delocalization_type == DELOCAL_FUZZING ? true : false );
 }
 
 void propagator::set_smearing_type(t_smear_bitmask i_smear_bitmask){

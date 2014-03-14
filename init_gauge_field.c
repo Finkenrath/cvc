@@ -20,7 +20,7 @@
  *
  ************************************************************************/
  
- /* initialization function for global gauge fields, including fuzzing */
+ /* initialization function for global gauge fields, including APE smearing and fuzzing */
 
 #include <stdio.h>
 #include <string.h>

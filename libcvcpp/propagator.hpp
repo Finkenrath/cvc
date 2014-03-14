@@ -32,18 +32,18 @@ using namespace std;
 class propagator{
 public:
   propagator();
-  propagator(string i_filename, t_smear_index i_smear_index, unsigned int i_scidac_pos, bool i_in_mms_file );
+  propagator(string i_filename, t_smear_index i_smear_index, unsigned int i_scidac_pos, bool i_in_mms_file, t_delocalization_type i_delocalization_type );
   // the copy constructor is a dummy function which DOES NOT actually copy anything
   // it exists solely for the purpose of being able to resize() vectors of propagators
   propagator(const propagator& i_propagator);
   ~propagator();
   
-  void init( string i_filename, t_smear_index i_smearing_type, unsigned int scidac_pos, bool i_in_mms_file );
+  void init( string i_filename, t_smear_index i_smearing_type, unsigned int scidac_pos, bool i_in_mms_file, t_delocalization_type i_delocalization_type );
   void read_from_memory( const propagator & i_prop );
   void read_from_file();
   void de_init();
   
-  void set_smearing_type(t_smear_index i_smear_index);
+  void set_smearing_type(t_smear_index i_smear_index, t_delocalization_type i_delocalization_type);
   void set_smearing_type(t_smear_bitmask i_smear_bitmask);
 
   t_smear_bitmask get_smear_bitmask() const;
@@ -54,6 +54,7 @@ public:
   
 private:
   void Jacobi_smear();
+  void Fuzz();
   void post_read_common();
 
   bool in_mms_file;

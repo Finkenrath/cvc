@@ -127,11 +127,33 @@ void meson::do_contractions(const flavour_pairing* fp, const unsigned int mass_i
     // the slightly inverted looping over smearing combinations first is a result of the way
     // the propagators are stored
     for( t_smear_index smear_index = 0; smear_index < fl_a->params.no_smearing_combinations; ++smear_index) {
-      // collect the propagators from the two flavours for this smearing combination
-      collect_props(prop_a, prop_b, 
+      // collect the propagators from the two flavours for this "smearing" combination
+      // for fuzzing, smearing combination FF has the source propagator from a fuzzed source (i.e. smear_index 2)
+      // and for the sink propagator fuzzed propagators from local sources
+      if( fl_a->params.delocalization_type == DELOCAL_FUZZING && smear_index > 0 ) {
+        // FIXME: as the code is written now this needs all of these conditionals
+        // and special treatment for fuzzing. It would be much nicer if this was
+        // handled at the level of the propagator arrays without duplication...
+        // it also wastes memory because we create PROP_FUZZED | SOURCE_FUZZED propagators
+        // which are never used
+        if( smear_index == 1 ) { // LF
+          collect_props(prop_a, prop_b, 
+                      fl_a->propagators[mass_index_a][0], fl_b->propagators[mass_index_b][1],
+                      fl_a->params.n_c*fl_a->params.n_s);
+        } else if( smear_index == 2 ) { // FL
+          collect_props(prop_a, prop_b, 
+                      fl_a->propagators[mass_index_a][0], fl_b->propagators[mass_index_b][2],
+                      fl_a->params.n_c*fl_a->params.n_s);        
+        } else { // FF
+          collect_props(prop_a, prop_b, 
+                      fl_a->propagators[mass_index_a][1], fl_b->propagators[mass_index_b][2],
+                      fl_a->params.n_c*fl_a->params.n_s);                
+        }
+      } else {
+        collect_props(prop_a, prop_b, 
                     fl_a->propagators[mass_index_a][smear_index], fl_b->propagators[mass_index_b][smear_index],
                     fl_a->params.n_c*fl_a->params.n_s);
-      
+      }
       
       // offset for the gindex arrays
       unsigned int gamma_offset = 0;

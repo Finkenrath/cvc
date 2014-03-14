@@ -20,7 +20,8 @@
  ************************************************************************/
  
 /* The "meson" class is a semi-abstract base class for collecting the arrays
- * of gamma combinations that were historically found in the 
+ * of gamma combinations that were historically found in the main
+ * program file of a given contraction code (hl_conn_5.c, say)
  * 
  * Further, it provides virtual functions for contracting propagators
  * with the configured gamma combinations and finally an output
@@ -34,11 +35,13 @@
  * When this derived class is instantiated, the pointers in this base
  * class are set to point to the static class members of the derived class.
  * The contraction and output functions can compute and output
- * the desired set of correlators.
+ * the desired set of correlators, referring only to the pointers
+ * of the base class.
  * 
  * Because the functions are virtual, a derived class may contain
  * specialized implementations of these functions if that proves 
- * necessary.
+ * necessary for some future derived observable.
+ * 
  * */ 
  
 #ifndef MESON_HPP_
@@ -47,9 +50,9 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 #include "correlator_memory.hpp"
+
+using namespace std;
 
 class flavour;
 class flavour_pairing;

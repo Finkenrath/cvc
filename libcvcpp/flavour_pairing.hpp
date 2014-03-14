@@ -70,6 +70,7 @@ public:
   bool is_mass_diagonal();
   
   // when init is called, parts of the data structure must already be set
+  // and this method checks whether it's safe to call init
   bool preinit_check();
   // during initialization, the two flavours are checked to be consistent
   bool check_consistency();

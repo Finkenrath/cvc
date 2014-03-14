@@ -49,7 +49,9 @@ void flavour::init() {
         propagators[mass_ctr][smearing].resize(params.n_c*params.n_s);
         for( unsigned int index = 0; index < params.n_c*params.n_s; ++index ) {
           deb_printf(1,"# [flavour::init] Initialising propagator for flavour %s, smearing_combination %s, mass %e, index %u\n", 
-            params.name.c_str(), smear_index_to_string(smearing).c_str(), params.masses[mass_ctr], index);
+            params.name.c_str(),
+            smear_index_to_string(smearing, params.delocalization_type == DELOCAL_FUZZING).c_str(),
+            params.masses[mass_ctr], index);
           
           unsigned int mass_index = params.first_mass_index+mass_ctr;
           
@@ -57,12 +59,12 @@ void flavour::init() {
            * when up and down are stored in the same file or 2*2*params.n_c*params.n_s
            * when all indices are stored in the same file 
            * (one factor of two comes from considering local and smeared sources
-           * which are stupidly stored as consecutive indices)
+           * which are stored as consecutive indices)
            * in the case of MMS files, there are no explicit down propagators
            * scidac_offset keeps track of which propagator to read out */
           
           // example: propagators from local sources, indices:   00, 01, 02, 03 (spin dilution)
-          //          propagators from smeared sources, indices: 04, 05, 06, 07
+          //          propagators from smeared (fuzzed) sources, indices: 04, 05, 06, 07
           unsigned int smearing_index = ( smearing < 2 ? 0 : 1 );
            
           unsigned int scidac_offset = 0;
@@ -86,7 +88,7 @@ void flavour::init() {
           
           string filename = construct_propagator_filename( mass_index, filename_index );
           
-          propagators[mass_ctr][smearing][index].init( filename, smearing, scidac_offset, params.in_mms_file );
+          propagators[mass_ctr][smearing][index].init( filename, smearing, scidac_offset, params.in_mms_file, params.delocalization_type );
           
           /* propagator::read_from_x() applies Qf5 if we're dealing with an MMS propagator
            * this currently uses g_kappa and g_mu, so we have to set g_mu and g_kappa accordingly */

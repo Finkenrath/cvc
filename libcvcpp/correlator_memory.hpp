@@ -45,7 +45,6 @@ class correlator_memory {
     double* get_temp_correl_pointer();
     double* get_temp_vector_correl_pointer();
     
-    
     void zero_out();
     void print_info();
     
