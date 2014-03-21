@@ -55,7 +55,7 @@
 using namespace std;
 
 class flavour;
-class flavour_pairing;
+class quark_line_pair;
 class correlator;
 class propagator;
 
@@ -74,18 +74,18 @@ class meson {
           const double* i_conf_gamma_sign);
   
     virtual void output_correlators(const vector< vector<correlator*> >* const correls, 
-                                    const string& flavour_pairing_name, 
+                                    const string& quark_line_pair_name, 
                                     const flavour* const fl_a, const flavour* const fl_b, 
                                     const unsigned int mass_index_a, const unsigned int mass_index_b ); 
                                      
     virtual void collect_props(double** prop_a, double** prop_b, const vector<propagator>& props_a, 
                                const vector<propagator>& props_b, const unsigned int no_spin_colour_indices);
                                
-    virtual void do_contractions(const flavour_pairing* const fp,
+    virtual void do_contractions(const quark_line_pair* const fp,
                                  const unsigned int mass_index_a, const unsigned int mass_index_b );
     
     virtual string construct_correlator_filename_create_subdirectory(
-                                  const string& flavour_pairing_name, 
+                                  const string& quark_line_pair_name, 
                                   const flavour* const fl_a, const flavour* const fl_b, 
                                   const unsigned int mass_index_a, const unsigned int mass_index_b );
  

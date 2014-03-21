@@ -43,7 +43,7 @@
 #include "fatal_error.h"
 
 #include "flavour.hpp"
-#include "flavour_pairing.hpp"
+#include "quark_line_pair.hpp"
 #include "flavour_params.hpp"
 #include "correlator.hpp"
 #include "charged_conn_meson_20.hpp"
@@ -78,11 +78,11 @@ int main(int argc, char **argv) {
   
   geometry();
   
-  // the initialization functions for flavour and flavour_pairing
+  // the initialization functions for flavour and quark_line_pair
   // take care of memory management, reading propagators and smearing
   init_global_data_structures();
   
-  for( vector<flavour_pairing*>::iterator fp_it = g_flavour_pairings.begin(); fp_it != g_flavour_pairings.end(); ++fp_it ) {
+  for( vector<quark_line_pair*>::iterator fp_it = g_quark_line_pairs.begin(); fp_it != g_quark_line_pairs.end(); ++fp_it ) {
     // convenience variables for the flavour objects
     flavour* fl_a = (*fp_it)->a;
     flavour* fl_b = (*fp_it)->b;
@@ -139,7 +139,7 @@ void init_global_data_structures() {
   for( vector<flavour*>::iterator it = g_flavours.begin(); it != g_flavours.end(); ++it ) {
     (*it)->init();
   }
-  for( vector<flavour_pairing*>::iterator it = g_flavour_pairings.begin(); it != g_flavour_pairings.end(); ++it ) {
+  for( vector<quark_line_pair*>::iterator it = g_quark_line_pairs.begin(); it != g_quark_line_pairs.end(); ++it ) {
     (*it)->init();
   }
 }
@@ -152,9 +152,9 @@ void free_global_data_structures() {
   /* the destructors take care of any internal memory management */
   free_gauge_field();
   
-  while( g_flavour_pairings.size() > 0 ) {
-    delete g_flavour_pairings.back();
-    g_flavour_pairings.pop_back(); 
+  while( g_quark_line_pairs.size() > 0 ) {
+    delete g_quark_line_pairs.back();
+    g_quark_line_pairs.pop_back(); 
   }
   while( g_flavours.size() > 0 ) {
     delete g_flavours.back();

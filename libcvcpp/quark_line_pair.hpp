@@ -19,18 +19,20 @@
  *
  ************************************************************************/
 
-/* The flavour pairing class is a slightly inefficient but necessary way of
- * pairing up flavours for contractions during program initialization. 
- * Initialization: It is passed a vector of two strings via 'set_flavour_names' 
+/* The quark line pair is a pairing of two quark lines (i.e. propagators)
+ * which pairs up quark lines defined during program initialization.
+ * The pair can then be passed to different "observables" which may, for instance,
+ * contract the quark lines.
+ * Initialization: It is passed a vector of two strings via 'set_quark_line_names' 
  * which could be, e.g. "up" and "strange".
- * In addition, it must be passed a pointer to a vector of 'flavour'. The 'init'
+ * In addition, it must be passed a pointer to a vector of 'quark_line'. The 'init'
  * method must be called when these two conditions are met and it will traverse
- * the 'flavour_collection' looking for names which match the pairing descriptor.
- * When a name matches, the pointers a and b are set to point to the respective flavours.
+ * the 'quark_line_collection' looking for names which match the pairing descriptor.
+ * When a name matches, the pointers a and b are set to point to the respective quark lines.
  *  */
 
-#ifndef FLAVOUR_PAIRING_HPP_
-#define FLAVOUR_PAIRING_HPP_
+#ifndef quark_line_pair_HPP_
+#define quark_line_pair_HPP_
 
 #include <string>
 #include <vector>
@@ -41,13 +43,13 @@ class flavour;
 
 using namespace std;
 
-class flavour_pairing {
+class quark_line_pair {
 public:
   
-  flavour_pairing();
-  flavour_pairing( vector<flavour*>* i_flavours_collection );
-  flavour_pairing( vector<string>& i_flavour_names, vector<flavour*>* i_flavours_collection );
-  ~flavour_pairing();
+  quark_line_pair();
+  quark_line_pair( vector<flavour*>* i_flavours_collection );
+  quark_line_pair( vector<string>& i_flavour_names, vector<flavour*>* i_flavours_collection );
+  ~quark_line_pair();
   
   void init();
   
@@ -92,4 +94,4 @@ private:
   void constructor_common();
 };
 
-#endif /* FLAVOUR_PAIRING_HPP_ */
+#endif /* quark_line_pair_HPP_ */

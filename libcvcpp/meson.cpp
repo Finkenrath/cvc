@@ -30,7 +30,7 @@
 #include "fatal_error.h"
 
 #include "flavour.hpp"
-#include "flavour_pairing.hpp"
+#include "quark_line_pair.hpp"
 #include "correlator.hpp"
 #include "correlator_memory.hpp"
 #include "propagator.hpp"
@@ -98,7 +98,7 @@ string meson::get_name() {
   return name;
 }
 
-void meson::do_contractions(const flavour_pairing* fp, const unsigned int mass_index_a, const unsigned int mass_index_b) {  
+void meson::do_contractions(const quark_line_pair* fp, const unsigned int mass_index_a, const unsigned int mass_index_b) {  
   if(initialized){
     const flavour* const fl_a = fp->a;
     const flavour* const fl_b = fp->b;
@@ -210,7 +210,7 @@ void meson::collect_props(double** prop_a, double** prop_b, const vector<propaga
   } /* spin_colour_index */
 }
 
-void meson::output_correlators(const vector< vector<correlator*> >* const correls, const string& flavour_pairing_name, const flavour* const fl_a, const flavour* const fl_b, const unsigned int mass_index_a, const unsigned int mass_index_b ) {
+void meson::output_correlators(const vector< vector<correlator*> >* const correls, const string& quark_line_pair_name, const flavour* const fl_a, const flavour* const fl_b, const unsigned int mass_index_a, const unsigned int mass_index_b ) {
   if(initialized){
     // this seems to be the default correlator norm for the ETMC toolset (at least hadron)
     double correlator_norm = 1/(2*g_kappa*g_kappa*VOL3*g_nproc_x*g_nproc_y*g_nproc_z);
@@ -222,7 +222,7 @@ void meson::output_correlators(const vector< vector<correlator*> >* const correl
     
     unsigned int source_timeslice = fl_a->params.source_timeslice;
   
-    string correlator_filename( construct_correlator_filename_create_subdirectory(flavour_pairing_name, fl_a, fl_b, mass_index_a, mass_index_b ) );
+    string correlator_filename( construct_correlator_filename_create_subdirectory(quark_line_pair_name, fl_a, fl_b, mass_index_a, mass_index_b ) );
   
     if(g_proc_id==0){
       FILE* ofs;
@@ -234,7 +234,7 @@ void meson::output_correlators(const vector< vector<correlator*> >* const correl
       if( name == "charged_conn_meson_32" || name == "neutral_conn_meson_32" ) {
         // Marcus's format header with additions
         fprintf(ofs, "# %5d%4d%4d%4d%4d%15.8e %s %s %s_%15.8e %s_%15.8e\tLL,LS,SL,SS\n",
-          Nconf, T_global, LX_global, LY_global, LZ, g_kappa, name.c_str() ,flavour_pairing_name.c_str(), fl_a->params.name.c_str(), fl_a->params.masses[mass_index_a], fl_b->params.name.c_str(), fl_b->params.masses[mass_index_b]);
+          Nconf, T_global, LX_global, LY_global, LZ, g_kappa, name.c_str() ,quark_line_pair_name.c_str(), fl_a->params.name.c_str(), fl_a->params.masses[mass_index_a], fl_b->params.name.c_str(), fl_b->params.masses[mass_index_b]);
       } else {
         // CMI Format header
         fprintf(ofs, "%5d%4d%4d%4d%4d%4d%15.8e\n",
@@ -269,11 +269,11 @@ void meson::output_correlators(const vector< vector<correlator*> >* const correl
   } // if(initialized)
 }
 
-string meson::construct_correlator_filename_create_subdirectory(const string& flavour_pairing_name, const flavour* const fl_a, const flavour* const fl_b, const unsigned int mass_index_a, const unsigned int mass_index_b) {
+string meson::construct_correlator_filename_create_subdirectory(const string& quark_line_pair_name, const flavour* const fl_a, const flavour* const fl_b, const unsigned int mass_index_a, const unsigned int mass_index_b) {
   stringstream rval;
   stringstream dirname;
   
-  dirname << flavour_pairing_name << "_";
+  dirname << quark_line_pair_name << "_";
   dirname << fl_a->params.name << "_";
   dirname << fl_a->params.masses[mass_index_a] << "-";
   dirname << fl_b->params.name << "_";

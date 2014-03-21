@@ -15,7 +15,7 @@
 #include <vector>
 #include "meson.hpp"
 #include "flavour.hpp"
-#include "flavour_pairing.hpp"
+#include "quark_line_pair.hpp"
 #endif
 
 #define _TM_FERMION        0
@@ -194,7 +194,7 @@ EXTERN int g_check_inversion;
 #ifdef __cplusplus
 using namespace std;
 EXTERN vector<flavour*> g_flavours;
-EXTERN vector<flavour_pairing*> g_flavour_pairings;
+EXTERN vector<quark_line_pair*> g_quark_line_pairs;
 #endif
 
 #endif

@@ -59,7 +59,7 @@ NAMELIST [a-zA-Z0-9_"."" "","]+
 #include <vector>
 #include "flavour.hpp"
 #include "flavour_params.hpp"
-#include "flavour_pairing.hpp"
+#include "quark_line_pair.hpp"
 
 /* given a line of the form name=0.12,0.13,0.15, store floats in
  * vector of doubles provided by caller */
@@ -293,8 +293,8 @@ double extract_float(char * text) {
 %x INITFLAVOUR
 %x PARSEFLAVOUR
 
-%x INITFLAVOURPAIRING
-%x PARSEFLAVOURPAIRING
+%x INITQUARKLINEPAIR
+%x PARSEQUARKLINEPAIR
 
 %{
 #endif /* __cplusplus */
@@ -421,7 +421,7 @@ double extract_float(char * text) {
 #ifdef __cplusplus
 %}
 ^BeginFlavour{SPC}*                        BEGIN(INITFLAVOUR);
-^BeginFlavourPairing{SPC}*                 BEGIN(INITFLAVOURPAIRING);
+^BeginQuarkLinePair{SPC}*                 BEGIN(INITQUARKLINEPAIR);
 %{
 #endif /* __cplusplus */
 %}
@@ -1070,38 +1070,38 @@ double extract_float(char * text) {
   }
 }
 
-<INITFLAVOURPAIRING>{SPC}*\n {
-  if(myverbose!=0) printf("# [read_input_parser] Adding a new flavour pairing on line %d\n",line_of_file);  
-  g_flavour_pairings.push_back( new flavour_pairing(&g_flavours) );
+<INITQUARKLINEPAIR>{SPC}*\n {
+  if(myverbose!=0) printf("# [read_input_parser] Adding a new quark line pair @ line %d\n",line_of_file);  
+  g_quark_line_pairs.push_back( new quark_line_pair(&g_flavours) );
   line_of_file++;
-  BEGIN(PARSEFLAVOURPAIRING);
+  BEGIN(PARSEQUARKLINEPAIR);
 }
-<PARSEFLAVOURPAIRING>{
+<PARSEQUARKLINEPAIR>{
   {SPC}*flavours{EQL}{NAMELIST}+ {
-    g_flavour_pairings.back()->set_flavour_names( extract_vector_of_strings( yytext ) );
-    if(myverbose!=0) printf("# [read_input_parser] \t Defined pairing '%s' in line %d\n",
-      g_flavour_pairings.back()->get_flavour_names_string().c_str(),line_of_file);  
+    g_quark_line_pairs.back()->set_flavour_names( extract_vector_of_strings( yytext ) );
+    if(myverbose!=0) printf("# [read_input_parser] \t Defined pair '%s' in line %d\n",
+      g_quark_line_pairs.back()->get_flavour_names_string().c_str(),line_of_file);  
   }
   {SPC}*name{EQL}{NAME}+ {
-    g_flavour_pairings.back()->set_name( extract_string(yytext) );
-    if(myverbose!=0) printf("# [read_input_parser] \t Flavour pairing name is '%s' in line %d\n",
-      g_flavour_pairings.back()->get_name().c_str(),line_of_file);
+    g_quark_line_pairs.back()->set_name( extract_string(yytext) );
+    if(myverbose!=0) printf("# [read_input_parser] \t Quark line pair name is '%s' in line %d\n",
+      g_quark_line_pairs.back()->get_name().c_str(),line_of_file);
   }
   {SPC}*mass_diagonal{EQL}yes {
-    g_flavour_pairings.back()->set_mass_diagonal( true );
-    if(myverbose!=0) printf("# [read_input_parser] \t Flavour pairing set to compute only mass-diagonal correlators in line %d\n",line_of_file);
+    g_quark_line_pairs.back()->set_mass_diagonal( true );
+    if(myverbose!=0) printf("# [read_input_parser] \t Quark line pair set to compute only mass-diagonal correlators in line %d\n",line_of_file);
   }
   {SPC}*mass_diagonal{EQL}no {
-    g_flavour_pairings.back()->set_mass_diagonal( false );
-    if(myverbose!=0) printf("# [read_input_parser] \t Flavour pairing set to compute all mass combinations in line %d\n",line_of_file);
+    g_quark_line_pairs.back()->set_mass_diagonal( false );
+    if(myverbose!=0) printf("# [read_input_parser] \t Quark line pair set to compute all mass combinations in line %d\n",line_of_file);
   }
   {SPC}*observables{EQL}{NAMELIST}+ {
-    g_flavour_pairings.back()->set_observable_names( extract_vector_of_strings(yytext) );
+    g_quark_line_pairs.back()->set_observable_names( extract_vector_of_strings(yytext) );
     if(myverbose!=0) printf("# [read_input_parser] \t Defined observables '%s' in line %d\n",
-      g_flavour_pairings.back()->get_observable_names_string().c_str(),line_of_file);  
+      g_quark_line_pairs.back()->get_observable_names_string().c_str(),line_of_file);  
   }    
-  ^EndFlavourPairing{SPC}* {
-    if(myverbose!=0) printf("# [read_input_parser] Finished adding a new flavour pairing on line %d\n",line_of_file);
+  ^EndQuarkLinePair{SPC}* {
+    if(myverbose!=0) printf("# [read_input_parser] Finished adding a new quark line pair on line %d\n",line_of_file);
     BEGIN(0);
   }
 }
@@ -1126,9 +1126,13 @@ double extract_float(char * text) {
 /* if we are in any of these starting conditions, we cannot go back to starting condition 0!
  * Otherwise we would stop parsing the relevant commands. */
 %}
-<PARSEFLAVOUR,PARSEFLAVOURPAIRING>{SPC}*\n {
+<PARSEFLAVOUR,PARSEQUARKLINEPAIR>{SPC}*\n {
   line_of_file++;
 }
+%{
+/* On the other hand, if we encounter a new-line during any other starting condition,
+ * we need to return to condition 0! */
+%}
 <*>{SPC}*\n                       {
   line_of_file++;
   BEGIN(0);

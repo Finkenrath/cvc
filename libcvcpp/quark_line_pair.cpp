@@ -25,28 +25,28 @@
 #include "global.h"
 #include "fatal_error.h"
 
-#include "flavour_pairing.hpp"
+#include "quark_line_pair.hpp"
 #include "flavour.hpp"
 #include "meson.hpp"
  
 using namespace std;
  
-flavour_pairing::flavour_pairing() {
+quark_line_pair::quark_line_pair() {
   constructor_common();
 }
 
-flavour_pairing::flavour_pairing( vector<string>& i_flavour_names, vector<flavour*>* i_flavours_collection ) {
+quark_line_pair::quark_line_pair( vector<string>& i_flavour_names, vector<flavour*>* i_flavours_collection ) {
   constructor_common();
   flavour_names = i_flavour_names;
   flavours_collection = i_flavours_collection;
 }
 
-flavour_pairing::flavour_pairing( vector<flavour*>* i_flavours_collection ) {
+quark_line_pair::quark_line_pair( vector<flavour*>* i_flavours_collection ) {
   constructor_common();
   flavours_collection = i_flavours_collection;
 }
 
-flavour_pairing::~flavour_pairing() {
+quark_line_pair::~quark_line_pair() {
   // free all allocated "meson" objects, freeing correlator memory with the last one
   while( observables.size() > 0 ) {
     delete observables.back();
@@ -54,7 +54,7 @@ flavour_pairing::~flavour_pairing() {
   }
 }
 
-void flavour_pairing::constructor_common() {
+void quark_line_pair::constructor_common() {
   initialized = false;
   mass_diagonal = false;
   a = NULL;
@@ -62,7 +62,7 @@ void flavour_pairing::constructor_common() {
   flavours_collection = NULL;
 }
 
-void flavour_pairing::init() {
+void quark_line_pair::init() {
   if( !initialized ){
     
     // check if names, observables and flavour collection have been properly set
@@ -88,47 +88,47 @@ void flavour_pairing::init() {
       initialized = check_consistency();
       
     } else { // preinit_check
-      fatal_error(1, "ERROR: [flavour_pairing::init] For flavour pairing %s, preinit_check failed!\n",name.c_str() );
+      fatal_error(1, "ERROR: [quark_line_pair::init] For quark line pair %s, preinit_check failed!\n",name.c_str() );
     }
 
   } else { // initialized
-    deb_printf(0, "WARNING: [flavour_pairing::init] Init called for flavour pairing %s, but it is already initialized! Was that intended?\n", name.c_str() );
+    deb_printf(0, "WARNING: [quark_line_pair::init] Init called for quark line pair %s, but it is already initialized! Was that intended?\n", name.c_str() );
   }
 }
 
-bool flavour_pairing::preinit_check() {
+bool quark_line_pair::preinit_check() {
   return( !flavour_names.empty() && !observable_names.empty() && !name.empty() );
 }
 
-bool flavour_pairing::check_consistency() {
+bool quark_line_pair::check_consistency() {
   if( a == NULL ) {
-    fatal_error(50,"ERROR: [flavour_pairing::check_consistency] Flavour a (%s) in flavour pairing %s could not be found!\n", flavour_names[0].c_str() , name.c_str() );
+    fatal_error(50,"ERROR: [quark_line_pair::check_consistency] Quark line a (%s) in pair %s could not be found! Maybe you misspelled the name in the definition of the pair?\n", flavour_names[0].c_str() , name.c_str() );
   }
   if( b == NULL ) {
-    fatal_error(51,"ERROR: [flavour_pairing::check_consistency] Flavour b (%s) in flavour pairing %s could not be found!\n", flavour_names[1].c_str(), name.c_str() );
+    fatal_error(51,"ERROR: [quark_line_pair::check_consistency] Quark line b (%s) in pair %s could not be found! Maybe you misspelled the name in the definition of the pair?\n", flavour_names[1].c_str(), name.c_str() );
   }
   if( a->params.no_smearing_combinations != b->params.no_smearing_combinations ) {
-    fatal_error(52,"ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, smearing_combinations do not match for flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
+    fatal_error(52,"ERROR: [quark_line_pair::check_consistency] For pair %s, smearing_combinations do not match for quark lines %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
   }
   if( a->params.n_s != b->params.n_s ) {
-    fatal_error(53,"ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, n_s do not match for flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );    
+    fatal_error(53,"ERROR: [quark_line_pair::check_consistency] For pair %s, n_s do not match for quark lines %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );    
   }
   if( a->params.n_c != b->params.n_c ) {
-    fatal_error(54,"ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, n_c do not match for flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );        
+    fatal_error(54,"ERROR: [quark_line_pair::check_consistency] For pair %s, n_c do not match for quark lines %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );        
   }
   if( a->params.source_timeslice != b->params.source_timeslice ) {
-    fatal_error(55, "ERROR: [flavour_pairing::check_consistency] For flavour pairing %s, the source timeslice differs between flavours %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
+    fatal_error(55, "ERROR: [quark_line_pair::check_consistency] For pair %s, the source timeslice differs between quark lines %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
   }
   
   // any failures will result in program termination so we simply return true if we reach this point!
   return true;
 }
 
-void flavour_pairing::set_observable_names( const vector<string>& i_observable_names ) {
+void quark_line_pair::set_observable_names( const vector<string>& i_observable_names ) {
   observable_names = i_observable_names;
 }
 
-string flavour_pairing::get_observable_names_string() {
+string quark_line_pair::get_observable_names_string() {
   stringstream rval;
   for( vector<string>::iterator obs_name_iter = observable_names.begin(); obs_name_iter != observable_names.end(); ++obs_name_iter ) {
     rval << *obs_name_iter << " ";
@@ -136,11 +136,11 @@ string flavour_pairing::get_observable_names_string() {
   return rval.str();
 }
 
-void flavour_pairing::set_flavour_names( const vector<string>& i_flavour_names ){
+void quark_line_pair::set_flavour_names( const vector<string>& i_flavour_names ){
   flavour_names = i_flavour_names;
 }
 
-string flavour_pairing::get_flavour_names_string() {
+string quark_line_pair::get_flavour_names_string() {
   stringstream flavour_names_string;
   for( vector<string>::iterator it = flavour_names.begin(); it != flavour_names.end(); ++it ) {
     flavour_names_string << *it << " ";
@@ -149,23 +149,23 @@ string flavour_pairing::get_flavour_names_string() {
   return flavour_names_string.str();
 }
 
-void flavour_pairing::set_name( string i_name ) {
+void quark_line_pair::set_name( string i_name ) {
   name = i_name;
 }
 
-string flavour_pairing::get_name() {
+string quark_line_pair::get_name() {
   return name;
 }
 
-string flavour_pairing::get_name() const {
+string quark_line_pair::get_name() const {
   return name;
 }
 
-bool flavour_pairing::is_mass_diagonal() {
+bool quark_line_pair::is_mass_diagonal() {
   return mass_diagonal;
 }
 
-void flavour_pairing::set_mass_diagonal( const bool& i_mass_diagonal ) {
+void quark_line_pair::set_mass_diagonal( const bool& i_mass_diagonal ) {
   mass_diagonal = i_mass_diagonal;
 }
   
