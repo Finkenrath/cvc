@@ -54,7 +54,7 @@
 
 using namespace std;
 
-class flavour;
+class quark_line;
 class quark_line_pair;
 class correlator;
 class propagator;
@@ -75,7 +75,7 @@ class meson {
   
     virtual void output_correlators(const vector< vector<correlator*> >* const correls, 
                                     const string& quark_line_pair_name, 
-                                    const flavour* const fl_a, const flavour* const fl_b, 
+                                    const quark_line* const ql_a, const quark_line* const ql_b, 
                                     const unsigned int mass_index_a, const unsigned int mass_index_b ); 
                                      
     virtual void collect_props(double** prop_a, double** prop_b, const vector<propagator>& props_a, 
@@ -86,7 +86,7 @@ class meson {
     
     virtual string construct_correlator_filename_create_subdirectory(
                                   const string& quark_line_pair_name, 
-                                  const flavour* const fl_a, const flavour* const fl_b, 
+                                  const quark_line* const ql_a, const quark_line* const ql_b, 
                                   const unsigned int mass_index_a, const unsigned int mass_index_b );
  
     virtual void print_info();

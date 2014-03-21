@@ -19,9 +19,9 @@
  *
  ************************************************************************/
 
-/* a slightly abstract representation of a quark 'flavour' for the purpose of
- * contractions of propagators for extraction of meson masses, for example
- * it provides a mechanism for automatically loading propagators in ILDG
+/* a slightly abstract representation of a 'quark line' for the purpose of
+ * contractions of propagators for the computation of various observables.
+ * It provides a mechanism for automatically loading propagators in ILDG
  * format as produced by tmLQCD
  * there exist a number of conditions which affect the filenames and content
  * of propagator files produced by tmLQCD:
@@ -46,8 +46,8 @@
  * is a bit obfuscating but allows the whole parameter set to be passed from one
  * object to another. */
 
-#ifndef FLAVOUR_HPP_
-#define FLAVOUR_HPP_
+#ifndef quark_line_HPP_
+#define quark_line_HPP_
 
 #include <vector>
 #include <sstream>
@@ -56,20 +56,20 @@
 
 #include "deb_printf.h"
 
-#include "flavour_params.hpp"
+#include "quark_line_params.hpp"
 #include "propagator.hpp"
 
 using namespace std;
 
-class flavour{
+class quark_line{
 public:
-  flavour();
-  flavour( flavour_params i_params );
+  quark_line();
+  quark_line( quark_line_params i_params );
   void init();
-  void init( flavour_params i_params );
+  void init( quark_line_params i_params );
   string construct_propagator_filename(const unsigned int i_mass_ctr, const unsigned i_index );
     
-  flavour_params params;  
+  quark_line_params params;  
   
   // index order: mass, smearing, spin_colour_index
   vector< vector < vector<propagator> > > propagators;
@@ -78,5 +78,5 @@ private:
   bool initialized;
 };
 
-#endif /*FLAVOUR_HPP_*/
+#endif /*quark_line_HPP_*/
   

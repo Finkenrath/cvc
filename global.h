@@ -14,7 +14,7 @@
 #ifdef __cplusplus
 #include <vector>
 #include "meson.hpp"
-#include "flavour.hpp"
+#include "quark_line.hpp"
 #include "quark_line_pair.hpp"
 #endif
 
@@ -193,7 +193,7 @@ EXTERN int g_check_inversion;
 
 #ifdef __cplusplus
 using namespace std;
-EXTERN vector<flavour*> g_flavours;
+EXTERN vector<quark_line*> g_quark_lines;
 EXTERN vector<quark_line_pair*> g_quark_line_pairs;
 #endif
 

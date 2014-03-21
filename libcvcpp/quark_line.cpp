@@ -21,30 +21,30 @@
 
 #include <string.h>
 
-#include "flavour.hpp"
+#include "quark_line.hpp"
 #include "global.h"
 #include "Q_phi.h"
 
-flavour::flavour() {
+quark_line::quark_line() {
   initialized = false;
 }
 
-flavour::flavour( flavour_params i_params ) {
+quark_line::quark_line( quark_line_params i_params ) {
   initialized = false;
   init( i_params );
 }
 
-void flavour::init() {
+void quark_line::init() {
   if( initialized ) {
     propagators.clear();
     initialized = false;
     init();
   } else {
-    deb_printf(1,"# [flavour::init] Initialising flavour %s.\n",params.name.c_str());
+    deb_printf(1,"# [quark_line::init] Initialising quark line %s.\n",params.name.c_str());
     
     // force smearing_combinations to 1 if set to local only
     if( params.delocalization_type == DELOCAL_NONE && params.no_smearing_combinations > 1 ) {
-      deb_printf(0,"# OVERRIDE: [flavour::init] Delocalization 'none' selected for flavour %s, forcing no_smearing_combinations=1!\n",params.name.c_str());
+      deb_printf(0,"# OVERRIDE: [quark_line::init] Delocalization 'none' selected for quark line %s, forcing no_smearing_combinations=1!\n",params.name.c_str());
       params.no_smearing_combinations = 1;
     }
     
@@ -54,7 +54,7 @@ void flavour::init() {
       for( unsigned int smearing = 0; smearing < params.no_smearing_combinations; ++smearing ) {
         propagators[mass_ctr][smearing].resize(params.n_c*params.n_s);
         for( unsigned int index = 0; index < params.n_c*params.n_s; ++index ) {
-          deb_printf(1,"# [flavour::init] Initialising propagator for flavour %s, smearing_combination %s, mass %e, index %u\n", 
+          deb_printf(1,"# [quark_line::init] Initialising propagator for quark line %s, smearing_combination %s, mass %e, index %u\n", 
             params.name.c_str(),
             smear_index_to_string(smearing, params.delocalization_type == DELOCAL_FUZZING).c_str(),
             params.masses[mass_ctr], index);
@@ -125,7 +125,7 @@ void flavour::init() {
   }    
 }
 
-void flavour::init( flavour_params i_params ) {
+void quark_line::init( quark_line_params i_params ) {
   params = i_params;
   init();
 }
@@ -158,7 +158,7 @@ void flavour::init( flavour_params i_params ) {
  *
  */
 
-string flavour::construct_propagator_filename( const unsigned int i_mass_ctr, const unsigned int i_index ) {
+string quark_line::construct_propagator_filename( const unsigned int i_mass_ctr, const unsigned int i_index ) {
   stringstream filename;
   
   // TODO: add support for volume sources?

@@ -19,8 +19,8 @@
  *
  ************************************************************************/
 
-#ifndef FLAVOUR_PARAMS_HPP_
-#define FLAVOUR_PARAMS_HPP_
+#ifndef QUARK_LINE_PARAMS_HPP_
+#define QUARK_LINE_PARAMS_HPP_
 
 #include <vector>
 #include <string>
@@ -29,14 +29,13 @@
 
 using namespace std;
 
-typedef enum flavour_type{
+typedef enum quark_line_type{
   up_type,
   down_type,
-  up_type_doublet,
-  down_type_doublet,
-  indeterminate_type } flavour_type;
+  doublet,
+  indeterminate_type } quark_line_type;
 
-typedef struct flavour_params{
+typedef struct quark_line_params{
   unsigned int no_masses;
   vector<double> masses;
   double kappa;
@@ -48,27 +47,26 @@ typedef struct flavour_params{
   string propagator_dirname;
   string propagator_basename;
   string name;
-  flavour_type type;
+  quark_line_type type;
   unsigned int n_c;
   unsigned int n_s;
   unsigned int source_timeslice;
   unsigned int no_smearing_combinations;
   t_delocalization_type delocalization_type;
   
-  
   vector<t_smear_bitmask> smearing_combinations;
   
   /* When using the multiple mass solver one could have all light, strange
-   * and charm propagators in one collection. first_mass_index is then set
-   * to the first mass index to be loaded.
+   * and charm propagators in one file. first_mass_index defines
+   * to the first SciDAC record to be loaded from this file.
    * It is also possible that inversions for more masses were done than we
    * would like to contract. In this case only the required masses
    * can be provided and first_mass_index can be used to provide the offset.
-   * A more general behaviour where only some mass indices in a consecutive
-   * range are used is currently not planned.
+   * A more general behaviour supporting a non-consecutive set of 
+   * propagators in the file is currently not planned.
    */
   unsigned int first_mass_index;
     
-} flavour_params;
+} quark_line_params;
 
 #endif

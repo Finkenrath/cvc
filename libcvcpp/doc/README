@@ -1,10 +1,10 @@
 'libcvcpp' is a C++ addon written by Bartosz Kostrzewa for the CVC contraction
 code by Marcus Petschlies. 
 
-An attempt was made to provide the concepts of 'quark flavour', 'meson',
-'correlator' and similar ideas in an object-oriented manner, striking
-some balance between eventual ease of use, performance and reuse of
-existing code.
+An attempt was made to provide data structures for the the concepts of 
+'quark flavour', 'meson', 'correlator' and similar ideas in an 
+object-oriented manner, striking some balance between eventual ease of use,
+performance and reuse of existing code.
 
 As such, all 'raw data' is kept in the same kinds of data structures
 that CVC uses (arrays of doubles), but standard library containers

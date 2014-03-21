@@ -42,9 +42,9 @@
 #include "init_gauge_field.h"
 #include "fatal_error.h"
 
-#include "flavour.hpp"
+#include "quark_line.hpp"
 #include "quark_line_pair.hpp"
-#include "flavour_params.hpp"
+#include "quark_line_params.hpp"
 #include "correlator.hpp"
 #include "charged_conn_meson_20.hpp"
 #include "meson.hpp"
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 #endif  
 
   process_args(argc,argv);
-  // the input file defines flavours and flavour combinations
+  // the input file defines quark_lines and quark_line combinations
   // and the relevant data structures are initialized below
   read_input_parser(input_filename.c_str()); 
 
@@ -78,27 +78,27 @@ int main(int argc, char **argv) {
   
   geometry();
   
-  // the initialization functions for flavour and quark_line_pair
+  // the initialization functions for quark_line and quark_line_pair
   // take care of memory management, reading propagators and smearing
   init_global_data_structures();
   
   for( vector<quark_line_pair*>::iterator fp_it = g_quark_line_pairs.begin(); fp_it != g_quark_line_pairs.end(); ++fp_it ) {
-    // convenience variables for the flavour objects
-    flavour* fl_a = (*fp_it)->a;
-    flavour* fl_b = (*fp_it)->b;
+    // convenience variables for the quark_line objects
+    quark_line* fl_a = (*fp_it)->a;
+    quark_line* fl_b = (*fp_it)->b;
     
-    // loop over the observables defined for this flavour pairing
+    // loop over the observables defined for this quark_line pairing
     
     for( vector<meson*>::const_iterator obs_it = (*fp_it)->observables.begin(); obs_it != (*fp_it)->observables.end(); ++obs_it ) {
       
       for( unsigned int mass_index_a = 0; mass_index_a < fl_a->params.no_masses ; ++mass_index_a ) {
         for( unsigned int mass_index_b = 0; mass_index_b < fl_b->params.no_masses ; ++mass_index_b ) {
           
-          /* if the two flavours are the same, we only do the mass diagonal case
+          /* if the two quark_lines are the same, we only do the mass diagonal case
            * we do the same if pairing has been defined to be mass-diagonal by
            * the user */
           if ( fl_a == fl_b || (*fp_it)->is_mass_diagonal() == true ) {
-            /* since the flavours are the same, the mass indices will have the same ranges
+            /* since the quark_lines are the same, the mass indices will have the same ranges
              * and we can use this as a criterion for staying on the mass diagonal
              * the same is hopefully true if the user has set the relevant flag */
             if( mass_index_a != mass_index_b ) {
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
             }
             if( fl_a->params.masses[mass_index_a] != fl_b->params.masses[mass_index_b] ) {
               deb_printf(0,"WARNING: mass-diagonal contraction for '%s', but the masses differ!\n \
-Flavour '%s' mass: %f, Flavour '%s' mass: %f\n", (*fp_it)->get_name().c_str(), 
+quark_line '%s' mass: %f, quark_line '%s' mass: %f\n", (*fp_it)->get_name().c_str(), 
                     fl_a->params.name.c_str(), fl_a->params.masses[mass_index_a], 
                     fl_b->params.name.c_str(), fl_b->params.masses[mass_index_b]); 
             }
@@ -118,7 +118,7 @@ Flavour '%s' mass: %f, Flavour '%s' mass: %f\n", (*fp_it)->get_name().c_str(),
         } /* mass_index_b */
       } /* mass_index_a */
     } /* for(obs_iter) */
-  } /* flavour pairings */
+  } /* quark_line pairings */
   
   deb_printf(0,"# [test_hl_helpers] All contractions complete!\n");
     
@@ -136,7 +136,7 @@ void init_global_data_structures() {
   /* all memory management is done at the level of the init methods */
   init_gauge_field();
   
-  for( vector<flavour*>::iterator it = g_flavours.begin(); it != g_flavours.end(); ++it ) {
+  for( vector<quark_line*>::iterator it = g_quark_lines.begin(); it != g_quark_lines.end(); ++it ) {
     (*it)->init();
   }
   for( vector<quark_line_pair*>::iterator it = g_quark_line_pairs.begin(); it != g_quark_line_pairs.end(); ++it ) {
@@ -156,9 +156,9 @@ void free_global_data_structures() {
     delete g_quark_line_pairs.back();
     g_quark_line_pairs.pop_back(); 
   }
-  while( g_flavours.size() > 0 ) {
-    delete g_flavours.back();
-    g_flavours.pop_back();
+  while( g_quark_lines.size() > 0 ) {
+    delete g_quark_lines.back();
+    g_quark_lines.pop_back();
   }
 }
 

@@ -57,8 +57,8 @@ NAMELIST [a-zA-Z0-9_"."" "","]+
 #ifdef __cplusplus
 
 #include <vector>
-#include "flavour.hpp"
-#include "flavour_params.hpp"
+#include "quark_line.hpp"
+#include "quark_line_params.hpp"
 #include "quark_line_pair.hpp"
 
 /* given a line of the form name=0.12,0.13,0.15, store floats in
@@ -290,8 +290,8 @@ double extract_float(char * text) {
 #ifdef __cplusplus
 %}
 
-%x INITFLAVOUR
-%x PARSEFLAVOUR
+%x INITQUARKLINE
+%x PARSEQUARKLINE
 
 %x INITQUARKLINEPAIR
 %x PARSEQUARKLINEPAIR
@@ -420,7 +420,7 @@ double extract_float(char * text) {
 %{
 #ifdef __cplusplus
 %}
-^BeginFlavour{SPC}*                        BEGIN(INITFLAVOUR);
+^BeginQuarkLine{SPC}*                        BEGIN(INITQUARKLINE);
 ^BeginQuarkLinePair{SPC}*                 BEGIN(INITQUARKLINEPAIR);
 %{
 #endif /* __cplusplus */
@@ -966,121 +966,121 @@ double extract_float(char * text) {
 #ifdef __cplusplus
 %}
 
-<INITFLAVOUR>{SPC}*\n {
-  if(myverbose!=0) printf("# [read_input_parser] Adding a new flavour on line %d\n",line_of_file);  
-  g_flavours.push_back( new flavour );
+<INITQUARKLINE>{SPC}*\n {
+  if(myverbose!=0) printf("# [read_input_parser] Adding a new quark line on line %d\n",line_of_file);  
+  g_quark_lines.push_back( new quark_line );
   line_of_file++;
-  BEGIN(PARSEFLAVOUR);
+  BEGIN(PARSEQUARKLINE);
 }
-<PARSEFLAVOUR>{
+<PARSEQUARKLINE>{
   {SPC}*kappa{EQL}{FLT} {
-    g_flavours.back()->params.kappa = extract_float(yytext);
-    if(myverbose!=0) printf("# [read_input_parser] \t kappa for flavour set to %lf in line %d\n",
-      g_flavours.back()->params.kappa,line_of_file);
+    g_quark_lines.back()->params.kappa = extract_float(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t kappa for quark line set to %lf in line %d\n",
+      g_quark_lines.back()->params.kappa,line_of_file);
   }
   {SPC}*masses{EQL}{FLTLIST} {
-    if(myverbose!=0) printf("# [read_input_parser] \t parsing list of masses in line %d for flavour %d\n",
-      line_of_file, (unsigned int)g_flavours.size() );
+    if(myverbose!=0) printf("# [read_input_parser] \t parsing list of masses in line %d for quark line %d\n",
+      line_of_file, (unsigned int)g_quark_lines.size() );
           
-    parse_fltlist(yytext,g_flavours.back()->params.masses);
-    g_flavours.back()->params.no_masses = (unsigned int)g_flavours.back()->params.masses.size();
+    parse_fltlist(yytext,g_quark_lines.back()->params.masses);
+    g_quark_lines.back()->params.no_masses = (unsigned int)g_quark_lines.back()->params.masses.size();
     
-    if(myverbose!=0) printf("# [read_input_parser] \t %d masses for flavour set in line %d\n",
-      g_flavours.back()->params.no_masses,line_of_file);
+    if(myverbose!=0) printf("# [read_input_parser] \t %d masses for quark line set in line %d\n",
+      g_quark_lines.back()->params.no_masses,line_of_file);
   }
   {SPC}*in_mms_file{EQL}yes {
-    g_flavours.back()->params.in_mms_file = true;
+    g_quark_lines.back()->params.in_mms_file = true;
     if(myverbose!=0) printf("# [read_input_parser] \t Propagators stored in MMS files in line %d\n",line_of_file);
   }
   {SPC}*in_mms_file{EQL}no {
-    g_flavours.back()->params.in_mms_file = false;
+    g_quark_lines.back()->params.in_mms_file = false;
     if(myverbose!=0) printf("# [read_input_parser] \t Propagators stored in non-MMS files in line %d\n",line_of_file);
   }
   {SPC}*splitted_propagator{EQL}yes {
-    g_flavours.back()->params.splitted_propagator = true;
+    g_quark_lines.back()->params.splitted_propagator = true;
     if(myverbose!=0) printf("# [read_input_parser] \t Separate propagators for all indices in line %d\n",line_of_file);
   }
   {SPC}*splitted_propagator{EQL}no {
-    g_flavours.back()->params.splitted_propagator = false;
+    g_quark_lines.back()->params.splitted_propagator = false;
     if(myverbose!=0) printf("# [read_input_parser] \t Individual propagators for all indices in line %d\n",line_of_file);
   }
-  {SPC}*flavour_type{EQL}down {
-    g_flavours.back()->params.type = down_type;
-    if(myverbose!=0) printf("# [read_input_parser] \t Flavour type is 'down' in line %d\n",line_of_file);
+  {SPC}*quark_line_type{EQL}down {
+    g_quark_lines.back()->params.type = down_type;
+    if(myverbose!=0) printf("# [read_input_parser] \t quark line type is 'down' in line %d\n",line_of_file);
   }
-  {SPC}*flavour_type{EQL}up {
-    g_flavours.back()->params.type = up_type;
-    if(myverbose!=0) printf("# [read_input_parser] \t Flavour type is 'up' in line %d\n",line_of_file);
+  {SPC}*quark_line_type{EQL}up {
+    g_quark_lines.back()->params.type = up_type;
+    if(myverbose!=0) printf("# [read_input_parser] \t quark line type is 'up' in line %d\n",line_of_file);
   }
   {SPC}*first_mass_index{EQL}{DIGIT}+ {
-    g_flavours.back()->params.first_mass_index = extract_integer(yytext);
+    g_quark_lines.back()->params.first_mass_index = extract_integer(yytext);
     if(myverbose!=0) printf("# [read_input_parser] \t First mass index is %d in line %d\n",
-      g_flavours.back()->params.first_mass_index,line_of_file);
+      g_quark_lines.back()->params.first_mass_index,line_of_file);
   }
   {SPC}*n_c{EQL}{DIGIT}+ {
-    g_flavours.back()->params.n_c = extract_integer(yytext);
+    g_quark_lines.back()->params.n_c = extract_integer(yytext);
     if(myverbose!=0) printf("# [read_input_parser] \t No. of color indices is %d in line %d\n",
-      g_flavours.back()->params.n_c,line_of_file);
+      g_quark_lines.back()->params.n_c,line_of_file);
   }
   {SPC}*n_s{EQL}{DIGIT}+ {
-    g_flavours.back()->params.n_s = extract_integer(yytext);
+    g_quark_lines.back()->params.n_s = extract_integer(yytext);
     if(myverbose!=0) printf("# [read_input_parser] \t No. of spin indices is %d in line %d\n",
-      g_flavours.back()->params.n_s,line_of_file);
+      g_quark_lines.back()->params.n_s,line_of_file);
   }
   {SPC}*source_timeslice{EQL}{DIGIT}+ {
-    g_flavours.back()->params.source_timeslice = extract_integer(yytext);
+    g_quark_lines.back()->params.source_timeslice = extract_integer(yytext);
     if(myverbose!=0) printf("# [read_input_parser] \t Source timeslice is %d in line %d\n",
-      g_flavours.back()->params.source_timeslice,line_of_file);  
+      g_quark_lines.back()->params.source_timeslice,line_of_file);  
   }
   {SPC}*delocalization_type{EQL}fuzzing {
-    g_flavours.back()->params.delocalization_type = DELOCAL_FUZZING;
+    g_quark_lines.back()->params.delocalization_type = DELOCAL_FUZZING;
     if(myverbose!=0) printf("# [read_input_parser] \t Delocalization type set to 'fuzzing' in line %d\n", line_of_file);
   }
   {SPC}*delocalization_type{EQL}smearing {
-    g_flavours.back()->params.delocalization_type = DELOCAL_SMEARING;
+    g_quark_lines.back()->params.delocalization_type = DELOCAL_SMEARING;
     if(myverbose!=0) printf("# [read_input_parser] \t Delocalization type set to 'smearing' in line %d\n", line_of_file);
   }
   {SPC}*delocalization_type{EQL}none {
-    g_flavours.back()->params.delocalization_type = DELOCAL_NONE;
+    g_quark_lines.back()->params.delocalization_type = DELOCAL_NONE;
     if(myverbose!=0) printf("# [read_input_parser] \t Delocalization type set to 'none' in line %d\n", line_of_file);
   }
   {SPC}*no_smearing_combinations{EQL}{DIGIT}+ {
-    g_flavours.back()->params.no_smearing_combinations = extract_integer(yytext);
+    g_quark_lines.back()->params.no_smearing_combinations = extract_integer(yytext);
     if(myverbose!=0) printf("# [read_input_parser] \t No. of smearing combinations is %d in line %d\n",
-      g_flavours.back()->params.no_smearing_combinations,line_of_file);
+      g_quark_lines.back()->params.no_smearing_combinations,line_of_file);
   }
   {SPC}*propagator_dirname{EQL}{NAME}+ {
-    g_flavours.back()->params.propagator_dirname = extract_string(yytext);
+    g_quark_lines.back()->params.propagator_dirname = extract_string(yytext);
     if(myverbose!=0) printf("# [read_input_parser] \t Propagator dirname is '%s' in line %d\n",
-      g_flavours.back()->params.propagator_dirname.c_str(),line_of_file);
+      g_quark_lines.back()->params.propagator_dirname.c_str(),line_of_file);
   }
   {SPC}*propagator_basename{EQL}{NAME}+ {
-    g_flavours.back()->params.propagator_basename = extract_string(yytext);
+    g_quark_lines.back()->params.propagator_basename = extract_string(yytext);
     if(myverbose!=0) printf("# [read_input_parser] \t Propagator basename is '%s' in line %d\n",
-      g_flavours.back()->params.propagator_basename.c_str(),line_of_file);
+      g_quark_lines.back()->params.propagator_basename.c_str(),line_of_file);
   }
   {SPC}*name{EQL}{NAME}+ {
-    g_flavours.back()->params.name = extract_string(yytext);
-    if(myverbose!=0) printf("# [read_input_parser] \t Flavour name is '%s' in line %d\n",
-      g_flavours.back()->params.name.c_str(),line_of_file);
+    g_quark_lines.back()->params.name = extract_string(yytext);
+    if(myverbose!=0) printf("# [read_input_parser] \t quark line name is '%s' in line %d\n",
+      g_quark_lines.back()->params.name.c_str(),line_of_file);
   }
-  ^EndFlavour{SPC}* {
-    if(myverbose!=0) printf("# [read_input_parser] Finished adding a new flavour on line %d\n",line_of_file);
+  ^EndQuarkLine{SPC}* {
+    if(myverbose!=0) printf("# [read_input_parser] Finished adding a new quark line on line %d\n",line_of_file);
     BEGIN(0);
   }
 }
 
 <INITQUARKLINEPAIR>{SPC}*\n {
   if(myverbose!=0) printf("# [read_input_parser] Adding a new quark line pair @ line %d\n",line_of_file);  
-  g_quark_line_pairs.push_back( new quark_line_pair(&g_flavours) );
+  g_quark_line_pairs.push_back( new quark_line_pair(&g_quark_lines) );
   line_of_file++;
   BEGIN(PARSEQUARKLINEPAIR);
 }
 <PARSEQUARKLINEPAIR>{
-  {SPC}*flavours{EQL}{NAMELIST}+ {
-    g_quark_line_pairs.back()->set_flavour_names( extract_vector_of_strings( yytext ) );
+  {SPC}*quark_lines{EQL}{NAMELIST}+ {
+    g_quark_line_pairs.back()->set_quark_line_names( extract_vector_of_strings( yytext ) );
     if(myverbose!=0) printf("# [read_input_parser] \t Defined pair '%s' in line %d\n",
-      g_quark_line_pairs.back()->get_flavour_names_string().c_str(),line_of_file);  
+      g_quark_line_pairs.back()->get_quark_line_names_string().c_str(),line_of_file);  
   }
   {SPC}*name{EQL}{NAME}+ {
     g_quark_line_pairs.back()->set_name( extract_string(yytext) );
@@ -1126,7 +1126,7 @@ double extract_float(char * text) {
 /* if we are in any of these starting conditions, we cannot go back to starting condition 0!
  * Otherwise we would stop parsing the relevant commands. */
 %}
-<PARSEFLAVOUR,PARSEQUARKLINEPAIR>{SPC}*\n {
+<PARSEQUARKLINE,PARSEQUARKLINEPAIR>{SPC}*\n {
   line_of_file++;
 }
 %{

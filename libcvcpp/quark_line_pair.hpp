@@ -39,7 +39,7 @@
 
 // forward declarations
 class meson;
-class flavour;
+class quark_line;
 
 using namespace std;
 
@@ -47,8 +47,8 @@ class quark_line_pair {
 public:
   
   quark_line_pair();
-  quark_line_pair( vector<flavour*>* i_flavours_collection );
-  quark_line_pair( vector<string>& i_flavour_names, vector<flavour*>* i_flavours_collection );
+  quark_line_pair( vector<quark_line*>* i_quark_lines_collection );
+  quark_line_pair( vector<string>& i_quark_line_names, vector<quark_line*>* i_quark_lines_collection );
   ~quark_line_pair();
   
   void init();
@@ -56,10 +56,10 @@ public:
   void set_observable_names( const vector<string>& i_observables_names );
   string get_observable_names_string();
   
-  void set_flavour_names( const vector<string>& i_flavour_names);
-  string get_flavour_names_string();
+  void set_quark_line_names( const vector<string>& i_quark_line_names);
+  string get_quark_line_names_string();
   
-  void set_flavours_collection(vector<flavour*>* i_flavours_collection);
+  void set_quark_lines_collection(vector<quark_line*>* i_quark_lines_collection);
 
   void set_name( string i_name );
   
@@ -74,21 +74,21 @@ public:
   // when init is called, parts of the data structure must already be set
   // and this method checks whether it's safe to call init
   bool preinit_check();
-  // during initialization, the two flavours are checked to be consistent
+  // during initialization, the two quark_lines are checked to be consistent
   bool check_consistency();
   
-  flavour* a;
-  flavour* b;
+  quark_line* a;
+  quark_line* b;
   
-  // collection of observable types for this flavour pairing
+  // collection of observable types for this quark_line pairing
   vector<meson*> observables;
 
 private:
   bool initialized;
   bool mass_diagonal;
   string name;
-  vector<flavour*>* flavours_collection;
-  vector<string> flavour_names;
+  vector<quark_line*>* quark_lines_collection;
+  vector<string> quark_line_names;
   vector<string> observable_names;
   
   void constructor_common();
