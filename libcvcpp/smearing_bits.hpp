@@ -45,6 +45,7 @@ typedef enum t_smearing_bits {
 } t_smearing_bits;
 
 typedef enum t_delocalization_type {
+  DELOCAL_NONE,
   DELOCAL_SMEARING,
   DELOCAL_FUZZING
 } t_delocalization_type;

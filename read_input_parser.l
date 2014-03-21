@@ -1039,7 +1039,11 @@ double extract_float(char * text) {
   {SPC}*delocalization_type{EQL}smearing {
     g_flavours.back()->params.delocalization_type = DELOCAL_SMEARING;
     if(myverbose!=0) printf("# [read_input_parser] \t Delocalization type set to 'smearing' in line %d\n", line_of_file);
-  }  
+  }
+  {SPC}*delocalization_type{EQL}none {
+    g_flavours.back()->params.delocalization_type = DELOCAL_NONE;
+    if(myverbose!=0) printf("# [read_input_parser] \t Delocalization type set to 'none' in line %d\n", line_of_file);
+  }
   {SPC}*no_smearing_combinations{EQL}{DIGIT}+ {
     g_flavours.back()->params.no_smearing_combinations = extract_integer(yytext);
     if(myverbose!=0) printf("# [read_input_parser] \t No. of smearing combinations is %d in line %d\n",

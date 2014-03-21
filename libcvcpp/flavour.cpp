@@ -42,6 +42,12 @@ void flavour::init() {
   } else {
     deb_printf(1,"# [flavour::init] Initialising flavour %s.\n",params.name.c_str());
     
+    // force smearing_combinations to 1 if set to local only
+    if( params.delocalization_type == DELOCAL_NONE && params.no_smearing_combinations > 1 ) {
+      deb_printf(0,"# OVERRIDE: [flavour::init] Delocalization 'none' selected for flavour %s, forcing no_smearing_combinations=1!\n",params.name.c_str());
+      params.no_smearing_combinations = 1;
+    }
+    
     propagators.resize(params.no_masses);
     for( unsigned int mass_ctr = 0; mass_ctr < params.no_masses; ++mass_ctr ) {
       propagators[mass_ctr].resize(params.no_smearing_combinations);
