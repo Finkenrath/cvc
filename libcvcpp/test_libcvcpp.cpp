@@ -44,7 +44,6 @@
 
 #include "quark_line.hpp"
 #include "quark_line_pair.hpp"
-#include "quark_line_params.hpp"
 #include "correlator.hpp"
 #include "charged_conn_meson_20.hpp"
 #include "meson.hpp"
@@ -82,38 +81,38 @@ int main(int argc, char **argv) {
   // take care of memory management, reading propagators and smearing
   init_global_data_structures();
   
-  for( vector<quark_line_pair*>::iterator fp_it = g_quark_line_pairs.begin(); fp_it != g_quark_line_pairs.end(); ++fp_it ) {
+  for( vector<quark_line_pair*>::iterator qlp_it = g_quark_line_pairs.begin(); qlp_it != g_quark_line_pairs.end(); ++qlp_it ) {
     // convenience variables for the quark_line objects
-    quark_line* fl_a = (*fp_it)->a;
-    quark_line* fl_b = (*fp_it)->b;
+    quark_line* ql_a = (*qlp_it)->a;
+    quark_line* ql_b = (*qlp_it)->b;
     
     // loop over the observables defined for this quark_line pairing
     
-    for( vector<meson*>::const_iterator obs_it = (*fp_it)->observables.begin(); obs_it != (*fp_it)->observables.end(); ++obs_it ) {
+    for( vector<meson*>::const_iterator obs_it = (*qlp_it)->observables.begin(); obs_it != (*qlp_it)->observables.end(); ++obs_it ) {
       
-      for( unsigned int mass_index_a = 0; mass_index_a < fl_a->params.no_masses ; ++mass_index_a ) {
-        for( unsigned int mass_index_b = 0; mass_index_b < fl_b->params.no_masses ; ++mass_index_b ) {
+      for( unsigned int mass_index_a = 0; mass_index_a < ql_a->no_masses ; ++mass_index_a ) {
+        for( unsigned int mass_index_b = 0; mass_index_b < ql_b->no_masses ; ++mass_index_b ) {
           
           /* if the two quark_lines are the same, we only do the mass diagonal case
            * we do the same if pairing has been defined to be mass-diagonal by
            * the user */
-          if ( fl_a == fl_b || (*fp_it)->is_mass_diagonal() == true ) {
+          if ( ql_a == ql_b || (*qlp_it)->is_mass_diagonal() == true ) {
             /* since the quark_lines are the same, the mass indices will have the same ranges
              * and we can use this as a criterion for staying on the mass diagonal
              * the same is hopefully true if the user has set the relevant flag */
             if( mass_index_a != mass_index_b ) {
               continue;
             }
-            if( fl_a->params.masses[mass_index_a] != fl_b->params.masses[mass_index_b] ) {
+            /* if( ql_a->masses[mass_index_a] != ql_b->masses[mass_index_b] ) {
               deb_printf(0,"WARNING: mass-diagonal contraction for '%s', but the masses differ!\n \
-quark_line '%s' mass: %f, quark_line '%s' mass: %f\n", (*fp_it)->get_name().c_str(), 
-                    fl_a->params.name.c_str(), fl_a->params.masses[mass_index_a], 
-                    fl_b->params.name.c_str(), fl_b->params.masses[mass_index_b]); 
-            }
+quark_line '%s' mass: %f, quark_line '%s' mass: %f\n", (*qlp_it)->get_name().c_str(), 
+                    ql_a->name.c_str(), ql_a->masses[mass_index_a], 
+                    ql_b->name.c_str(), ql_b->masses[mass_index_b]); 
+            } */
           }
         
         // carry out the contractions for the given set of observables
-        (*obs_it)->do_contractions( *fp_it, mass_index_a, mass_index_b );
+        (*obs_it)->do_contractions( *qlp_it, mass_index_a, mass_index_b );
         
         } /* mass_index_b */
       } /* mass_index_a */
@@ -133,7 +132,7 @@ quark_line '%s' mass: %f, quark_line '%s' mass: %f\n", (*fp_it)->get_name().c_st
 void init_global_data_structures() {
   alloc_spinor_field(&g_work_spinor_field, VOLUMEPLUSRAND);
     
-  /* all memory management is done at the level of the init methods */
+  /* all other memory management is done at the level of the init methods */
   init_gauge_field();
   
   for( vector<quark_line*>::iterator it = g_quark_lines.begin(); it != g_quark_lines.end(); ++it ) {

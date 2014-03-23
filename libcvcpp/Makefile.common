@@ -2,7 +2,8 @@
 PROGRAMS = test_libcvcpp
 
 # MODULES, CVC_MODULES and HEADERLESS_CVC_MODULES treated with COMPILE
-MODULES = quark_line quark_line_pair spinor_field propagator smearing_bits correlator \
+MODULES = quark_line quark_line_pair spinor_field propagator \
+	smearing_bits correlator \
   correlator_memory meson charged_conn_meson_20 neutral_conn_meson_20 \
   charged_conn_meson_32 neutral_conn_meson_32
 

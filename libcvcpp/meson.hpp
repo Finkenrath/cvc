@@ -73,7 +73,7 @@ class meson {
           const double* i_vsign,
           const double* i_conf_gamma_sign);
   
-    virtual void output_correlators(const vector< vector<correlator*> >* const correls, 
+    virtual void output_correlators(const vector< vector< vector<correlator*> > >* const correls, 
                                     const string& quark_line_pair_name, 
                                     const quark_line* const ql_a, const quark_line* const ql_b, 
                                     const unsigned int mass_index_a, const unsigned int mass_index_b ); 
@@ -84,10 +84,14 @@ class meson {
     virtual void do_contractions(const quark_line_pair* const fp,
                                  const unsigned int mass_index_a, const unsigned int mass_index_b );
     
-    virtual string construct_correlator_filename_create_subdirectory(
-                                  const string& quark_line_pair_name, 
+    virtual string create_subdirectory( const string& quark_line_pair_name, 
                                   const quark_line* const ql_a, const quark_line* const ql_b, 
-                                  const unsigned int mass_index_a, const unsigned int mass_index_b );
+                                  const unsigned int mass_index_a, const unsigned int mass_index_b);
+    
+    virtual string construct_correlator_filename( const string& dirname,
+                                  const quark_line* const ql_a, const quark_line* const ql_b, 
+                                  const unsigned int mass_index_a, const unsigned int mass_index_b,
+                                  const unsigned int fl_index );
  
     virtual void print_info();
     

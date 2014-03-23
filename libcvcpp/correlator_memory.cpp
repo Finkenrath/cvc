@@ -33,7 +33,7 @@ unsigned int correlator_memory::ref_count = 0;
 double* correlator_memory::temp_correl=(double*)NULL;
 double* correlator_memory::temp_vector_correl=(double*)NULL;
 double* correlator_memory::allreduce_buffer=(double*)NULL;
-vector< vector<correlator*> > correlator_memory::correls;
+vector< vector< vector<correlator*> > > correlator_memory::correls;
 
 correlator_memory::correlator_memory() {
   ++ref_count;
@@ -96,10 +96,12 @@ void correlator_memory::de_init() {
   // free actual correlator storage because this is the last reference and we can assume 
   // that we won't have another opportunity to clean up later!
   if( !correls.empty() ) {
-    for(vector< vector<correlator*> >::iterator iter = correls.begin(); iter != correls.end(); ++iter){
-      while(iter->size() > 0){
-        delete iter->back();
-        iter->pop_back();
+    for(vector< vector< vector<correlator*> > >::iterator fl_iter = correls.begin(); fl_iter != correls.end(); ++fl_iter) {
+      for(vector< vector<correlator*> >::iterator obs_iter = fl_iter->begin(); obs_iter != fl_iter->end(); ++obs_iter){
+        while(obs_iter->size() > 0){
+          delete obs_iter->back();
+          obs_iter->pop_back();
+        }
       }
     }
   }
@@ -110,20 +112,25 @@ void correlator_memory::de_init() {
 // we return the address of the private "correls" member, but first we check
 // if it fulfills the callers requirements
 
-vector< vector<correlator*> >* 
-correlator_memory::get_correls_pointer(const unsigned int N_correlators, const unsigned int no_smearing_combinations) {
+vector< vector< vector<correlator*> > >* 
+correlator_memory::get_correls_pointer(const unsigned int N_correlators, const unsigned int no_smearing_combinations, const unsigned no_flavour_combinations) {
   if(!initialized){
     init();
   }
   
   if( initialized ) {
-    if( correls.size() < N_correlators ) {
-      correls.resize(N_correlators);
+    if( correls.size() < no_flavour_combinations ) {
+      correls.resize(no_flavour_combinations);
     }
-    // check if all elements can hold all smearing combinations
-    for(vector<vector <correlator*> >::iterator iter = correls.begin(); iter != correls.end(); ++iter) {
-      while( iter->size() < no_smearing_combinations ) {
-        iter->push_back( new correlator(allreduce_buffer) );
+    for(vector< vector< vector<correlator*> > >::iterator fl_iter = correls.begin(); fl_iter != correls.end(); ++fl_iter) {
+      if( fl_iter->size() < N_correlators ) {
+        fl_iter->resize(N_correlators);
+      }
+      for( vector< vector<correlator*> >::iterator obs_iter = fl_iter->begin(); obs_iter != fl_iter->end(); ++obs_iter) {
+        while( obs_iter->size() < no_smearing_combinations ) {
+          // this is where actual memory is allocated and a pointer to this memory is stored in our vector
+          obs_iter->push_back( new correlator(allreduce_buffer) );
+        }
       }
     }
     return &correls;
@@ -148,11 +155,13 @@ double* correlator_memory::get_temp_vector_correl_pointer() {
 }
 
 void correlator_memory::zero_out() {
-  for(vector< vector<correlator*> >::iterator obs_iter = correls.begin(); obs_iter != correls.end(); ++obs_iter) {
-    for(vector<correlator*>::iterator smearing_iter = obs_iter->begin(); smearing_iter != obs_iter->end(); ++smearing_iter) {
-      (*smearing_iter)->zero_out();
+  for(vector< vector< vector<correlator*> > >::iterator fl_iter = correls.begin(); fl_iter != correls.end(); ++fl_iter) {
+    for(vector< vector<correlator*> >::iterator obs_iter = fl_iter->begin(); obs_iter != fl_iter->end(); ++obs_iter) {
+      for(vector<correlator*>::iterator smearing_iter = obs_iter->begin(); smearing_iter != obs_iter->end(); ++smearing_iter) {
+        (*smearing_iter)->zero_out();
+      }
     }
-  }  
+  }
 }
 
 void correlator_memory::print_info() {

@@ -8,12 +8,12 @@ fftwdir=/usr
 LEX=flex
 
 # MPI
-CXX=mpicxx.openmpi    # with MPI
-CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall -DMPI -DPARALLELTXY -DHAVE_LIBLEMON    # with MPI
+#CXX=mpicxx.openmpi    # with MPI
+#CXXFLAGS=-g -ggdb -DF_ -O2 -mtune=core2 -DCVC -DOMPI_SKIP_MPICXX -pedantic -Wall -DMPI -DPARALLELTXY -DHAVE_LIBLEMON    # with MPI
 
 # no MPI
-#CXX=g++    # no MPI
-#CXXFLAGS=-g -ggdb -DF_ -O2 -DCVC -pedantic -Wall    # no MPI
+CXX=g++    # no MPI
+CXXFLAGS=-g -ggdb -DF_ -O2 -DCVC -pedantic -Wall    # no MPI
 
 DEP = ${CXX}
 DEPFLAGS = -MM

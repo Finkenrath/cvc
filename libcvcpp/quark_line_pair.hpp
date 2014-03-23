@@ -31,8 +31,8 @@
  * When a name matches, the pointers a and b are set to point to the respective quark lines.
  *  */
 
-#ifndef quark_line_pair_HPP_
-#define quark_line_pair_HPP_
+#ifndef QUARK_LINE_PAIR_HPP_
+#define QUARK_LINE_PAIR_HPP_
 
 #include <string>
 #include <vector>
@@ -94,4 +94,4 @@ private:
   void constructor_common();
 };
 
-#endif /* quark_line_pair_HPP_ */
+#endif /* QUARK_LINE_PAIR_HPP_ */

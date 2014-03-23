@@ -71,10 +71,10 @@ void quark_line_pair::init() {
       /* traverse the quark_line collection and assign the correct ones to the pairing
       * by matching names */ 
       for( vector<quark_line*>::iterator it = (*quark_lines_collection).begin(); it != (*quark_lines_collection).end(); ++it ){
-        if( (*it)->params.name == quark_line_names[0] ) {
+        if( (*it)->name == quark_line_names[0] ) {
           a = (*it);
         }
-        if( (*it)->params.name == quark_line_names[1] ) {
+        if( (*it)->name == quark_line_names[1] ) {
           b = (*it);
         }
       }
@@ -107,17 +107,17 @@ bool quark_line_pair::check_consistency() {
   if( b == NULL ) {
     fatal_error(51,"ERROR: [quark_line_pair::check_consistency] Quark line b (%s) in pair %s could not be found! Maybe you misspelled the name in the definition of the pair?\n", quark_line_names[1].c_str(), name.c_str() );
   }
-  if( a->params.no_smearing_combinations != b->params.no_smearing_combinations ) {
-    fatal_error(52,"ERROR: [quark_line_pair::check_consistency] For pair %s, smearing_combinations do not match for quark lines %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
+  if( a->no_smearing_combinations != b->no_smearing_combinations ) {
+    fatal_error(52,"ERROR: [quark_line_pair::check_consistency] For pair %s, smearing_combinations do not match for quark lines %s and %s!\n", name.c_str(), a->name.c_str(), b->name.c_str() );
   }
-  if( a->params.n_s != b->params.n_s ) {
-    fatal_error(53,"ERROR: [quark_line_pair::check_consistency] For pair %s, n_s do not match for quark lines %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );    
+  if( a->n_s != b->n_s ) {
+    fatal_error(53,"ERROR: [quark_line_pair::check_consistency] For pair %s, n_s do not match for quark lines %s and %s!\n", name.c_str(), a->name.c_str(), b->name.c_str() );    
   }
-  if( a->params.n_c != b->params.n_c ) {
-    fatal_error(54,"ERROR: [quark_line_pair::check_consistency] For pair %s, n_c do not match for quark lines %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );        
+  if( a->n_c != b->n_c ) {
+    fatal_error(54,"ERROR: [quark_line_pair::check_consistency] For pair %s, n_c do not match for quark lines %s and %s!\n", name.c_str(), a->name.c_str(), b->name.c_str() );        
   }
-  if( a->params.source_timeslice != b->params.source_timeslice ) {
-    fatal_error(55, "ERROR: [quark_line_pair::check_consistency] For pair %s, the source timeslice differs between quark lines %s and %s!\n", name.c_str(), a->params.name.c_str(), b->params.name.c_str() );
+  if( a->source_timeslice != b->source_timeslice ) {
+    fatal_error(55, "ERROR: [quark_line_pair::check_consistency] For pair %s, the source timeslice differs between quark lines %s and %s!\n", name.c_str(), a->name.c_str(), b->name.c_str() );
   }
   
   // any failures will result in program termination so we simply return true if we reach this point!

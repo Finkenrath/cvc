@@ -87,7 +87,9 @@ void propagator::init( string i_filename, t_smear_index i_smear_index, unsigned 
 
 void propagator::read_from_file() {
   if( initialized ){
-    /* the cast to (char*) is technically invalid but when using LEMON, the filename
+    deb_printf( 1, "[propagator] Attempting to read propagator from SciDAC position %d in file %s!\n",scidac_pos,filename.c_str() );
+    /* the cast to (char*) is technically invalid because it should be
+     * a pointer to const. However, when using LEMON the filename
      * is passed through to MPI_File_open which, at least for OpenMPI,
      * stupidly calls for a (char*) argument */
     read_lime_spinor(field.mem, (char*)filename.c_str(), scidac_pos);
