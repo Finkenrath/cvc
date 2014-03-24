@@ -71,15 +71,17 @@ void parse_fltlist(char * text, vector<double>& values ){
     yy_fatal_error("[read_input_parser::parse_fltlist] target vector does not have zero elements! Exiting!");
   }
   
-  if( strtok(text,"\n\t =,\\") != NULL ) {
-    /* Implicitly drop the first token, it is the name */
-    token = strtok(NULL," =,\t");
+  /* Implicitly drop the first token, it is the name */
+  if( strtok(text,"=") != NULL ) {
+    
+    /* get the first token from the RHS */
+    token = strtok(NULL,";");
       
     while( token != NULL ) {
       sscanf(token,"%lf",&mass);
       values.push_back(mass);
       if(myverbose!=0) printf("# [read_input_parser::parse_fltlist] \t\t parsed value %lf in line %d\n",mass,line_of_file);
-      token = strtok(NULL," =,\t");
+      token = strtok(NULL,";");
     }
   } else {
     yy_fatal_error("[read_input_parser::parse_fltlist] failed to parse list of floats!");
@@ -98,14 +100,17 @@ void parse_masslist(char * text, vector<t_quark_mass>& values ){
     yy_fatal_error("[read_input_parser::parse_masslist] target vector does not have zero elements! Exiting!");
   }
   
-  if( strtok(text,"\n\t =;\\") != NULL ) {
-    /* Implicitly drop the first token, it is the name */
-    token = strtok(NULL," =;\t");
+  /* Implicitly drop the first token, it is the name */
+  if( strtok(text,"=") != NULL ) {
+    
+    /* get the first token from the RHS */
+    token = strtok(NULL,";");
       
     while( token != NULL ) {
-      // for a mass pair we need to read two floats
+      /* for a mass pair we need to read two floats */
       if( strpbrk( token, "," ) != NULL ) {
-        sscanf(token,"%lf,%lf",&mass.mu,&mass.mudelta);
+        /* there can be random whitespace around the comma separating the two mass parameters */
+        sscanf(token,"%lf%*[ ,\t]%lf",&mass.mu,&mass.mudelta);
       } else {
         sscanf(token,"%lf",&mass.mu);
         mass.mudelta=0.0;
@@ -113,7 +118,7 @@ void parse_masslist(char * text, vector<t_quark_mass>& values ){
      
       values.push_back(mass);
       if(myverbose!=0) printf("# [read_input_parser::parse_masslist] \t\t parsed value %lf/%lf in line %d\n",mass.mu,mass.mudelta,line_of_file);
-      token = strtok(NULL," =,\t");
+      token = strtok(NULL,";");
     }
   } else {
     yy_fatal_error("[read_input_parser::parse_masslist] failed to parse list of masses!");
