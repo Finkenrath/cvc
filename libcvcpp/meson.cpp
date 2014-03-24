@@ -301,7 +301,7 @@ string meson::create_subdirectory(const string& quark_line_pair_name, const quar
   if( g_proc_id == 0 ){
     if( access(dirname.str().c_str(),F_OK) != 0 ) {
       if( mkdir( dirname.str().c_str(), 0700 ) != 0 ) {
-        fatal_error(22,"ERROR: [meson::construct_correlator_filename_create_subdirectory]\n Creation of subdirectory %s failed!\n",dirname.str().c_str() );
+        fatal_error(22,"ERROR: [meson::create_subdirectory]\n Creation of subdirectory %s failed!\n",dirname.str().c_str() );
       }
     }
   }
@@ -330,9 +330,23 @@ string meson::construct_correlator_filename(const string& dirname, const quark_l
   // puttogether.sh requires the filename to be $basename.$timeslice(2).$confnum(4)
   // silly, really...
   rval << dirname << "/" << basename;
+  
   if( ql_a->type == QL_TYPE_DOUBLET || ql_b->type == QL_TYPE_DOUBLET ) {
-    rval << setw(2) << setfill('0') << fl_index << '.';
+    /* for backwards-compatibility reasons we use the following somewhat archaic naming
+     * scheme from heavylight.cc and heavyheavy.cc from the contractions package
+     * note that for a light non-degenerate doublet this naming would be a bit confusing... */
+    unsigned int fl_comb = ql_a->no_flavour_combinations * ql_b->no_flavour_combinations; 
+    if( fl_comb == 4 ) {
+      const string sector_id[] = {"lss","lsc","lcs","lcc"};
+      rval << sector_id[fl_index] << ".";
+    } else {
+      const string sector_id[] = {"ssss","sssc","sscs","sscc","scss","scsc","sccs","sccc","csss","cssc","cscs","cscc","ccss","ccsc","cccs","cccc"};
+      rval << sector_id[fl_index] << ".";  
+    }
+    // otherwise we would simply do:
+    // rval << setw(2) << setfill('0') << fl_index << '.';
   }
+  
   rval << setw(2) << setfill('0') << ql_a->source_timeslice << '.';
   rval << setw(4) << setfill('0') << Nconf;
   return rval.str();
