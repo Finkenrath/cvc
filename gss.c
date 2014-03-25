@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
 
 #ifdef MPI
   MPI_Status status;
+  MPI_Init(&argc,&argv);
 #endif
 
   while ((c = getopt(argc, argv, "h?sf:i:a:n:l:K:t:")) != -1) {
@@ -277,21 +278,21 @@ int main(int argc, char **argv) {
           g_spinor_field[0][_GSI(ix)+ 4] = ran[ 4];
           g_spinor_field[0][_GSI(ix)+ 5] = ran[ 5];
 
-          g_spinor_field[1][_GSI(ix)  6] = ran[ 6];
+          g_spinor_field[1][_GSI(ix)+ 6] = ran[ 6];
           g_spinor_field[1][_GSI(ix)+ 7] = ran[ 7];
           g_spinor_field[1][_GSI(ix)+ 8] = ran[ 8];
           g_spinor_field[1][_GSI(ix)+ 9] = ran[ 9];
           g_spinor_field[1][_GSI(ix)+10] = ran[10];
           g_spinor_field[1][_GSI(ix)+11] = ran[11];
 
-          g_spinor_field[2][_GSI(ix) 12] = ran[12];
+          g_spinor_field[2][_GSI(ix)+12] = ran[12];
           g_spinor_field[2][_GSI(ix)+13] = ran[13];
           g_spinor_field[2][_GSI(ix)+14] = ran[14];
           g_spinor_field[2][_GSI(ix)+15] = ran[15];
           g_spinor_field[2][_GSI(ix)+16] = ran[16];
           g_spinor_field[2][_GSI(ix)+17] = ran[17];
 
-          g_spinor_field[3][_GSI(ix) 18] = ran[18];
+          g_spinor_field[3][_GSI(ix)+18] = ran[18];
           g_spinor_field[3][_GSI(ix)+19] = ran[19];
           g_spinor_field[3][_GSI(ix)+20] = ran[20];
           g_spinor_field[3][_GSI(ix)+21] = ran[21];
