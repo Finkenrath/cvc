@@ -204,12 +204,17 @@ string quark_line::construct_propagator_filename( const unsigned int i_mass_ctr,
     filename << propagator_dirname << "/";
   }
   
-  // multiple masses not in mms file but in subdirectories
-  if(no_masses > 1 && in_mms_file == false) {
+  // if we are not dealing with propagators in MMS files, we require
+  // the propagators to be stored as
+  //   propagator_dirname/propagator_dirname_00, propagator_dirname/propagator_dirname_01 ...
+  // where the sequence should match the order of definition in the input file  (NOTE: this will probably change to use the actual mass!)
+  // if propagator_dirname has not been defined, we require the propagators to be stored in (a) subdirector[ies/y]
+  //   name_00, name_01 ...
+  if(in_mms_file == false) {
     if( propagator_dirname != string("") ) {
       filename << propagator_dirname << '_' << setw(2) << i_mass_ctr << "/";
     } else {
-      filename << setw(2) << i_mass_ctr << "/";
+      filename << name << '_' << setw(2) << i_mass_ctr << "/";
     }
   }
   filename << propagator_basename << ".";
