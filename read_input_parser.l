@@ -1011,11 +1011,11 @@ double extract_float(char * text) {
   BEGIN(PARSEQUARKLINE);
 }
 <PARSEQUARKLINE>{
-  {SPC}*type{EQL}down {
+  {SPC}*type{EQL}up {
     g_quark_lines.back()->type = QL_TYPE_UP;
     if(myverbose!=0) printf("# [read_input_parser] \t quark line type is 'down' in line %d\n",line_of_file);
   }
-  {SPC}*type{EQL}up {
+  {SPC}*type{EQL}down {
     g_quark_lines.back()->type = QL_TYPE_DOWN;
     if(myverbose!=0) printf("# [read_input_parser] \t quark line type is 'up' in line %d\n",line_of_file);
   }
