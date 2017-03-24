@@ -225,12 +225,19 @@ string quark_line::construct_propagator_filename( const unsigned int i_mass_ctr,
   } 
   
   filename << setw(4) << Nconf << ".";
-  
-  filename << setw(2) << source_timeslice << ".";
-  
-  if(splitted_propagator){
-    filename << setw(2) << i_index << ".";
+ 
+    if (T_global>99)
+  {
+     filename << setw(3) << source_timeslice << ".";
   }
+  else
+  {
+     filename << setw(2) << source_timeslice << ".";
+  }
+  
+ // if(splitted_propagator){
+    filename << setw(2) << i_index << ".";
+ // }
   
   if( in_mms_file ){
     filename << "cgmms." << setw(2) << i_mass_ctr << ".";

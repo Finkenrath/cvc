@@ -616,7 +616,8 @@ int get_propagator_type(char * filename) {
 #ifdef HAVE_LIBLEMON
 int read_lime_spinor(double * const s, char * filename, const int position) {
   MPI_File *ifs;
-  int status = 0, getpos = 0, bytes = 0, prec = 0, prop_type;
+  int status = 0, getpos = 0, prec = 0, prop_type;
+  unsigned long long bytes =0;
   LemonReader *reader = NULL;
   DML_Checksum checksum;
 
@@ -663,10 +664,11 @@ int read_lime_spinor(double * const s, char * filename, const int position) {
   } 
 
   bytes = lemonReaderBytes(reader);
-  if ((int)bytes == LX * g_nproc_x * LY * g_nproc_y * LZ * T_global * 24*sizeof(double)) {
+  
+  if ( bytes == (unsigned long long) LX * g_nproc_x * LY * g_nproc_y * LZ * T_global * 24*sizeof(double)) {
     prec = 64;
   } else {
-    if ((int)bytes == LX * g_nproc_x * LY * g_nproc_y * LZ * T_global * 24* sizeof(double) / 2) {
+    if ( bytes == (unsigned long long) LX * g_nproc_x * LY * g_nproc_y * LZ * T_global * 24* sizeof(double) / 2) {
       prec = 32;
     } else {
       if(g_cart_id==0) fprintf(stderr, "[read_lime_spinor] Error, wrong length in spinor. Aborting read!\n");
@@ -675,6 +677,8 @@ int read_lime_spinor(double * const s, char * filename, const int position) {
        exit(501);
     }
   }
+  
+ 
   if(g_cart_id==0) fprintf(stdout, "# [read_lime_spinor] %d bit precision read.\n", prec);
 
   read_binary_spinor_data(s, reader, prec, &checksum);
